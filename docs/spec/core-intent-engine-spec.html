@@ -1,0 +1,229 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Buyer Intent Lib — Core Intent Engine Spec</title>
+    <meta property="article:author" content="Obvious (prepared for Richard Lu, Spotlize)" />
+    <meta property="article:published_time" content="2026-10-30" />
+  </head>
+  <body>
+    <main data-bp-node-id="doc-body"><header>
+  <bp-eyebrow>Spotlize · Autobuild spec · v1.0</bp-eyebrow>
+  <h1>Buyer Intent Lib — Core Intent Engine</h1>
+  <bp-subheader>The first build package for a standalone, Visible-independent intent intelligence infrastructure: Intent Schema v1, a Solix golden dataset, URL-to-Brand/Product modeling, and an evidence-first LLM intent generator with a minimal API.</bp-subheader>
+</header>
+
+<bp-toc label="Contents"></bp-toc>
+
+<section data-bp-node-id="problem-frame" id="problem-frame"><bp-subheader>BIL's bet, from the product plan: a brand's public website and product pages already contain the semantics of purchase intent — category questions, comparison moments, scenario needs, risk objections. Today that semantics is trapped in prose. BIL extracts it into a versioned, machine-callable intent library that entertainment-affiliate matching and advertising-diagnosis systems can query, without requiring any user-behavior tracking or the Visible GEO-monitoring product.</bp-subheader>
+
+<p>This spec covers the <strong>first build package only</strong> — the plan's designated first Autobuild task: <em>Intent Schema + Importer + URL-to-Intent Generator in standalone generation mode</em>. Shopify App, entertainment matching, and the diagnosis Skill are later packages and are named here only as boundaries they must not break.</p>
+
+<div class="card-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;">
+  <article style="border:1px solid var(--bp-edge);padding:1rem;">
+    <bp-eyebrow>The decision to approve</bp-eyebrow>
+    <p>Build the core intent engine as a TypeScript monorepo inside the registered <code>guangl2011/IntentVisible</code> repo (currently empty), shipping: Intent Schema v1 as JSON Schema + TypeScript types; a Solix golden dataset and importer; a URL extractor that produces evidence-cited brand/product profiles; an LLM intent generator in standalone mode (<code>visibility_pct = null</code>, <code>measurement_status: not_measured</code>); and the minimal async API surface (<code>/v1/brands/analyze</code>, <code>/v1/products/analyze</code>, intent reads, <code>/v1/jobs/{id}</code>).</p>
+  </article>
+  <article style="border:1px solid var(--bp-edge);padding:1rem;">
+    <bp-eyebrow>What makes this hard</bp-eyebrow>
+    <p>The failure mode named in the plan is not "the LLM writes bad prompts" — it is <strong>confident fabrication presented as measurement</strong>: invented search volumes, pseudo-visibility scores, product claims with no page evidence. The architecture must make fabrication structurally difficult: measurement fields are schema-nullable and pipeline-forbidden, every generated intent carries <code>evidence_urls</code>, and every claim is traceable to a fetched snapshot.</p>
+  </article>
+</div>
+
+<bp-callout type="invariant" label="Boundary invariant">
+In standalone mode the pipeline cannot emit <code>visibility_pct</code>, <code>monthly_search_volume</code>, or any measured value: these fields are <code>null</code> with <code>measurement_status: "not_measured"</code>, and the schema validator rejects any generated record that sets them. Real measurement enters later through the optional Visible adapter — never as a dependency.
+</bp-callout>
+
+<bp-callout type="ref" label="Scope boundary — not in this package">
+User-behavior pixels, cross-site personal profiles, GEO visibility measurement, ad-bidding, affiliate settlement, the Shopify App, the entertainment matching adapter, and the landing-page diagnosis Skill. Each is a later package; this spec delivers only the engine they consume.
+</bp-callout>
+</section>
+
+<section data-bp-node-id="current-state" id="current-state"><p>This is a greenfield build. Evidence read this session, and what each item decided:</p>
+
+<dl style="display:grid;grid-template-columns:max-content 1fr;gap:0.5rem 1rem;">
+  <dt><strong>Product plan</strong> <code>fl_IWHSU6Zn</code> (Buyer_Intent_Lib_Product_Project_Plan.md, v1.0 2026-10-30)</dt>
+  <dd>Source of truth for scope. §2.1 defines which Solix fields are inherited and which are measurement-derived; §3 M1–M3 define the engine's modules; §4 defines the API table and the canonical Intent JSON example; §9.1 defines acceptance metrics (≥80% human-review usability, ≥95% fact traceability, ≥90% SKU coverage — sampled in pilots, not CI); §10 defines the repo layout, working principles, and the first Autobuild task this spec implements.</dd>
+
+  <dt><strong>Repo</strong> <code>guangl2011/IntentVisible</code> on sandbox <code>cmp_WxWGaFLm</code></dt>
+  <dd>Verified empty: one commit <code>70b432c</code> ("initialize default branch — repository is empty"), zero tracked files, no manifests, no CI config. Nothing to integrate with; monorepo scaffolding is part of this package. <bp-note>The plan asks for a separate private monorepo named <code>buyer-intent-lib</code>. I am assuming this registered repo is the intended home — it is the only repo registered to this project, it is empty, and it was created for this work. Reversal: if you want a separate <code>buyer-intent-lib</code> repo, provision it and this plan moves unchanged (the monorepo structure is self-contained).</bp-note></dd>
+
+  <dt><strong>Reference files</strong> <code>Solix_Buyer_Intent_Library.md</code>, <code>landing_page_ad_diagnosis_skill_standard.md</code></dt>
+  <dd>Cited as inputs by the plan but <em>not uploaded to this project</em>. The schema field list survives via the plan's own §2.1 and the §4.1 example JSON, so the build proceeds; the actual Solix rows are needed to make the golden dataset faithful. Flagged as an open question below, not a blocker.</dd>
+
+  <dt><strong>Skill inventory</strong> — no design system, no existing UI primitives</dt>
+  <dd>Backend-only package; the plan defers the merchant dashboard. No UI research applies to this spec.</dd>
+</dl>
+
+<p>Two plan-level optimizations I'm carrying into the spec (both reversible, both flagged where they appear):</p>
+<ol>
+  <li><strong>Persistence:</strong> the plan names PostgreSQL. For the first package I'm specifying Drizzle ORM against PostgreSQL-compatible SQL with tests runnable on SQLite, so the coder sandbox needs no database service and the swap to hosted Postgres is a connection string. If CI can provision Postgres, drop the SQLite test profile.</li>
+  <li><strong>Incremental refresh:</strong> the plan requires partial regeneration when a PDP changes (§3 M3) but defers the mechanism. This package adds a <code>content_hash</code> per fetched page snapshot now — it's a one-line schema field that later makes "regenerate only what changed" possible without a migration.</li>
+</ol>
+</section>
+
+<section data-bp-node-id="what-we-build" id="what-we-build"><p>Five packages in a TypeScript pnpm monorepo, each independently PR-able, with <code>packages/core-schema</code> frozen first as the contract the rest build against. The plan's §10 principle governs: schemas change only in their own dedicated PR.</p>
+
+<div class="bp-table-wrap"><table>
+  <thead><tr><th scope="col">Package</th><th scope="col">Owns</th><th scope="col">Key inputs → outputs</th></tr></thead>
+  <tbody>
+    <tr><th scope="row"><code>packages/core-schema</code></th><td>Intent Schema v1: JSON Schema files + generated TypeScript types + Zod validation. Brand/Product/LandingPage profile schemas, SKU–Intent mapping schema, versioning rules (SemVer on <code>schema_version</code>).</td><td>Solix field list (plan §2.1) → validated <code>IntentRecord</code>, <code>BrandProfile</code>, <code>ProductProfile</code>, <code>SkuIntentMapping</code></td></tr>
+    <tr><th scope="row"><code>packages/url-extractor</code></th><td>Crawler + structured extraction. robots.txt respect, depth/cost limits, JSON-LD / Schema.org Product parsing, page snapshots to object storage with <code>content_hash</code>.</td><td>Brand domain or PDP URL → <code>BrandProfile</code>, <code>ProductProfile</code>, <code>LandingPageProfile</code>, each with <code>evidence_urls</code> and snapshot references</td></tr>
+    <tr><th scope="row"><code>packages/intent-engine</code></th><td>LLM intent generation + QA: brand-level and product-level intents, semantic dedup to stable <code>intent_id</code>s, versioning, confidence, evidence citation, invariant enforcement (no measured values).</td><td>Profiles + evidence → versioned <code>IntentRecord[]</code> + <code>SkuIntentMapping[]</code></td></tr>
+    <tr><th scope="row"><code>packages/intent-importer</code></th><td>Solix golden dataset: import Solix rows (CSV/JSON) into Intent Schema v1, mapping measurement-derived fields to the standalone-mode nulls. Used by CI as the reference corpus.</td><td>Solix export → schema-valid library + validation report</td></tr>
+    <tr><th scope="row"><code>apps/api</code></th><td>Minimal REST surface with async job queue. No dashboard in this package.</td><td>HTTP + queue → job state, intent reads</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Data contract: the Intent record</h3>
+<p>The canonical record, from the plan's §4.1 example, tightened with the plan's §2.1 field adjustments. The two measurement fields and their companions are the load-bearing part — the schema, the engine, and CI all enforce them.</p>
+
+<bp-source language="json" summary="Intent Schema v1 — normative shape">{
+  "schema_version": "1.0.0",
+  "intent_id": "int_camping_fridge_runtime",
+  "intent_version": 1,
+  "scope": "product",
+  "brand_id": "brand_solix",
+  "intent_name": "Camping Fridge Runtime",
+  "buyer_stage": "Solution Research",
+  "intent_category": "Technical",
+  "persona": "Camper/Overlander",
+  "pain_point": "Need realistic runtime for a camping fridge",
+  "country": "AU",
+  "language": "en",
+  "prompts": ["Which portable power station can run a camping fridge overnight?"],
+  "recommended_content": "Runtime guide with appliance assumptions",
+  "recommended_cta": "Check compatible models",
+  "sku_ids": ["sku_example_01", "sku_example_02"],
+  "evidence_urls": ["https://example.com/products/example"],
+  "generation_method": "llm_with_page_evidence",
+  "generation_model": "…",
+  "measurement_source": null,
+  "measurement_status": "not_measured",
+  "visibility_pct": null,
+  "monthly_search_volume": null,
+  "confidence": "medium"
+}</bp-source>
+
+<ul>
+  <li><code>confidence</code> is an enum (<code>low|medium|high</code>) scoring <em>evidence support</em> for the record — never a conversion prediction.</li>
+  <li><code>measurement_status</code> is enum <code>not_measured|imported|measured</code>; only <code>imported</code>/<code>measured</code> records may carry <code>visibility_pct</code> or <code>monthly_search_volume</code>. A Zod superRefinement enforces the pairing; the generator can only ever construct <code>not_measured</code> records.</li>
+  <li><code>intent_version</code> is an integer bump per regeneration; <code>intent_id</code> survives rewording via semantic dedup, so re-runs update rather than duplicate.</li>
+</ul>
+
+<h3>API surface (this package's subset of plan §4)</h3>
+<div class="bp-table-wrap"><table>
+  <thead><tr><th scope="col">Endpoint</th><th scope="col">Behavior</th></tr></thead>
+  <tbody>
+    <tr><th scope="row"><code>POST /v1/brands/analyze</code></th><td>URL → async brand-modeling job. Returns <code>{ job_id }</code> immediately; errors on unreachable/robots-disallowed domains with a typed reason.</td></tr>
+    <tr><th scope="row"><code>POST /v1/products/analyze</code></th><td>PDP URL or catalog handle → product-modeling job. Accepts an optional <code>brand_id</code> to link.</td></tr>
+    <tr><th scope="row"><code>GET /v1/brands/{id}/intents</code> · <code>GET /v1/products/{id}/intents</code></th><td>Read validated, versioned intents; filter by <code>buyer_stage</code>, <code>intent_category</code>, <code>country</code>, <code>language</code>. Serves <code>null</code> measurement fields as-is.</td></tr>
+    <tr><th scope="row"><code>GET /v1/jobs/{id}</code></th><td>Job state machine: <code>queued → fetching → extracting → generating → validating → complete | failed</code>, with typed error payloads (fetch blocked, extraction empty, LLM validation failed).</td></tr>
+  </tbody>
+</table></div>
+
+<p>The plan's matching, diagnosis, and Visible-import endpoints (<code>/v1/matches/entertainment</code>, <code>/v1/diagnoses/landing-page</code>, <code>/v1/skills/…</code>, <code>/v1/imports/visible</code>) are intentionally absent here — each belongs to its own later package against this same schema.</p>
+
+<bp-callout type="locked" label="Architecture decisions">
+TypeScript ESM monorepo (pnpm), LLM orchestration in TypeScript behind a provider-agnostic adapter interface (no SDK lock-in in engine code), Drizzle ORM with Postgres dialect for production and SQLite for local tests, Fastify for the API, BullMQ-style queue with an in-process fallback for tests, Vitest everywhere. Object storage behind a local-filesystem driver in tests.
+</bp-callout>
+</section>
+
+<section data-bp-node-id="flow" id="flow"><p>The engine's core path, with the two failure branches that matter most: fetch-denied and validation-failed. Every artifact that flows downstream carries the evidence it was derived from, so an intent can always be traced back to the snapshot it came from.</p>
+
+<figure>
+  <svg viewBox="0 0 760 210" role="img" aria-labelledby="flow-title flow-desc" style="font: 13px var(--bp-mono, monospace); width:100%;">
+    <title id="flow-title">Core intent-generation flow</title>
+    <desc id="flow-desc">A URL is fetched and extracted into profiles, LLM generation produces candidate intents, validation and dedup gate them, and the versioned library serves reads. Fetch denial and validation failure exit with typed reasons.</desc>
+    <rect class="svg-fill-100 svg-stroke-700" x="10" y="60" width="118" height="52" rx="4"></rect>
+    <text class="svg-fill-900" x="69" y="83" text-anchor="middle">URL /</text>
+    <text class="svg-fill-900" x="69" y="99" text-anchor="middle">catalog</text>
+    <path class="svg-stroke-700" fill="none" d="M128 86H168"></path>
+    <rect class="svg-fill-100 svg-stroke-700" x="168" y="60" width="128" height="52" rx="4"></rect>
+    <text class="svg-fill-900" x="232" y="83" text-anchor="middle">FETCH +</text>
+    <text class="svg-fill-900" x="232" y="99" text-anchor="middle">SNAPSHOT</text>
+    <path class="svg-stroke-700" fill="none" d="M296 86H336"></path>
+    <rect class="svg-fill-100 svg-stroke-700" x="336" y="60" width="130" height="52" rx="4"></rect>
+    <text class="svg-fill-900" x="401" y="83" text-anchor="middle">EXTRACT →</text>
+    <text class="svg-fill-900" x="401" y="99" text-anchor="middle">PROFILES</text>
+    <path class="svg-stroke-700" fill="none" d="M466 86H506"></path>
+    <rect class="svg-fill-100 svg-stroke-700" x="506" y="60" width="110" height="52" rx="4"></rect>
+    <text class="svg-fill-900" x="561" y="83" text-anchor="middle">LLM</text>
+    <text class="svg-fill-900" x="561" y="99" text-anchor="middle">GENERATE</text>
+    <path class="svg-stroke-700" fill="none" d="M616 86H648"></path>
+    <rect class="svg-fill-100 svg-stroke-700" x="648" y="60" width="102" height="52" rx="4"></rect>
+    <text class="svg-fill-900" x="699" y="83" text-anchor="middle">LIBRARY</text>
+    <text class="svg-fill-900" x="699" y="99" text-anchor="middle">(API)</text>
+    <path class="svg-stroke-700" fill="none" d="M699 112V150H480V138"></path>
+    <rect class="svg-fill-100 svg-stroke-700" x="390" y="150" width="180" height="44" rx="4"></rect>
+    <text class="svg-fill-900" x="480" y="169" text-anchor="middle">VALIDATE + DEDUP</text>
+    <path class="svg-stroke-700" fill="none" d="M480 150V130H561V112" transform="translate(0,-12)"></path>
+  </svg>
+  <figcaption>Validate-and-dedup sits between generation and the library: records without evidence URLs, with fabricated measurement fields, or duplicating an existing intent's semantics never reach storage.</figcaption>
+</figure>
+
+<div class="bp-table-wrap"><table>
+  <thead><tr><th scope="col">Step</th><th scope="col">Behavior</th><th scope="col">On failure</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">Fetch</th><td>Respect robots.txt, cap depth and page count, snapshot every fetched page to storage with <code>content_hash</code> and fetch timestamp.</td><td>Robots-disallowed or unreachable → job <code>failed</code> with typed reason; nothing generated. Never guess past a denial.</td></tr>
+    <tr><th scope="row">Extract</th><td>JSON-LD / Schema.org Product, titles, descriptions, specs, prices, variants, image alt, FAQ, CTA, shipping/returns. Produces profiles with per-field evidence URLs.</td><td>Empty or unparseable extraction → job <code>failed</code>, typed reason <code>extraction_empty</code>; the snapshot is kept for diagnosis.</td></tr>
+    <tr><th scope="row">Generate</th><td>Brand-level intents (category questions, comparisons, scenarios, price, trust) and product-level intents (features, compatibility, purchase conditions, after-sales). Multi-language prompts per market. Evidence-first: the prompt supplies page evidence; the model must cite it.</td><td>LLM unreachable or rate-limited → job retried with backoff; deterministic failure after budget, not silent degradation.</td></tr>
+    <tr><th scope="row">Validate + dedup</th><td>Schema validation, measurement-invariant check (nulls present, no volume/visibility), evidence-URL presence, no unevidenced product claims; semantic clustering assigns or reuses stable <code>intent_id</code>s.</td><td>Invalid record → dropped with a QA log entry, never stored; near-duplicate → merged into the existing <code>intent_id</code> with a version bump.</td></tr>
+    <tr><th scope="row">Read</th><td>Versioned intents served with all fields; measurement fields read as <code>null</code> + <code>not_measured</code>.</td><td>Unknown brand/product id → 404; partially complete brand → available intents served, job state visible.</td></tr>
+  </tbody>
+</table></div>
+
+<bp-note>Incremental refresh arrives later, but the foundation is in this package: re-running analyze on an unchanged PDP (same <code>content_hash</code>) skips regeneration; a changed hash regenerates that page's intents and bumps versions, leaving other pages' intents untouched.</bp-note>
+</section>
+
+<section data-bp-node-id="verification" id="verification"><p>Verification is mostly machine-checkable — that is the point of an evidence-first engine. Plan §9.1's pilot metrics (≥80% human-review usability, ≥90% SKU coverage, 3–5 merchants installed) are <em>not</em> acceptance criteria here: they need real merchants and human panels, which come after this package ships.</p>
+
+<div class="bp-table-wrap"><table>
+  <thead><tr><th scope="col">Acceptance criterion</th><th scope="col">How it is verified</th><th scope="col">What failure looks like</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">Solix golden dataset imports losslessly into Intent Schema v1</th><td>Fixture-based unit test: importer output validates against the published JSON Schema; field-mapping table reviewed against plan §2.1's inherit/adjust lists.</td><td>Any required Solix field silently dropped or mapped into a measurement field.</td></tr>
+    <tr><th scope="row">Standalone-mode invariant holds</th><td>Schema-level test: a record with <code>measurement_status: "not_measured"</code> plus non-null <code>visibility_pct</code> or <code>monthly_search_volume</code> fails validation; the generator has no code path that constructs one.</td><td>Validator accepts a generated record carrying a measured value.</td></tr>
+    <tr><th scope="row">Evidence traceability</th><td>Property test over generated intents: every record has ≥1 <code>evidence_urls</code> entry resolving to a stored snapshot; intents citing missing snapshots are rejected at validation.</td><td>An intent stored without resolvable evidence.</td></tr>
+    <tr><th scope="row">Semantic dedup to stable IDs</th><td>Unit tests with paraphrase pairs (same intent, different wording) → one <code>intent_id</code> with a version bump; distinct intents → distinct IDs. Run against the golden corpus.</td><td>Paraphrases stored as separate billable intents.</td></tr>
+    <tr><th scope="row">URL extractor handles real page structures</th><td>Integration tests against fixture snapshots of a JSON-LD product page, a page with only meta tags, and a robots-restricted domain.</td><td>Extraction crash, hallucinated fields with no source, or fetch past robots denial.</td></tr>
+    <tr><th scope="row">API job lifecycle</th><td>Integration tests: happy path queued→complete; fetch-denied and extraction-empty failure paths return typed reasons; intent reads filter and serve <code>null</code> measurement fields.</td><td>Job hangs without terminal state, or errors surface as untyped 500s.</td></tr>
+    <tr><th scope="row">Code quality gates</th><td>lint, typecheck, unit + integration suites, and schema-validation checks green in CI on every PR; conventional commits; each subtask's PR names the tests it adds.</td><td>Any red check blocks merge.</td></tr>
+  </tbody>
+</table></div>
+
+<bp-callout type="invariant" label="Security and cost guardrails">
+No production credentials in CI or code — the LLM key enters as a runtime secret, never a fixture. Crawler obeys robots.txt and per-domain rate caps by default. Generated content must never assert facts absent from page evidence; the validator drops such records and logs them.
+</bp-callout>
+</section>
+
+<section data-bp-node-id="locked-decisions" id="locked-decisions"><bp-callout type="locked" label="Locked decisions">
+  <ul>
+    <li><strong>Standalone mode is the only generation mode in this package.</strong> Generated records are <code>not_measured</code> with null visibility and volume; enforcement is schema-level, not convention.</li>
+    <li><strong>Repo home:</strong> build in <code>guangl2011/IntentVisible</code>, monorepo rooted at the repo top, per the assumption recorded in Current State.</li>
+    <li><strong>Solix inheritance list is normative</strong> (plan §2.1): the eleven listed fields carry over; measurement-derived fields (<code>visibility_pct</code>, <code>source_models</code>, <code>observed_at</code>, <code>monthly_search_volume</code>, <code>revenue_expansion</code>/<code>market_expansion</code>) do not — they exist only for imported/measured records, and <code>opportunity_type: hypothesis</code> is the standalone-mode substitute.</li>
+    <li><strong>Schemas change only in dedicated PRs</strong> (plan §10 principle 3) — matching and diagnosis packages consume this schema, never edit it incidentally.</li>
+    <li><strong>Architecture stack as specified in What We Build:</strong> TypeScript ESM monorepo, provider-agnostic LLM adapter, Drizzle (Postgres prod / SQLite test), Fastify, queue with in-process test fallback, Vitest.</li>
+    <li><strong>No user-behavior tracking, no pixels, no personal profiles</strong> anywhere in the pipeline — public page content and authorized catalogs only.</li>
+  </ul>
+</bp-callout>
+
+<p>These decisions are excluded from re-litigation during planning and implementation. If the upstream plan changes, they change through a spec revision, not a coder's judgment call.</p>
+</section>
+
+<section data-bp-node-id="open-questions" id="open-questions"><p>Nothing here blocks starting the build; each item names its owner and its reversal condition.</p>
+
+<div class="bp-table-wrap"><table>
+  <thead><tr><th scope="col">Open item</th><th scope="col">Why it matters</th><th scope="col">Owner / next move</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">Upload <code>Solix_Buyer_Intent_Library.md</code> and <code>landing_page_ad_diagnosis_skill_standard.md</code></th><td>The golden dataset should be built from the real Solix rows, not the reconstructed field list; the diagnosis Skill package will need the four-layer standard verbatim.</td><td>You (Richard). Drop them into this project any time before the importer PR; until then the importer tests run on the plan-derived fixture.</td></tr>
+    <tr><th scope="row">LLM provider and API key</th><td>The intent generator needs one. Provider-agnostic adapter means the choice is reversible, but the key must exist before integration tests against a live model run.</td><td>You + me. I'll request the secret (e.g. <code>OPENAI_API_KEY</code> or <code>ANTHROPIC_API_KEY</code>) through the approval card when implementation reaches the engine package; tests otherwise run against recorded fixtures.</td></tr>
+    <tr><th scope="row">Repo home confirmation</th><td>The plan names a separate <code>buyer-intent-lib</code> monorepo; I assumed this registered empty <code>IntentVisible</code> repo instead.</td><td>You, at spec review. Cost of being wrong is low — the monorepo moves as a directory.</td></tr>
+    <tr><th scope="row">Object storage for snapshots</th><td>Plan says object storage for page snapshots; provider unchosen (S3-compatible?).</td><td>Defer — local-driver abstraction in this package makes it a config swap later.</td></tr>
+  </tbody>
+</table></div>
+
+<bp-note>The first two are inputs only you can supply; everything else proceeds. If the spec looks right, approving it moves planning forward with the fixtures-based importer and fixture-only LLM tests until the key arrives.</bp-note>
+</section>
+</main>
+  
+
+</body></html>
