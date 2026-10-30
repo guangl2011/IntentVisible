@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sku-intent-mapping.schema.json",
+  "title": "SkuIntentMapping",
+  "description": "Intent-to-SKU linkage record for Intent Schema v1. Grounded in docs/plan/buyer-intent-lib-product-plan.md section M3: intents map N-to-M onto products/SKUs; match_strength is rule/semantic relevance and never a purchase-probability prediction.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "mapping_id",
+    "intent_id",
+    "sku_id",
+    "match_strength",
+    "eligibility",
+    "landing_url",
+    "evidence_urls"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion",
+      "description": "SemVer of the Intent Schema contract; major version must be 1."
+    },
+    "mapping_id": {
+      "$ref": "#/$defs/MappingId",
+      "description": "Stable identifier for this intent-to-SKU mapping."
+    },
+    "intent_id": {
+      "$ref": "#/$defs/IntentId"
+    },
+    "sku_id": {
+      "$ref": "#/$defs/SkuId"
+    },
+    "product_id": {
+      "$ref": "#/$defs/ProductId",
+      "description": "Owning product when the SKU belongs to a modeled product."
+    },
+    "match_strength": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Rule/semantic relevance between the intent and the SKU (plan M3). Not a purchase probability, expected CTR/CVR, or settlement value."
+    },
+    "eligibility": {
+      "$ref": "#/$defs/EligibilityStatus",
+      "description": "Promotional/affiliate eligibility of the SKU; standalone mode emits 'unverified' until a later integration package confirms it."
+    },
+    "landing_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Landing page URL for this SKU in this mapping.",
+      "pattern": "^https?://"
+    },
+    "evidence_urls": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https?://"
+      },
+      "description": "Page evidence supporting this mapping; every mapping carries at least one URL."
+    }
+  },
+  "$defs": {
+    "SchemaVersion": {
+      "type": "string",
+      "pattern": "^1\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+    },
+    "MappingId": {
+      "type": "string",
+      "pattern": "^map_[a-z0-9_]{1,100}$"
+    },
+    "IntentId": {
+      "type": "string",
+      "pattern": "^int_[a-z0-9_]{1,100}$"
+    },
+    "ProductId": {
+      "type": "string",
+      "pattern": "^product_[a-z0-9_]{1,100}$"
+    },
+    "SkuId": {
+      "type": "string",
+      "pattern": "^sku_[a-z0-9_]{1,100}$"
+    },
+    "EligibilityStatus": {
+      "enum": ["eligible", "ineligible", "unverified"]
+    }
+  }
+}

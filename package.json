@@ -9,6 +9,7 @@
   },
   "scripts": {
     "lint": "eslint .",
+    "generate:check": "pnpm -r generate:check",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test"
   },
