@@ -257,6 +257,13 @@ importers:
         version: 3.2.7(@types/node@20.19.43)(jiti@2.7.0)(supports-color@7.2.0)
 
   packages/intent-engine:
+    dependencies:
+      '@intentvisible/core-schema':
+        specifier: workspace:*
+        version: link:../core-schema
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       vitest:
         specifier: ^3.2.4
