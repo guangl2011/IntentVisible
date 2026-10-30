@@ -14,10 +14,6 @@ describe("slugify", () => {
     expect(slugify("v2-release")).toBe("v2-release");
   });
 
-  it("deliberate failing test (revert me)", () => {
-    expect(slugify("abc")).toBe("wrong");
-  });
-
   it("throws TypeError for non-string input", () => {
     expect(() => slugify(42)).toThrow(TypeError);
     expect(() => slugify(null)).toThrow(TypeError);
