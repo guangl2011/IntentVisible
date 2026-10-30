@@ -1,0 +1,26 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+
+# production
+build/
+dist/
+
+# env
+.env
+.env*.local
+
+# testing
+coverage/
+playwright-report/
+test-results/
+
+# misc
+*.tsbuildinfo
+.DS_Store
+npm-debug.log*
+
+# prisma generated engine binaries are fetched by postinstall; schema and migrations stay tracked

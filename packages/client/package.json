@@ -1,0 +1,14 @@
+{
+  "name": "@intentvisible/client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Typed fetch wrapper for the IntentVisible declaration API (placeholder — real implementation lands in the client subtask).",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}
