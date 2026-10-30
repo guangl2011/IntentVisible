@@ -10,3 +10,4 @@ allowBuilds:
 
 overrides:
   postcss: ^8.5.18
+  deepmerge-ts: ^8.0.0
