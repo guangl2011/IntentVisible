@@ -28,9 +28,41 @@ global store state, no ambient credentials.
 
 ## Admin GraphQL catalog sync
 
-See `src/admin-api.ts` and `src/catalog-sync.ts` (cursor-paginated product
-sync producing core-schema `BrandProfile`/`ProductProfile` records with
-SHA-256 snapshot references for every raw response page).
+`AdminGraphQLClient` posts `{ query, variables }` to
+`https://{shop}/admin/api/{apiVersion}/graphql.json` with the
+`X-Shopify-Access-Token` header, and classifies failures:
+HTTP 401 → `token_expired` (re-authorization required), HTTP 429 →
+`graphql_error` with the Retry-After value when present, GraphQL
+`errors` arrays (returned with HTTP 200 per the GraphQL spec) →
+`graphql_error` with the first message and extension code.
+
+`syncCatalog(client, options)` runs the full pull:
+
+1. `ShopResourceQuery` — shop name, description, currency, myshopify
+   domain, primary domain. The response's `myshopifyDomain` must equal the
+   configured store domain or the sync aborts (`graphql_error`).
+2. `CatalogPageQuery` — cursor-paginated products (`first`/`after`,
+   `sortKey: ID` for deterministic ordering) with variants inline
+   (`first: $variantsFirst`); pages whose variants overflow are completed
+   with `ProductVariantsPage` refetches and merged before mapping.
+3. Every raw response body is kept verbatim as a `CatalogSnapshotPage`
+   with a SHA-256 `content_hash` and a
+   `shopify-catalog://{shopDomain}/{hash}.json` storage reference — the
+   incremental-refresh key core-schema's SnapshotRef defines. The connector
+   returns the pages; the API layer persists them.
+4. Products map to core-schema `ProductProfile` (canonical PDP URL via
+   onlineStoreUrl → preview URL → primary-domain fallback; SKU summaries
+   per variant; product price = cheapest variant) and the shop resource to
+   a `BrandProfile`. Both are validated with their Zod schemas — a record
+   that fails validation throws with the schema issue paths.
+
+Failure policy: store-level breakage (malformed shop resource, broken
+connection shape, transport/auth failures) aborts the sync with a typed
+error; a single unmappable product becomes a `failures` entry (product id
++ reason) while the rest of the catalog proceeds. Soft issues (variant
+with an unparseable price) are recorded the same way. Products with more
+than 500 variants exceed the core-schema SKU cap and surface as failures
+(their raw snapshots remain available for audit).
 
 ## Webhooks
 

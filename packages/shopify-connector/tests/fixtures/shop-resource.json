@@ -1,0 +1,15 @@
+{
+  "data": {
+    "shop": {
+      "name": "Acme Fixtures Outfitters",
+      "description": "Fine camping and overlanding fixtures since 2019",
+      "currencyCode": "USD",
+      "myshopifyDomain": "acme-fixtures.myshopify.com",
+      "url": "https://acme-fixtures.myshopify.com",
+      "primaryDomain": {
+        "host": "www.acme-fixtures-outfitters.com",
+        "url": "https://www.acme-fixtures-outfitters.com"
+      }
+    }
+  }
+}

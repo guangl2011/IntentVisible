@@ -1,0 +1,17 @@
+{
+  "data": {
+    "product": {
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/222000333",
+            "legacyResourceId": "222000333",
+            "title": "Moss",
+            "price": { "amount": "94.99", "currencyCode": "USD" }
+          }
+        ],
+        "pageInfo": { "hasNextPage": false, "endCursor": null }
+      }
+    }
+  }
+}

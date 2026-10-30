@@ -12,3 +12,5 @@ export * from "./scopes.js";
 export * from "./shop-domain.js";
 export * from "./crypto.js";
 export * from "./oauth.js";
+export * from "./admin-api.js";
+export * from "./catalog-sync.js";

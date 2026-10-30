@@ -1,0 +1,68 @@
+{
+  "data": {
+    "products": {
+      "nodes": [
+        {
+          "id": "gid://shopify/Product/98765432100",
+          "legacyResourceId": "98765432100",
+          "title": "Tungsten Weighted Blanket",
+          "handle": "tungsten-weighted-blanket",
+          "description": "A dense tungsten-weighted blanket for campers who sleep cold.",
+          "onlineStoreUrl": "https://www.acme-fixtures-outfitters.com/products/tungsten-weighted-blanket",
+          "onlineStorePreviewUrl": "https://preview.acme-fixtures-outfitters.com/products/tungsten-weighted-blanket",
+          "options": [
+            { "name": "Size" },
+            { "name": "Fill Weight" }
+          ],
+          "variants": {
+            "nodes": [
+              {
+                "id": "gid://shopify/ProductVariant/111000111",
+                "legacyResourceId": "111000111",
+                "title": "Queen / 15 lbs",
+                "price": { "amount": "129.00", "currencyCode": "USD" }
+              },
+              {
+                "id": "gid://shopify/ProductVariant/111000222",
+                "legacyResourceId": "111000222",
+                "title": "Queen / 20 lbs",
+                "price": { "amount": "149.00", "currencyCode": "USD" }
+              }
+            ],
+            "pageInfo": { "hasNextPage": false, "endCursor": null }
+          }
+        },
+        {
+          "id": "gid://shopify/Product/98765432101",
+          "legacyResourceId": "98765432101",
+          "title": "Merino Camp Blanket",
+          "handle": "merino-camp-blanket",
+          "description": "A lightweight merino wool blanket for warm nights.",
+          "onlineStoreUrl": "https://www.acme-fixtures-outfitters.com/products/merino-camp-blanket",
+          "onlineStorePreviewUrl": "https://preview.acme-fixtures-outfitters.com/products/merino-camp-blanket",
+          "options": [
+            { "name": "Color" }
+          ],
+          "variants": {
+            "nodes": [
+              {
+                "id": "gid://shopify/ProductVariant/222000111",
+                "legacyResourceId": "222000111",
+                "title": "Ochre",
+                "price": { "amount": "89.99", "currencyCode": "USD" }
+              },
+              {
+                "id": "gid://shopify/ProductVariant/222000222",
+                "legacyResourceId": "222000222",
+                "title": "Slate",
+                "price": { "amount": "89.99", "currencyCode": "USD" }
+              }
+            ],
+            "pageInfo": { "hasNextPage": true, "endCursor": "cursor-merino-2" }
+          }
+        }
+      ],
+      "pageInfo": { "hasNextPage": true, "endCursor": "cursor-page-1" }
+    }
+  }
+}
