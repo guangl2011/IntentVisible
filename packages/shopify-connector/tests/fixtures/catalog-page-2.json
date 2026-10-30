@@ -1,0 +1,32 @@
+{
+  "data": {
+    "products": {
+      "nodes": [
+        {
+          "id": "gid://shopify/Product/98765432102",
+          "legacyResourceId": "98765432102",
+          "title": "Wool Envelope Sleeping Bag Liner",
+          "handle": "wool-envelope-sleeping-bag-liner",
+          "description": "An envelope-cut wool liner that keeps sleeping bags fresh between washes.",
+          "onlineStoreUrl": null,
+          "onlineStorePreviewUrl": null,
+          "options": [
+            { "name": "Size" }
+          ],
+          "variants": {
+            "nodes": [
+              {
+                "id": "gid://shopify/ProductVariant/333000111",
+                "legacyResourceId": "333000111",
+                "title": "Regular",
+                "price": { "amount": "35.50", "currencyCode": "USD" }
+              }
+            ],
+            "pageInfo": { "hasNextPage": false, "endCursor": null }
+          }
+        }
+      ],
+      "pageInfo": { "hasNextPage": false, "endCursor": null }
+    }
+  }
+}
