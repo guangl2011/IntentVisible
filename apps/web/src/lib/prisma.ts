@@ -1,10 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 
-// Singleton so dev hot-reload doesn't exhaust database connections.
+// Lazy singleton so dev hot-reload doesn't exhaust database connections.
+// Construction must not happen at import time: route modules import this
+// file, and tests import routes in environments without DATABASE_URL.
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+export function getPrisma(): PrismaClient {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = new PrismaClient();
+  }
+  return globalForPrisma.prisma;
 }

@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import { prisma } from "../../../../lib/prisma";
+import { getPrisma } from "../../../../lib/prisma";
 import { expireStaleIntents } from "../../../../lib/sweeper";
 
 /**
@@ -23,6 +23,6 @@ export async function GET(request: Request): Promise<Response> {
   if (!isAuthorizedCronRequest(request, process.env.CRON_SECRET)) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
-  const result = await expireStaleIntents(prisma, new Date());
+  const result = await expireStaleIntents(getPrisma(), new Date());
   return Response.json(result, { status: 200 });
 }
