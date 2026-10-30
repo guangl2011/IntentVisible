@@ -18,6 +18,13 @@ export {
 } from "./adapter.js";
 export { slugify } from "./slug.js";
 export {
+  GEMINI_OPENAI_BASE_URL,
+  LLM_API_KEY_ENV,
+  resolveProviderConfig,
+  type ProviderConfigOutcome,
+  type ResolvedProviderConfig,
+} from "./provider-config.js";
+export {
   BRAND_INTENT_CATEGORIES,
   PRODUCT_INTENT_CATEGORIES,
   buildBrandPrompt,
