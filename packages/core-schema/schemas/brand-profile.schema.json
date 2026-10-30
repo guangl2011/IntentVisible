@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "brand-profile.schema.json",
+  "title": "BrandProfile",
+  "description": "Evidence-cited brand profile produced by URL extraction (plan M1: brand, category, evidence-backed competitors, differentiators, use cases, personas, pain points, purchase barriers, trust evidence). Every substantive claim traces to evidence_urls and fetched page snapshots.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "brand_id",
+    "name",
+    "domain",
+    "categories",
+    "competitor_brands",
+    "differentiators",
+    "use_cases",
+    "personas",
+    "pain_points",
+    "purchase_barriers",
+    "evidence_urls",
+    "snapshot_refs",
+    "generation_method"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion",
+      "description": "SemVer of the Intent Schema contract; major version must be 1."
+    },
+    "brand_id": {
+      "$ref": "#/$defs/BrandId"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300,
+      "description": "Brand name as evidenced on the site."
+    },
+    "domain": {
+      "type": "string",
+      "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$",
+      "description": "Registrable domain the profile was extracted from, e.g. 'example.com'."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "categories": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "description": "Product categories the brand sells in; competitors are listed only with page evidence (plan M1)."
+    },
+    "competitor_brands": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "description": "Competitor brand names only where the site itself evidences them."
+    },
+    "differentiators": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    },
+    "use_cases": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    },
+    "personas": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      }
+    },
+    "pain_points": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    },
+    "purchase_barriers": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    },
+    "trust_evidence": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      },
+      "description": "Trust signals found on the site (certifications, guarantees, review presence). Never invent absence or presence."
+    },
+    "evidence_urls": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https?://"
+      },
+      "description": "Page evidence this profile was derived from; at least one URL."
+    },
+    "snapshot_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 200,
+      "items": {
+        "$ref": "#/$defs/SnapshotRef"
+      },
+      "description": "References to stored page snapshots backing the evidence; every extracted profile has at least one."
+    },
+    "generation_method": {
+      "$ref": "#/$defs/GenerationMethod"
+    },
+    "generation_model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Model identifier and version, when LLM-assisted extraction produced the profile."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the profile was generated."
+    }
+  },
+  "$defs": {
+    "SchemaVersion": {
+      "type": "string",
+      "pattern": "^1\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+    },
+    "BrandId": {
+      "type": "string",
+      "pattern": "^brand_[a-z0-9_]{1,100}$"
+    },
+    "GenerationMethod": {
+      "enum": ["llm_with_page_evidence", "deterministic_extraction", "imported"]
+    },
+    "SnapshotRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "content_hash", "fetched_at", "storage_ref"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https?://"
+        },
+        "content_hash": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Content hash of the fetched page (e.g. sha256 hex) — the incremental-refresh key: unchanged hash means regeneration can be skipped."
+        },
+        "fetched_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "storage_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "Object-storage reference where the snapshot is kept."
+        }
+      }
+    }
+  }
+}
