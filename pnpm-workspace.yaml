@@ -7,3 +7,6 @@ allowBuilds:
   prisma: true
   "@prisma/client": true
   "@prisma/engines": true
+
+overrides:
+  postcss: ^8.5.18
