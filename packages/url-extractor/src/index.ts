@@ -31,4 +31,21 @@ export {
   type PageSnapshot,
   type PipelineFailureReason,
   type StoredSnapshot,
+  type ExtractedPage,
 } from "./types.js";
+export {
+  LandingPageProfileSchema,
+  type Evidenced,
+  type LandingPageProfile,
+} from "./landing-page.js";
+export {
+  extractProfiles,
+  type ExtractionOutcome,
+  type EvidencedValue,
+} from "./extract/profiles.js";
+export {
+  UrlExtractor,
+  type AnalyzeKind,
+  type AnalyzeOutcome,
+  type AnalyzeSuccess,
+} from "./analyze.js";

@@ -41,6 +41,12 @@ export interface PageSnapshot {
 /** Persisted snapshot reference — structurally the core-schema SnapshotRef. */
 export type StoredSnapshot = z.output<typeof SnapshotRefSchema>;
 
+/** A fetched page paired with its persisted snapshot reference. */
+export interface ExtractedPage {
+  snapshot: PageSnapshot;
+  stored: StoredSnapshot;
+}
+
 /** All failures this package's pipeline can produce (fetch + extraction). */
 export const PIPELINE_FAILURE_REASONS = [
   "fetch_robots_disallowed",
