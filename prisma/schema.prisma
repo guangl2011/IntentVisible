@@ -1,0 +1,107 @@
+// This Prisma schema is the source of truth for the IntentVisible data model.
+// Migrations are committed alongside it; never edit generated SQL by hand.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum Verdict {
+  AUTO_APPROVE
+  REQUIRE_APPROVAL
+  DENY
+}
+
+enum IntentStatus {
+  DECLARED
+  PENDING_APPROVAL
+  APPROVED
+  DENIED
+  EXPIRED
+  EXECUTED
+  FAILED
+}
+
+enum Outcome {
+  SUCCEEDED
+  FAILED
+}
+
+enum ActorType {
+  policy
+  human
+  agent
+  system
+}
+
+model Agent {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  keyHash   String   @unique
+  keyPrefix String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  intents     Intent[]
+  policyRules PolicyRule[]
+}
+
+model PolicyRule {
+  id           String    @id @default(cuid())
+  name         String
+  priority     Int
+  agentId      String?
+  actionType   String?
+  maxRiskLevel RiskLevel?
+  verdict      Verdict
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+
+  agent Agent? @relation(fields: [agentId], references: [id])
+}
+
+model Intent {
+  id         String       @id @default(cuid())
+  agentId    String
+  actionType String
+  riskLevel  RiskLevel
+  summary    String
+  payload    Json         @default("{}")
+  status     IntentStatus @default(DECLARED)
+  decidedBy  String?
+  decidedAt  DateTime?
+  expiresAt  DateTime
+  outcome    Outcome?
+  outcomeAt  DateTime?
+  createdAt  DateTime     @default(now())
+
+  agent Agent        @relation(fields: [agentId], references: [id])
+  audits IntentAudit[]
+
+  @@index([status, createdAt])
+}
+
+model IntentAudit {
+  id         String       @id @default(cuid())
+  intentId   String
+  fromStatus IntentStatus
+  toStatus   IntentStatus
+  actor      String
+  actorType  ActorType
+  createdAt  DateTime     @default(now())
+
+  intent Intent @relation(fields: [intentId], references: [id])
+
+  @@index([intentId])
+}
