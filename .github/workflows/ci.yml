@@ -50,6 +50,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma client
+        run: pnpm --filter @intentvisible/web generate
+
       - name: Typecheck
         run: pnpm typecheck
 
@@ -67,6 +70,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @intentvisible/web generate
 
       - name: Test
         run: pnpm test
@@ -103,6 +109,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @intentvisible/web generate
 
       - name: Build all workspaces
         run: pnpm build
