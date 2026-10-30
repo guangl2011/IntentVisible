@@ -18,6 +18,32 @@ export {
   ValidationError,
   type ValidationIssue,
 } from "./errors.js";
+export {
+  createShopifyClient,
+  intentFiltersQuery,
+  SHOPIFY_JOB_FAILURE_REASONS,
+  SHOPIFY_JOB_KINDS,
+  SHOPIFY_JOB_STATUSES,
+  type InstallStart,
+  type IntentLibraryFilters,
+  type IntentList,
+  type JobStart,
+  type MappingList,
+  type MappingListItem,
+  type ProductList,
+  type ProductListItem,
+  type ShopifyClient,
+  type ShopifyClientOptions,
+  type ShopifyJob,
+  type ShopifyJobError,
+  type ShopifyJobFailureReason,
+  type ShopifyJobKind,
+  type ShopifyJobResult,
+  type ShopifyJobStatus,
+  type ShopifyJobStatusChange,
+  type StoreJobSummary,
+  type StoreStatus,
+} from "./shopify.js";
 export type { FetchLike } from "./transport.js";
 export {
   DECISION_VERDICTS,

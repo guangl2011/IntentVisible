@@ -59,7 +59,7 @@ export interface DashboardClient {
 }
 
 /** Normalize a base URL so callers can pass values with or without a trailing slash. */
-function joinUrl(baseUrl: string, path: string): string {
+export function joinUrl(baseUrl: string, path: string): string {
   return `${baseUrl.replace(/\/+$/, "")}${path}`;
 }
 

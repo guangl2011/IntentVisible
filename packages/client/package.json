@@ -10,6 +10,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@intentvisible/core-schema": "workspace:*"
+  },
   "devDependencies": {
     "vitest": "^3.2.4"
   }
