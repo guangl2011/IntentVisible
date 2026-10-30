@@ -156,3 +156,56 @@ jobs:
 
       - name: DB-backed tests
         run: pnpm --filter @intentvisible/web test
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: intentvisible
+          POSTGRES_PASSWORD: intentvisible
+          POSTGRES_DB: intentvisible_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://intentvisible:intentvisible@localhost:5432/intentvisible_test
+      DASHBOARD_PASSCODE: ci-e2e-passcode
+      CRON_SECRET: ci-e2e-cron-secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @intentvisible/web generate
+
+      - name: Apply migrations
+        run: pnpm --filter @intentvisible/web exec prisma migrate deploy
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter @intentvisible/web exec playwright install --with-deps chromium
+
+      - name: E2E journey
+        run: pnpm --filter @intentvisible/web e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
