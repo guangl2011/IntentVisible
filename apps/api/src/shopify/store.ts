@@ -129,6 +129,8 @@ export interface ShopifyStore {
   getJob(jobId: string): Promise<ShopifyJobRecord | null>;
   /** Upserts a job record — the state machine's write path. */
   saveJob(job: ShopifyJobRecord): Promise<void>;
+  /** The merchant's most recent job of one kind (overview's last-sync view). */
+  latestJobByKind(merchantId: string, kind: ShopifyJobKind): Promise<ShopifyJobRecord | null>;
   /** Records a delivery id; false means a replay was already processed. */
   recordWebhookDelivery(delivery: {
     webhookId: string;
@@ -274,6 +276,16 @@ export class DrizzleShopifyStore implements ShopifyStore {
           updatedAt: row.updatedAt,
         },
       });
+  }
+
+  async latestJobByKind(merchantId: string, kind: ShopifyJobKind): Promise<ShopifyJobRecord | null> {
+    const rows = await this.db
+      .select()
+      .from(shopifyJobs)
+      .where(and(eq(shopifyJobs.storeId, merchantId), eq(shopifyJobs.kind, kind)))
+      .orderBy(desc(shopifyJobs.updatedAt))
+      .limit(1);
+    return rows[0] !== undefined ? jobFromRow(rows[0]) : null;
   }
 
   async recordWebhookDelivery(delivery: {
