@@ -22,8 +22,11 @@
  * call, no nondeterminism. Deeper paraphrase detection (embedding
  * similarity) is a later provider-adapter concern, not hidden here.
  *
- * Reused ids get version = matched version + 1 (the reworded record becomes
- * the new current version). First occurrences mint fresh name-derived ids
+ * Reused ids keep the matched version when the content is unchanged and get
+ * version = matched version + 1 when the content changed (the reworded
+ * record becomes the new current version). Content comparison needs a
+ * content key on the summary (summaryOf supplies it); summaries without one
+ * always bump. First occurrences mint fresh name-derived ids
  * (the plan's `int_camping_fridge_runtime` example), suffixed on collision.
  * Ids are unique per record: two same-topic drafts in one run share the id
  * with sequential versions (1, 2, …), and a persistence layer keeps the
@@ -49,6 +52,14 @@ export interface ExistingIntentSummary {
   topic?: string;
   intent_name: string;
   intent_version: number;
+  /**
+   * Canonical content digest of the stored record, computed by summaryOf.
+   * With it, dedup keeps the stored version for an unchanged derivation and
+   * bumps only on a content change (spec verification row: version bumps on
+   * the changed intent only). Summaries without a content key — legacy
+   * callers that hand-build the object — always bump, the rewording regime.
+   */
+  content_key?: string;
 }
 
 export interface IntentAssignment {
@@ -79,7 +90,42 @@ export function summaryOf(record: IntentRecord): ExistingIntentSummary {
     topic: undefined,
     intent_name: record.intent_name,
     intent_version: record.intent_version,
+    content_key: contentKeyOf(record),
   };
+}
+
+/**
+ * Canonical digest of the fields a regeneration can change, as a JSON array
+ * in fixed order. Identity (scope, brand, market) and run bookkeeping
+ * (generated_at) are excluded — equal keys mean "same intent, same content",
+ * which is exactly what the change-only version bump turns on.
+ */
+function contentKeyOf(fields: {
+  intent_name: string;
+  buyer_stage: string;
+  intent_category: string;
+  persona?: string;
+  pain_point?: string;
+  prompts: readonly string[];
+  recommended_content?: string;
+  recommended_cta?: string;
+  sku_ids: readonly string[];
+  evidence_urls: readonly string[];
+  confidence?: string;
+}): string {
+  return JSON.stringify([
+    fields.intent_name,
+    fields.buyer_stage,
+    fields.intent_category,
+    fields.persona ?? null,
+    fields.pain_point ?? null,
+    fields.prompts,
+    fields.recommended_content ?? null,
+    fields.recommended_cta ?? null,
+    fields.sku_ids,
+    fields.evidence_urls,
+    fields.confidence,
+  ]);
 }
 
 /** Lowercase word tokens, deduplicated — the Jaccard material. */
@@ -115,6 +161,8 @@ interface PartitionMember {
   /** Name key always present — stored records have no topic, so name keys
    * are the only family a regeneration can match them on. */
   nameKey: string;
+  /** Content digest when known — drives the change-only version bump. */
+  contentKey?: string;
   intentName: string;
   intentCategory: IntentCategory;
   intent_id: string;
@@ -170,6 +218,7 @@ export function dedupDrafts(
     members.push({
       topicKey: topicKeyOf(summary.intent_category, summary.topic),
       nameKey: nameKeyOf(summary.intent_category, summary.intent_name),
+      contentKey: summary.content_key,
       intentName: summary.intent_name,
       intentCategory: summary.intent_category,
       intent_id: summary.intent_id,
@@ -194,6 +243,7 @@ export function dedupDrafts(
     const members = partitions.get(key) ?? [];
     const draftTopicKey = topicKeyOf(draft.intent_category, draft.topic);
     const draftNameKey = nameKeyOf(draft.intent_category, draft.intent_name);
+    const draftContentKey = contentKeyOf(draft);
 
     // 1. Exact semantic key match — same category and topic OR name material.
     const exact = members.find(
@@ -215,7 +265,14 @@ export function dedupDrafts(
     const reused = fuzzy !== undefined;
     if (fuzzy !== undefined) {
       intentId = fuzzy.intent_id;
-      version = (assignedVersions.get(intentId) ?? fuzzy.intent_version) + 1;
+      const currentVersion = assignedVersions.get(intentId) ?? fuzzy.intent_version;
+      // Change-only versioning: a content-identical regeneration keeps the
+      // stored version; only a content change bumps. Members without a
+      // content key (legacy summaries) always bump.
+      version =
+        fuzzy.contentKey !== undefined && fuzzy.contentKey === draftContentKey
+          ? currentVersion
+          : currentVersion + 1;
       reusedCount += 1;
     } else {
       // Fresh ids stay name-derived (the plan's `int_camping_fridge_runtime`
@@ -235,6 +292,7 @@ export function dedupDrafts(
     members.push({
       topicKey: draftTopicKey,
       nameKey: draftNameKey,
+      contentKey: draftContentKey,
       intentName: draft.intent_name,
       intentCategory: draft.intent_category,
       intent_id: intentId,

@@ -9,6 +9,8 @@ describe("intent-engine", () => {
 
   it("exposes the generation surface", () => {
     expect(typeof pkg.IntentGenerator).toBe("function");
+    expect(typeof pkg.DeterministicIntentGenerator).toBe("function");
+    expect(pkg.DETERMINISTIC_GENERATION_METHOD).toBe("deterministic_extraction");
     expect(typeof pkg.FetchChatAdapter).toBe("function");
     expect(typeof pkg.buildBrandPrompt).toBe("function");
     expect(typeof pkg.buildProductPrompt).toBe("function");

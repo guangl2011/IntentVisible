@@ -17,8 +17,10 @@ import {
   LanguageCodeSchema,
   SCHEMA_VERSION,
   type BrandProfile,
+  type GenerationMethod,
   type IntentRecord,
   type ProductProfile,
+  type SkuIntentMapping,
   type SnapshotRefSchema,
 } from "@intentvisible/core-schema";
 
@@ -70,12 +72,23 @@ export interface GenerationRun {
   max_candidates_per_market?: number;
 }
 
+/**
+ * The generation seam (spec D3): both realizations — the evidence-first LLM
+ * generator below and the deterministic extractor — implement this
+ * interface, so callers swap them without touching the pipeline shape.
+ */
+export interface IntentGeneratorSeam {
+  generateBrandIntents(brand: BrandProfile, run: GenerationRun): Promise<GenerationOutcome>;
+  generateProductIntents(product: ProductProfile, run: GenerationRun): Promise<GenerationOutcome>;
+}
+
 export interface GenerationReport {
   /** Candidate count parsed from the LLM across all markets, pre-cap. */
   candidates: number;
   /** Records that survived validation and the final schema gate. */
   kept: number;
-  /** Records reusing an existing library intent_id (version bump). */
+  /** Records reusing an existing library intent_id (unchanged content keeps
+   * the stored version; changed content bumps it). */
   reused: number;
   /** Records that minted a fresh intent_id. */
   fresh: number;
@@ -84,7 +97,13 @@ export interface GenerationReport {
 }
 
 export type GenerationOutcome =
-  | { ok: true; records: IntentRecord[]; report: GenerationReport }
+  | {
+      ok: true;
+      records: IntentRecord[];
+      /** SKU mappings derived alongside the records (empty on the LLM path). */
+      mappings: SkuIntentMapping[];
+      report: GenerationReport;
+    }
   | { ok: false; reason: GenerationFailureReason; detail: string };
 
 export interface GeneratorDeps {
@@ -126,6 +145,8 @@ function validateMarket(raw: MarketTarget): MarketTarget {
   }
   return parsed.data;
 }
+
+export { validateMarket };
 
 function marketTag(market: MarketTarget): string {
   return `${market.country}/${market.language}`;
@@ -192,13 +213,16 @@ async function completeAndParseWithRetry(
 /**
  * The ONE place a generated IntentRecord is constructed. Measurement fields
  * are hard-set to the standalone-mode nulls — there is no parameter that
- * could carry a measured value in, so the generator cannot emit one. The
+ * could carry a measured value in, so no generator can emit one. The
+ * generation_method is an explicit build input: every construction site
+ * declares its provenance (LLM path vs deterministic extraction), and a
+ * model identifier is recorded only when a model actually ran. The
  * core-schema validator re-enforces the invariant as the final gate.
  */
 export function buildStandaloneRecord(
   draft: ValidatedDraft,
   identity: { intent_id: string; intent_version: number },
-  build: { generation_model: string; generated_at: string },
+  build: { generation_method: GenerationMethod; generation_model?: string; generated_at: string },
 ): IntentRecord {
   const record = {
     schema_version: SCHEMA_VERSION,
@@ -220,8 +244,8 @@ export function buildStandaloneRecord(
     ...(draft.recommended_cta !== undefined ? { recommended_cta: draft.recommended_cta } : {}),
     sku_ids: [...draft.sku_ids],
     evidence_urls: [...draft.evidence_urls],
-    generation_method: "llm_with_page_evidence",
-    generation_model: build.generation_model,
+    generation_method: build.generation_method,
+    ...(build.generation_model !== undefined ? { generation_model: build.generation_model } : {}),
     // Standalone-mode boundary invariant (spec): the nulls, always.
     measurement_status: "not_measured",
     measurement_source: null,
@@ -235,7 +259,7 @@ export function buildStandaloneRecord(
   return parsed;
 }
 
-export class IntentGenerator {
+export class IntentGenerator implements IntentGeneratorSeam {
   constructor(private readonly deps: GeneratorDeps) {}
 
   /** Brand-level intent generation (category questions, comparisons, scenarios, price, trust). */
@@ -345,7 +369,7 @@ export class IntentGenerator {
       buildStandaloneRecord(
         assignment.draft,
         { intent_id: assignment.intent_id, intent_version: assignment.intent_version },
-        { generation_model: assignment.draft.generation_model, generated_at: generatedAt },
+        { generation_method: "llm_with_page_evidence", generation_model: assignment.draft.generation_model, generated_at: generatedAt },
       ),
     );
 
@@ -364,6 +388,9 @@ export class IntentGenerator {
     return {
       ok: true,
       records,
+      // The LLM path derives no SKU mappings yet — that linkage is the
+      // deterministic extractor's product-scope output for now.
+      mappings: [],
       report: { candidates: candidateCount, kept: records.length, reused: dedup.reused, fresh: dedup.fresh, dropped },
     };
   }

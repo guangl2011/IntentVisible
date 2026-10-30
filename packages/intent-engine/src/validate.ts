@@ -23,8 +23,11 @@ export interface ValidationContext {
   allowed_evidence_urls: readonly string[];
   /** The only SKU ids a candidate may reference (empty for brand scope). */
   allowed_sku_ids: readonly string[];
-  /** Model identifier recorded on records built from accepted drafts. */
-  generation_model: string;
+  /**
+   * Model identifier recorded on records built from accepted drafts.
+   * Undefined for the deterministic extractor — extraction has no model.
+   */
+  generation_model?: string;
 }
 
 /**
@@ -49,7 +52,12 @@ export interface ValidatedDraft {
   sku_ids: string[];
   evidence_urls: string[];
   confidence: CandidateIntent["confidence"];
-  generation_model: string;
+  /**
+   * Model identifier, when a model produced the draft. Undefined for
+   * deterministic extraction drafts — records built from them omit the
+   * field entirely rather than claim a model that never ran.
+   */
+  generation_model?: string;
 }
 
 export type ValidationOutcome =

@@ -1,6 +1,8 @@
 /**
- * LLM intent generation + QA: evidence-first generation, semantic dedup,
- * versioning, and standalone-mode invariant enforcement (spec art_KGYzMB5Z).
+ * LLM + deterministic intent generation and QA: evidence-first generation,
+ * catalog-driven deterministic extraction, semantic dedup, versioning, and
+ * standalone-mode invariant enforcement (spec art_KGYzMB5Z; D3 seam in
+ * art_Aj4HcWgx).
  */
 
 export { ENGINE_PACKAGE_NAME } from "./package-name.js";
@@ -68,6 +70,7 @@ export {
   GENERATION_FAILURE_REASONS,
   IntentGenerator,
   buildStandaloneRecord,
+  validateMarket,
   type GenerationFailureReason,
   type GenerationOutcome,
   type GenerationReport,
@@ -76,3 +79,9 @@ export {
   type RetryOptions,
   type SnapshotRef,
 } from "./generate.js";
+export type { IntentGeneratorSeam } from "./generate.js";
+export {
+  DETERMINISTIC_GENERATION_METHOD,
+  DeterministicIntentGenerator,
+  type DeterministicGeneratorDeps,
+} from "./deterministic.js";
