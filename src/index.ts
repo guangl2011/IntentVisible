@@ -26,3 +26,6 @@ export function slugify(input: unknown): string {
 
   return slug;
 }
+
+// deliberate lint error (revert me)
+const unusedVariable = 123;
