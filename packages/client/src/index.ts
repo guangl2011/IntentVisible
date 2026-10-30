@@ -6,6 +6,20 @@ export {
   type DashboardClient,
   type DashboardClientOptions,
 } from "./client.js";
+// Contract payload types, re-exported so consumers (the merchant dashboard
+// pages) need only this package to speak the whole wire contract.
+export {
+  IntentRecordSchema,
+  SkuIntentMappingSchema,
+  type IntentRecord,
+  type SkuIntentMapping,
+} from "@intentvisible/core-schema";
+export type {
+  BuyerStage,
+  IntentCategory,
+  ProductProfile,
+  Scope,
+} from "@intentvisible/core-schema";
 export {
   ConflictError,
   NetworkError,
