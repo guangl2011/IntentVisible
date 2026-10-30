@@ -47,6 +47,15 @@ export {
   type ValidationSummary,
 } from "./validate.js";
 export {
+  dedupDrafts,
+  freshIntentId,
+  summaryOf,
+  tokenOverlap,
+  type DedupReport,
+  type ExistingIntentSummary,
+  type IntentAssignment,
+} from "./dedup.js";
+export {
   DEFAULT_MAX_CANDIDATES_PER_MARKET,
   DEFAULT_RETRY_OPTIONS,
   GENERATION_FAILURE_REASONS,

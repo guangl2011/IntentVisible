@@ -24,10 +24,10 @@ import {
 
 import { LlmError, type LlmAdapter, type LlmRequest } from "./adapter.js";
 import type { Clock } from "./clock.js";
+import { dedupDrafts, type ExistingIntentSummary } from "./dedup.js";
 import type { DropEvent } from "./drops.js";
 import { CandidateParseError, parseCandidates, type ParsedCandidates } from "./parse.js";
 import { buildBrandPrompt, buildProductPrompt, type MarketTarget } from "./prompt.js";
-import { slugify } from "./slug.js";
 import { validateCandidates, type ValidatedDraft } from "./validate.js";
 
 /** Reference to a stored page snapshot — structurally the core-schema SnapshotRef. */
@@ -60,6 +60,11 @@ export interface GenerationRun {
   markets: readonly MarketTarget[];
   /** Stored snapshots backing this run — the only citable evidence. */
   snapshots: readonly SnapshotRef[];
+  /**
+   * The library view this run dedups against (spec: re-runs update rather
+   * than duplicate). Omit for a first generation.
+   */
+  existing?: readonly ExistingIntentSummary[];
   retry?: Partial<RetryOptions>;
   /** Cost cap: candidates kept per market, sliced in model order. */
   max_candidates_per_market?: number;
@@ -70,6 +75,8 @@ export interface GenerationReport {
   candidates: number;
   /** Records that survived validation and the final schema gate. */
   kept: number;
+  /** Records reusing an existing library intent_id (version bump). */
+  reused: number;
   /** Every dropped candidate, logged with reason — never stored. */
   dropped: Array<DropEvent & { market: string }>;
 }
@@ -180,22 +187,6 @@ async function completeAndParseWithRetry(
   );
 }
 
-/** Fresh stable id for a first-generation intent, collision-guarded. */
-function freshIntentId(intentName: string, usedIds: ReadonlySet<string>): string {
-  const base = slugify(intentName) || "unnamed";
-  const candidate = `int_${base}`;
-  if (!usedIds.has(candidate)) {
-    return candidate;
-  }
-  for (let n = 2; n < 100; n++) {
-    const suffixed = `int_${base.slice(0, 100 - String(n).length - 1)}_${n}`;
-    if (!usedIds.has(suffixed)) {
-      return suffixed;
-    }
-  }
-  throw new Error(`could not derive a unique intent_id for "${intentName}"`);
-}
-
 /**
  * The ONE place a generated IntentRecord is constructed. Measurement fields
  * are hard-set to the standalone-mode nulls — there is no parameter that
@@ -240,11 +231,6 @@ export function buildStandaloneRecord(
   } as const;
   const parsed = IntentRecordSchema.parse(record);
   return parsed;
-}
-
-interface DraftWithIdentity extends ValidatedDraft {
-  intent_id: string;
-  intent_version: number;
 }
 
 export class IntentGenerator {
@@ -325,8 +311,7 @@ export class IntentGenerator {
 
     // Validate per market (identity injected from the pipeline, not the model).
     const dropped: Array<DropEvent & { market: string }> = [];
-    const drafts: DraftWithIdentity[] = [];
-    const usedIds = new Set<string>();
+    const acceptedDrafts: ValidatedDraft[] = [];
     let candidateCount = 0;
     for (const { market, outcome } of parsedByMarket) {
       candidateCount += outcome.parsed.candidates.length;
@@ -345,23 +330,22 @@ export class IntentGenerator {
       for (const event of summary.dropped) {
         dropped.push({ ...event, market: marketTag(market) });
       }
-      for (const draft of summary.accepted) {
-        const intentId = freshIntentId(draft.intent_name, usedIds);
-        usedIds.add(intentId);
-        drafts.push({ ...draft, intent_id: intentId, intent_version: 1 });
-      }
+      acceptedDrafts.push(...summary.accepted);
     }
 
+    // Semantic dedup against the library view: paraphrases reuse the
+    // existing intent_id with a version bump instead of being stored as
+    // separate billable intents (spec Validate + dedup row).
+    const dedup = dedupDrafts(acceptedDrafts, run.existing ?? []);
+
     const generatedAt = this.deps.clock.isoNow();
-    const records: IntentRecord[] = [];
-    for (const draft of drafts) {
-      const record = buildStandaloneRecord(
-        draft,
-        { intent_id: draft.intent_id, intent_version: draft.intent_version },
-        { generation_model: draft.generation_model, generated_at: generatedAt },
-      );
-      records.push(record);
-    }
+    const records: IntentRecord[] = dedup.assigned.map((assignment) =>
+      buildStandaloneRecord(
+        assignment.draft,
+        { intent_id: assignment.intent_id, intent_version: assignment.intent_version },
+        { generation_model: assignment.draft.generation_model, generated_at: generatedAt },
+      ),
+    );
 
     for (const event of dropped) {
       this.deps.log?.(`dropped candidate ${event.intent_name ?? "<unnamed>"} [${event.market}] ${event.reason}: ${event.detail}`);
@@ -378,7 +362,7 @@ export class IntentGenerator {
     return {
       ok: true,
       records,
-      report: { candidates: candidateCount, kept: records.length, dropped },
+      report: { candidates: candidateCount, kept: records.length, reused: dedup.reused, dropped },
     };
   }
 }

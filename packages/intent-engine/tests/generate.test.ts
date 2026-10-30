@@ -365,3 +365,62 @@ describe("buildStandaloneRecord", () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe("IntentGenerator — semantic dedup", () => {
+  it("reuses an existing library intent_id with a version bump on rewording", async () => {
+    const generator = generatorWith([candidatesJson([baseCandidate()])]);
+    const existing = [
+      {
+        intent_id: "int_camping_fridge_runtime",
+        scope: "brand" as const,
+        brand_id: BRAND.brand_id,
+        country: "AU",
+        language: "en",
+        intent_category: "Technical" as const,
+        topic: "camping_fridge_runtime",
+        intent_name: "Camping Fridge Runtime",
+        intent_version: 3,
+      },
+    ];
+
+    const outcome = await generator.generateBrandIntents(BRAND, run({ existing }));
+    expect(outcome.ok).toBe(true);
+    if (!outcome.ok) return;
+    expect(outcome.records[0]?.intent_id).toBe("int_camping_fridge_runtime");
+    expect(outcome.records[0]?.intent_version).toBe(4);
+    expect(outcome.report.reused).toBe(1);
+  });
+
+  it("mints fresh ids when the library has no semantic match", async () => {
+    const generator = generatorWith([candidatesJson([baseCandidate()])]);
+    const outcome = await generator.generateBrandIntents(BRAND, run({ existing: [] }));
+    expect(outcome.ok).toBe(true);
+    if (!outcome.ok) return;
+    expect(outcome.records[0]?.intent_id).toBe("int_camping_fridge_runtime");
+    expect(outcome.records[0]?.intent_version).toBe(1);
+    expect(outcome.report.reused).toBe(0);
+  });
+
+  it("does not merge the same topic across different markets", async () => {
+    const generator = generatorWith([
+      candidatesJson([baseCandidate()]),
+      candidatesJson([
+        baseCandidate({
+          intent_name: "Kühlschrank Laufzeit",
+          prompts: ["Wie lange läuft ein Kühlschrank beim Campen?"],
+        }),
+      ]),
+    ]);
+    const outcome = await generator.generateBrandIntents(
+      BRAND,
+      run({ markets: [AU_MARKET, { ...AU_MARKET, country: "DE", language: "de" }] }),
+    );
+    expect(outcome.ok).toBe(true);
+    if (!outcome.ok) return;
+    const ids = outcome.records.map((record) => record.intent_id);
+    expect(new Set(ids).size).toBe(2);
+    // Same topic, different markets → distinct intents with their own ids.
+    expect(ids).toContain("int_camping_fridge_runtime");
+    expect(ids).toContain("int_ku_hlschrank_laufzeit");
+  });
+});
