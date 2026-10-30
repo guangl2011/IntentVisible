@@ -69,7 +69,14 @@ export const IsoDateTimeSchema = z.iso.datetime({ offset: true });
 // to keep the Zod contract as strict as the intent of evidence_urls.
 export const UrlSchema = z.url().refine(
   (raw) => {
-    const protocol = new URL(raw).protocol;
+    // new URL() throws on inputs z.url() may still admit (defense against
+    // parser divergence); a throw is a failed validation, not a crash.
+    let protocol: string;
+    try {
+      protocol = new URL(raw).protocol;
+    } catch {
+      return false;
+    }
     return protocol === "http:" || protocol === "https:";
   },
   { message: "URL must use the http or https scheme" },
