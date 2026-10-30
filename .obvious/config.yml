@@ -1,0 +1,6 @@
+# Autobuild repository policy
+branches:
+  default: main
+merge:
+  method: squash
+  requireHumanMerge: true
