@@ -74,10 +74,26 @@ describe.skipIf(!process.env.DATABASE_URL)("expiry sweeper", () => {
   });
 
   it("is a no-op on a second run", async () => {
-    const auditsBefore = await prisma.intentAudit.count();
+    // Count only audits for this suite's seeded intents: other test files
+    // write to the same shared CI database in parallel, so a global count
+    // is not a stable baseline.
+    const probeIds = [
+      pendingExpired.id,
+      approvedExpired.id,
+      pendingFresh.id,
+      deniedExpired.id,
+      declaredExpired.id,
+    ];
+    const auditsBefore = await prisma.intentAudit.count({
+      where: { intentId: { in: probeIds } },
+    });
     const result = await expireStaleIntents(prisma, now);
     expect(result.expired).toBe(0);
-    expect(await prisma.intentAudit.count()).toBe(auditsBefore);
+    expect(
+      await prisma.intentAudit.count({
+        where: { intentId: { in: probeIds } },
+      }),
+    ).toBe(auditsBefore);
   });
 
   afterAll(async () => {
