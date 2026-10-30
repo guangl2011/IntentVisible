@@ -7,7 +7,12 @@
  */
 
 import { z } from "zod";
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type {
+  FastifyError,
+  FastifyInstance,
+  FastifyReply,
+  FastifyRequest,
+} from "fastify";
 import fastify from "fastify";
 
 import {
@@ -22,11 +27,19 @@ import {
 import type { IntentFilters, JobStore, LibraryStore } from "./store.js";
 import type { AnalyzePipeline } from "./pipeline.js";
 import type { JobFailureReason } from "./types.js";
+import { registerRawBodyParser } from "./raw-body.js";
+import type { ShopifyStore } from "./shopify/store.js";
 
 export interface ApiDeps {
   pipeline: AnalyzePipeline;
   jobStore: JobStore;
   libraryStore: LibraryStore;
+  /**
+   * When the Shopify surfaces are composed into the same app, the shared
+   * /v1/jobs/:job_id route falls back to the merchant store when the
+   * analyze store has no such job.
+   */
+  shopifyStore?: ShopifyStore;
 }
 
 const MarketsSchema = z
@@ -82,13 +95,26 @@ function parseBody<T>(schema: z.ZodType<T>, body: unknown): ParsedBody<T> {
 export function buildApp(deps: ApiDeps): FastifyInstance {
   const app = fastify();
 
+  // Raw-byte-preserving JSON parsing: the webhook route verifies HMACs
+  // over the exact bytes received; analyze routes see the same parsed
+  // objects as before.
+  registerRawBodyParser(app);
+
   app.setNotFoundHandler((_request, reply) => {
     return fail(reply, 404, "not_found", "unknown route");
   });
 
   // Last resort: an escaped error must still be typed, never a raw 500.
-  app.setErrorHandler((error, _request, reply) => {
-    return fail(reply, 500, "internal_error", error instanceof Error ? error.message : String(error));
+  // Parser errors arrive with a statusCode (400 for malformed JSON) —
+  // client mistakes are invalid_request, everything else internal_error.
+  app.setErrorHandler((error: FastifyError, _request, reply) => {
+    const status = typeof error.statusCode === "number" ? error.statusCode : 500;
+    return fail(
+      reply,
+      status,
+      status < 500 ? "invalid_request" : "internal_error",
+      error instanceof Error ? error.message : String(error),
+    );
   });
 
   app.post("/v1/brands/analyze", async (request, reply) => {
@@ -111,7 +137,9 @@ export function buildApp(deps: ApiDeps): FastifyInstance {
 
   app.get("/v1/jobs/:job_id", async (request, reply) => {
     const jobId = param(request, "job_id");
-    const job = await deps.jobStore.getJob(jobId);
+    // The shared job route: the analyze store first, then the composed
+    // Shopify store (sync/generation jobs live there).
+    const job = (await deps.jobStore.getJob(jobId)) ?? (await deps.shopifyStore?.getJob(jobId));
     if (!job) {
       return sendError(reply, failBody("not_found", `unknown job id ${jobId}`), 404);
     }
