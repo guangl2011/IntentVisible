@@ -338,7 +338,11 @@ describe("buildStandaloneRecord", () => {
     const record = buildStandaloneRecord(
       draftFrom(baseCandidate()),
       { intent_id: "int_camping_fridge_runtime", intent_version: 1 },
-      { generation_model: "fixture-model", generated_at: "2026-10-30T12:00:00.000Z" },
+      {
+        generation_method: "llm_with_page_evidence",
+        generation_model: "fixture-model",
+        generated_at: "2026-10-30T12:00:00.000Z",
+      },
     );
     expect(record).toMatchObject({
       intent_id: "int_camping_fridge_runtime",
@@ -358,7 +362,11 @@ describe("buildStandaloneRecord", () => {
     const record = buildStandaloneRecord(
       draftFrom(baseCandidate()),
       { intent_id: "int_guard_check", intent_version: 1 },
-      { generation_model: "fixture-model", generated_at: "2026-10-30T12:00:00.000Z" },
+      {
+        generation_method: "llm_with_page_evidence",
+        generation_model: "fixture-model",
+        generated_at: "2026-10-30T12:00:00.000Z",
+      },
     );
     const corrupted = { ...record, visibility_pct: 42 };
     const result = IntentRecordSchema.safeParse(corrupted);
