@@ -49,20 +49,34 @@ export function readSessionCookie(
 }
 
 /**
- * Timing-safe session-token check. Length is compared before timingSafeEqual
- * because the latter throws on mismatched lengths; the token format (sha256
- * hex) is public knowledge, so an early length miss leaks nothing.
+ * Timing-safe string compare for secret-derived tokens. Length is compared
+ * before timingSafeEqual because the latter throws on mismatched lengths; the
+ * token format (sha256 hex) is public knowledge, so an early length miss
+ * leaks nothing.
+ */
+export function timingSafeSessionCompare(
+  provided: string | null | undefined,
+  expected: string | undefined,
+): boolean {
+  if (!expected || !provided) return false;
+  const given = Buffer.from(provided, "utf8");
+  const expectedBuf = Buffer.from(expected, "utf8");
+  return (
+    given.length === expectedBuf.length && timingSafeEqual(given, expectedBuf)
+  );
+}
+
+/**
+ * Timing-safe session-token check.
  */
 export function isAuthorizedDashboardRequest(
   request: Request,
   expectedToken: string | undefined,
 ): boolean {
-  if (!expectedToken) return false;
-  const provided = readSessionCookie(request, DASHBOARD_SESSION_COOKIE);
-  if (!provided) return false;
-  const given = Buffer.from(provided, "utf8");
-  const expected = Buffer.from(expectedToken, "utf8");
-  return given.length === expected.length && timingSafeEqual(given, expected);
+  return timingSafeSessionCompare(
+    readSessionCookie(request, DASHBOARD_SESSION_COOKIE),
+    expectedToken,
+  );
 }
 
 /** Audit actor for a human decision: the spec's `<kind>:<identity>` pattern. */
