@@ -309,11 +309,17 @@ export async function runIntentGenerationJob(
       snapshots,
       existing,
     });
-    if (!brandOutcome.ok) {
+    // An empty brand profile is a valid empty result, not a failure: the
+    // connector-saved brand (Admin shop resource) carries no category or
+    // use-case material today, and product profiles can still be derivable.
+    // The job-level vocabulary is preserved below — a job where nothing at
+    // all was derivable still fails as generation_empty.
+    if (!brandOutcome.ok && brandOutcome.reason !== "generation_empty") {
       throw generationFailure(brandOutcome);
     }
-    await run.scoped.saveIntents(brandOutcome.records);
-    existing.push(...brandOutcome.records.map(summaryOf));
+    const brandRecords = brandOutcome.ok ? brandOutcome.records : [];
+    await run.scoped.saveIntents(brandRecords);
+    existing.push(...brandRecords.map(summaryOf));
 
     const liveProducts = (await run.scoped.listProducts()).filter(
       (row) => row.deleted_at === null,
@@ -326,14 +332,25 @@ export async function runIntentGenerationJob(
         snapshots,
         existing,
       });
-      if (!outcome.ok) {
+      // Same shape as the brand stage: one thin product must not fail the
+      // whole job — only a truly undeliverable reason does.
+      if (!outcome.ok && outcome.reason !== "generation_empty") {
         throw generationFailure(outcome);
       }
-      await run.scoped.saveIntents(outcome.records);
-      await run.scoped.saveMappings(outcome.mappings);
-      existing.push(...outcome.records.map(summaryOf));
-      productIntents += outcome.records.length;
-      mappingsCreated += outcome.mappings.length;
+      const records = outcome.ok ? outcome.records : [];
+      const mappings = outcome.ok ? outcome.mappings : [];
+      await run.scoped.saveIntents(records);
+      await run.scoped.saveMappings(mappings);
+      existing.push(...records.map(summaryOf));
+      productIntents += records.length;
+      mappingsCreated += mappings.length;
+    }
+
+    if (brandRecords.length + productIntents === 0) {
+      throw new JobFailure(
+        "generation_empty",
+        "no brand or product profile carried derivable material",
+      );
     }
 
     await run.beginStage("validating");
@@ -344,9 +361,9 @@ export async function runIntentGenerationJob(
     const storedMappings = await run.scoped.listMappings();
 
     await run.complete({
-      brand_intents: brandOutcome.records.length,
+      brand_intents: brandRecords.length,
       product_intents: productIntents,
-      intents_created: brandOutcome.records.length + productIntents,
+      intents_created: brandRecords.length + productIntents,
       mappings_created: mappingsCreated,
       library_intents: storedIntents.length,
       library_mappings: storedMappings.length,

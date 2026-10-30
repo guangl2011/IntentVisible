@@ -40,7 +40,14 @@ import {
 import type { RawBodyRequest } from "../raw-body.js";
 import { registerRawBodyParser } from "../raw-body.js";
 import { encryptToken } from "./secrets.js";
-import type { ShopifyJobFailureReason, ShopifyJobRecord } from "./jobs.js";
+import type {
+  ShopifyJobError,
+  ShopifyJobFailureReason,
+  ShopifyJobKind,
+  ShopifyJobRecord,
+  ShopifyJobResult,
+  ShopifyJobStatus,
+} from "./jobs.js";
 import {
   createShopifyJob,
   runCatalogSyncJob,
@@ -259,6 +266,35 @@ export function registerShopifyRoutes(app: FastifyInstance, deps: ShopifyApiDeps
   // ── Catalog + library reads ──
   const unknownStore = (reply: FastifyReply, storeId: string): ShopifyTypedError =>
     sendError(reply, typedError("not_found", `unknown store id ${storeId}`), 404);
+
+  // ── Store status: the dashboard overview's single read (connection
+  // state, last job of each kind, library counts). Merchant-scoped by id.
+  app.get("/v1/stores/:id", async (request, reply) => {
+    const storeId = param(request, "id");
+    const merchant = await deps.store.getMerchant(storeId);
+    if (merchant === null) {
+      return unknownStore(reply, storeId);
+    }
+    const scoped = deps.store.forMerchant(storeId);
+    const [products, intents, mappings, lastSync, lastGeneration] = await Promise.all([
+      scoped.listProducts(),
+      scoped.listIntents(),
+      scoped.listMappings(),
+      deps.store.latestJobByKind(storeId, "catalog_sync"),
+      deps.store.latestJobByKind(storeId, "intent_generation"),
+    ]);
+    return await reply.send({
+      store_id: storeId,
+      shop_domain: merchant.shop_domain,
+      connected: merchant.connected,
+      granted_scopes: merchant.granted_scopes,
+      product_count: products.filter((row) => row.deleted_at === null).length,
+      intent_count: intents.length,
+      mapping_count: mappings.filter((row) => row.active).length,
+      last_sync: lastSync === null ? null : jobSummary(lastSync),
+      last_generation: lastGeneration === null ? null : jobSummary(lastGeneration),
+    });
+  });
 
   app.get("/v1/stores/:id/products", async (request, reply) => {
     const storeId = param(request, "id");
@@ -483,6 +519,42 @@ function mappingViews(mappings: MappingRow[]) {
     active: row.active,
     invalidated_at: row.invalidated_at,
   }));
+}
+
+/** Job rows as the overview view: lifecycle state, never internal ids. */
+export interface StoreJobSummary {
+  job_id: string;
+  kind: ShopifyJobKind;
+  status: ShopifyJobStatus;
+  created_at: string;
+  updated_at: string;
+  error: ShopifyJobError | null;
+  result: ShopifyJobResult | null;
+}
+
+/** GET /v1/stores/:id — the dashboard overview's single read. */
+export interface StoreStatusView {
+  store_id: string;
+  shop_domain: string;
+  connected: boolean;
+  granted_scopes: string[];
+  product_count: number;
+  intent_count: number;
+  mapping_count: number;
+  last_sync: StoreJobSummary | null;
+  last_generation: StoreJobSummary | null;
+}
+
+function jobSummary(job: ShopifyJobRecord): StoreJobSummary {
+  return {
+    job_id: job.job_id,
+    kind: job.kind,
+    status: job.status,
+    created_at: job.created_at,
+    updated_at: job.updated_at,
+    error: job.error,
+    result: job.result,
+  };
 }
 
 /** Enqueues one job's runner closure by kind. */

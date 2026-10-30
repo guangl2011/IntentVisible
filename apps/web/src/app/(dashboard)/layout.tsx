@@ -26,6 +26,7 @@ export default async function DashboardLayout({
           <Link href="/queue">Queue</Link>
           <Link href="/history">History</Link>
           <Link href="/agents">Agents</Link>
+          <Link href="/shopify">Shopify</Link>
         </div>
         <form action={signOut}>
           <button type="submit" className="linklike">

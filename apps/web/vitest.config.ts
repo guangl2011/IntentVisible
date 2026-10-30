@@ -8,4 +8,7 @@ export default defineConfig({
     // observe each other's writes, so keep test files sequential.
     fileParallelism: false,
   },
+  // tsconfig sets jsx: "preserve" for Next.js; vitest transforms test
+  // files itself, so component tests need the runtime transform here.
+  esbuild: { jsx: "automatic" },
 });

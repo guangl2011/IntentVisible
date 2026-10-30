@@ -12,6 +12,7 @@
     "e2e": "playwright test"
   },
   "dependencies": {
+    "@intentvisible/client": "workspace:*",
     "@prisma/client": "^6.19.0",
     "next": "^15.5.0",
     "react": "^19.0.0",

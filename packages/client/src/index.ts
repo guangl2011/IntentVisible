@@ -6,6 +6,20 @@ export {
   type DashboardClient,
   type DashboardClientOptions,
 } from "./client.js";
+// Contract payload types, re-exported so consumers (the merchant dashboard
+// pages) need only this package to speak the whole wire contract.
+export {
+  IntentRecordSchema,
+  SkuIntentMappingSchema,
+  type IntentRecord,
+  type SkuIntentMapping,
+} from "@intentvisible/core-schema";
+export type {
+  BuyerStage,
+  IntentCategory,
+  ProductProfile,
+  Scope,
+} from "@intentvisible/core-schema";
 export {
   ConflictError,
   NetworkError,
@@ -18,6 +32,32 @@ export {
   ValidationError,
   type ValidationIssue,
 } from "./errors.js";
+export {
+  createShopifyClient,
+  intentFiltersQuery,
+  SHOPIFY_JOB_FAILURE_REASONS,
+  SHOPIFY_JOB_KINDS,
+  SHOPIFY_JOB_STATUSES,
+  type InstallStart,
+  type IntentLibraryFilters,
+  type IntentList,
+  type JobStart,
+  type MappingList,
+  type MappingListItem,
+  type ProductList,
+  type ProductListItem,
+  type ShopifyClient,
+  type ShopifyClientOptions,
+  type ShopifyJob,
+  type ShopifyJobError,
+  type ShopifyJobFailureReason,
+  type ShopifyJobKind,
+  type ShopifyJobResult,
+  type ShopifyJobStatus,
+  type ShopifyJobStatusChange,
+  type StoreJobSummary,
+  type StoreStatus,
+} from "./shopify.js";
 export type { FetchLike } from "./transport.js";
 export {
   DECISION_VERDICTS,
