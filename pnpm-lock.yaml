@@ -217,7 +217,17 @@ importers:
         version: 3.2.7(@types/node@20.19.43)(supports-color@7.2.0)
 
   packages/intent-importer:
+    dependencies:
+      '@intentvisible/core-schema':
+        specifier: workspace:*
+        version: link:../core-schema
     devDependencies:
+      ajv:
+        specifier: ^8.20.0
+        version: 8.20.0
+      ajv-formats:
+        specifier: ^3.0.1
+        version: 3.0.1(ajv@8.20.0)
       vitest:
         specifier: ^3.2.4
         version: 3.2.7(@types/node@20.19.43)(supports-color@7.2.0)
