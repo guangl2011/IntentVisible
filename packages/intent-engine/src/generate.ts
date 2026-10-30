@@ -77,6 +77,8 @@ export interface GenerationReport {
   kept: number;
   /** Records reusing an existing library intent_id (version bump). */
   reused: number;
+  /** Records that minted a fresh intent_id. */
+  fresh: number;
   /** Every dropped candidate, logged with reason — never stored. */
   dropped: Array<DropEvent & { market: string }>;
 }
@@ -362,7 +364,7 @@ export class IntentGenerator {
     return {
       ok: true,
       records,
-      report: { candidates: candidateCount, kept: records.length, reused: dedup.reused, dropped },
+      report: { candidates: candidateCount, kept: records.length, reused: dedup.reused, fresh: dedup.fresh, dropped },
     };
   }
 }

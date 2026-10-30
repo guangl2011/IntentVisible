@@ -9,19 +9,25 @@
  *    (scope, brand, country, language) partition. An AU/en intent and a
  *    DE/de intent are different intents even when they describe the same
  *    underlying question.
- * 2. Exact semantic key — when the model supplied a `topic`, the match key
- *    is (intent_category, slugified topic). Differently-worded candidates
- *    that share a topic collapse onto one id.
+ * 2. Exact semantic key — within a category, a shared topic (the model's
+ *    own semantic label) or a shared intent name counts as the same
+ *    intent. Stored records carry no topic, so name keys are the family
+ *    a regeneration matches them on; topic keys catch reworded names
+ *    within and across runs.
  * 3. Fuzzy name fallback — without a topic, token-set (Jaccard) overlap of
  *    the intent names at ≥ 0.5 within the same category counts as the same
  *    intent.
  *
+ * This is deliberately lexical, deterministic clustering — no embedding
+ * call, no nondeterminism. Deeper paraphrase detection (embedding
+ * similarity) is a later provider-adapter concern, not hidden here.
+ *
  * Reused ids get version = matched version + 1 (the reworded record becomes
- * the new current version). First occurrences mint fresh ids from the
- * slugified topic (preferred — it is the stable material) or the intent
- * name, suffixed on collision. Ids are unique per record: two same-topic
- * drafts in one run share the id with sequential versions (1, 2, …), and a
- * persistence layer keeps the highest version per intent_id as current.
+ * the new current version). First occurrences mint fresh name-derived ids
+ * (the plan's `int_camping_fridge_runtime` example), suffixed on collision.
+ * Ids are unique per record: two same-topic drafts in one run share the id
+ * with sequential versions (1, 2, …), and a persistence layer keeps the
+ * highest version per intent_id as current.
  */
 
 import type { IntentCategory, IntentRecord, Scope } from "@intentvisible/core-schema";
@@ -104,8 +110,11 @@ export function tokenOverlap(a: string, b: string): number {
 }
 
 interface PartitionMember {
-  /** Exact-match key when a topic exists; empty string when fuzzy-only. */
-  exactKey: string;
+  /** Topic key when a topic exists — semantic match material. */
+  topicKey?: string;
+  /** Name key always present — stored records have no topic, so name keys
+   * are the only family a regeneration can match them on. */
+  nameKey: string;
   intentName: string;
   intentCategory: IntentCategory;
   intent_id: string;
@@ -117,11 +126,15 @@ function partitionKey(scope: Scope, brandId: string, country: string, language: 
   return `${scope}|${brandId}|${country}|${language}`;
 }
 
-/** Exact match key: same category AND same topic (or canonical name) → same intent. */
-function exactKeyOf(category: IntentCategory, topic: string | undefined, name: string): string {
-  if (topic !== undefined && topic !== "") {
-    return `${category}|topic:${slugify(topic)}`;
+/** Match keys: same category AND same topic, or same category AND same name. */
+function topicKeyOf(category: IntentCategory, topic: string | undefined): string | undefined {
+  if (topic === undefined || topic === "") {
+    return undefined;
   }
+  return `${category}|topic:${slugify(topic)}`;
+}
+
+function nameKeyOf(category: IntentCategory, name: string): string {
   return `${category}|name:${slugify(name)}`;
 }
 
@@ -155,7 +168,8 @@ export function dedupDrafts(
     const key = partitionKey(summary.scope, summary.brand_id, summary.country, summary.language);
     const members = partitions.get(key) ?? [];
     members.push({
-      exactKey: exactKeyOf(summary.intent_category, summary.topic, summary.intent_name),
+      topicKey: topicKeyOf(summary.intent_category, summary.topic),
+      nameKey: nameKeyOf(summary.intent_category, summary.intent_name),
       intentName: summary.intent_name,
       intentCategory: summary.intent_category,
       intent_id: summary.intent_id,
@@ -178,10 +192,15 @@ export function dedupDrafts(
   for (const draft of drafts) {
     const key = partitionKey(draft.scope, draft.brand_id, draft.country, draft.language);
     const members = partitions.get(key) ?? [];
-    const exactKey = exactKeyOf(draft.intent_category, draft.topic, draft.intent_name);
+    const draftTopicKey = topicKeyOf(draft.intent_category, draft.topic);
+    const draftNameKey = nameKeyOf(draft.intent_category, draft.intent_name);
 
-    // 1. Exact semantic key match — same category and topic/name material.
-    const exact = members.find((member) => member.exactKey === exactKey);
+    // 1. Exact semantic key match — same category and topic OR name material.
+    const exact = members.find(
+      (member) =>
+        (draftTopicKey !== undefined && member.topicKey === draftTopicKey) ||
+        member.nameKey === draftNameKey,
+    );
     // 2. Fuzzy fallback — same category, similar names, no topic key.
     const fuzzy =
       exact ??
@@ -214,7 +233,8 @@ export function dedupDrafts(
 
     // Later drafts in this run dedup against this assignment too.
     members.push({
-      exactKey,
+      topicKey: draftTopicKey,
+      nameKey: draftNameKey,
       intentName: draft.intent_name,
       intentCategory: draft.intent_category,
       intent_id: intentId,
