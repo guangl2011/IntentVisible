@@ -66,8 +66,16 @@ than 500 variants exceed the core-schema SKU cap and surface as failures
 
 ## Webhooks
 
-See `src/webhooks.ts` — HMAC verification of the raw body **before** any
-JSON parsing for `app/uninstalled`, `products/update`, `products/delete`.
+`verifyWebhook({ clientSecret, headers, rawBody })` verifies the delivery's
+HMAC — base64 SHA-256 over the **raw body bytes**, `X-Shopify-Hmac-Sha256`
+header, constant-time compared — before any body processing. A signed
+delivery reaches processing as a `VerifiedWebhook` (topic, shop domain,
+webhook id, parsed payload); a mutated body, wrong secret, or missing
+header throws `hmac_rejected` with the body never parsed. Verification
+and routing are separate: `isSupportedWebhookTopic` guards the three
+spec topics (`app/uninstalled`, `products/update`, `products/delete`).
+Webhook deliveries carry no nonce — replay protection is caller-side
+deduplication on `X-Shopify-Webhook-Id`, which the envelope surfaces.
 
 ## Errors
 
