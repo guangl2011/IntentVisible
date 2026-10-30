@@ -15,6 +15,7 @@ import {
   FailurePanel,
   LoadingPanel,
   ShopifyNav,
+  JobPanel,
 } from "../components/panels";
 import { ProductTable } from "../components/tables";
 
@@ -86,6 +87,8 @@ export default function ShopifyCatalogPage() {
   }
 
   const syncFailedJob = poll.job?.status === "failed" ? poll.job : null;
+  const jobTerminal =
+    poll.job?.status === "complete" || poll.job?.status === "failed";
 
   return (
     <>
@@ -95,12 +98,17 @@ export default function ShopifyCatalogPage() {
         <button
           type="button"
           className="primary"
-          disabled={syncBusy || poll.job !== null}
+          disabled={syncBusy || (poll.job !== null && !jobTerminal)}
           onClick={() => void triggerSync()}
         >
-          {poll.job === null ? "Sync catalog" : `Syncing… (${poll.job.status})`}
+          {poll.job === null
+            ? "Sync catalog"
+            : jobTerminal
+              ? `Last sync ${poll.job.status}`
+              : `Syncing… (${poll.job.status})`}
         </button>
       </div>
+      {poll.job !== null && <JobPanel label="Last catalog sync" job={poll.job} />}
       {syncFailedJob?.error !== null && syncFailedJob?.error !== undefined && (
         <FailurePanel
           reason={syncFailedJob.error.reason}

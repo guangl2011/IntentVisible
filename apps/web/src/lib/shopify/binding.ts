@@ -1,6 +1,6 @@
-import type { LoadError, LoadResult } from "./loaders.js";
-import { loadPage } from "./loaders.js";
-import { getShopifyClient } from "./client.js";
+import type { LoadError, LoadResult } from "./loaders";
+import { loadPage } from "./loaders";
+import { getShopifyClient } from "./client";
 
 /**
  * Which store the merchant pages operate on. Picked once on the overview
