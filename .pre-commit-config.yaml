@@ -1,0 +1,16 @@
+# Secret scanning at commit time. Guard mode `git`: only staged changes are
+# scanned, and a match fails the commit, naming the file, line, and rule.
+#
+# Prerequisite: the `gitleaks` binary on your PATH (see README, "Secret
+# scanning"). The `-system` hook id uses that binary directly instead of
+# compiling gitleaks with the Go toolchain on every clone.
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks-system
+        # Upstream omits `pass_filenames: false` for the -system hook, so
+        # pre-commit appends staged filenames — which `gitleaks git` reads as
+        # the [repo] positional arg, silently scanning nothing and exiting 0.
+        # Override it here or the hook is a no-op.
+        pass_filenames: false
