@@ -1,6 +1,14 @@
 node_modules/
 dist/
 coverage/
+*.pem
+*.key
+secrets/
+.idea/
+.vscode/
+!.vscode/extensions.json
+__pycache__/
+target/
 *.tsbuildinfo
 .env
 .env.*
