@@ -22,6 +22,30 @@ to page evidence. No user-behavior tracking, no pixels, no personal profiles.
 - Every generated intent cites evidence URLs resolvable to stored page snapshots.
 - Schema files change only in dedicated PRs.
 
+## Secret scanning (pre-commit)
+
+Commits are scanned for hardcoded secrets — API keys, tokens, private keys —
+by [gitleaks](https://github.com/gitleaks/gitleaks), wired through
+[pre-commit](https://pre-commit.com) via `.pre-commit-config.yaml`. The hook
+runs in git guard mode: it scans only staged changes and fails the commit,
+naming the offending file, line, and rule.
+
+One-time setup:
+
+1. Install the gitleaks binary (v8 or newer) and put it on your `PATH`:
+   `brew install gitleaks` — or download a release asset from
+   <https://github.com/gitleaks/gitleaks/releases>.
+2. Install the hook into this clone:
+
+   ```sh
+   pre-commit install
+   ```
+
+After that, every `git commit` runs the scanner automatically. To scan the
+whole working tree on demand: `gitleaks detect --no-git`. If a commit is
+rejected, replace the secret with a placeholder or load it from the
+environment — never bypass the hook with `--no-verify`.
+
 ## Repository
 
 TypeScript ESM monorepo (pnpm): `packages/core-schema`, `packages/url-extractor`,
