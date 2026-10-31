@@ -13,4 +13,4 @@ overrides:
   deepmerge-ts: ^8.0.0
   # Two critical advisories (GHSA affecting tinypool <=2.1.0 and <2.1.2) arrive
   # transitively via vitest@3; vitest 3's own range still resolves 1.x.
-  tinypool: ">=2.1.2"
+  tinypool: "1.1.1" # NEGATIVE CONTROL (temporary)
