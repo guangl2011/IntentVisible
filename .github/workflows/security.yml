@@ -24,10 +24,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Reads the version from package.json#packageManager.
+      - uses: pnpm/action-setup@v4
       - name: Detect manifest and audit
         run: |
           set -euo pipefail
-          if [[ -f package-lock.json ]]; then
+          if [[ -f pnpm-lock.yaml ]]; then
+            audit_report=$(mktemp)
+            # pnpm 12 audit exits nonzero for ANY advisory and has no
+            # --audit-level flag, so gate on high/critical by parsing JSON.
+            pnpm audit --json > "$audit_report" || true
+            high_count=$(jq '[.advisories[] | select(.severity == "high" or .severity == "critical")] | length' "$audit_report")
+            if [[ "$high_count" -gt 0 ]]; then
+              jq -r '.advisories[] | select(.severity == "high" or .severity == "critical") | "\(.module_name) \(.vulnerable_versions) — fixed in \(.patched_versions)"' "$audit_report"
+              echo "::error::$high_count high/critical advisories found — see listing above."
+              exit 1
+            fi
+            rm -f "$audit_report"
+            echo "::notice::pnpm audit passed: no high or critical advisories."
+          elif [[ -f package-lock.json ]]; then
             npm ci
             npm audit --audit-level=high
           elif [[ -f requirements.txt || -f pyproject.toml ]]; then
