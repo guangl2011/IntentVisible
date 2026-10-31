@@ -1,0 +1,42 @@
+name: security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Weekly catch-up: new advisories land without code changing.
+    - cron: "0 6 * * 1"
+
+jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: catches secrets rewritten into the past.
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect manifest and audit
+        run: |
+          set -euo pipefail
+          if [[ -f package-lock.json ]]; then
+            npm ci
+            npm audit --audit-level=high
+          elif [[ -f requirements.txt || -f pyproject.toml ]]; then
+            pip install pip-audit
+            pip-audit --strict
+          elif [[ -f Cargo.lock ]]; then
+            cargo audit --deny warnings
+          elif [[ -f go.sum ]]; then
+            go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+          else
+            echo "::notice::No dependency manifest yet — audit passes vacuously."
+          fi
