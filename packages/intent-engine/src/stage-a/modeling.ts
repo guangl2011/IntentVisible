@@ -31,7 +31,7 @@ import type { LandingPageProfile } from "@intentvisible/url-extractor";
 import type { Clock } from "../clock.js";
 import { LlmError, type LlmAdapter, type LlmRequest } from "../adapter.js";
 import { type RetryOptions } from "../generate.js";
-import { completeAndParse, ModelOutputError } from "./llm.js";
+import { completeAndParse, ModelOutputError, parseEnvelope } from "./llm.js";
 import { validateTrait, type StageADropEvent } from "./evidence.js";
 
 // ---------------------------------------------------------------------------
@@ -664,38 +664,8 @@ function collectScenarios(
 }
 
 // ---------------------------------------------------------------------------
-// Envelope parsing + the retry-wrapped pass driver
+// The retry-wrapped pass driver
 // ---------------------------------------------------------------------------
-
-function extractJsonObject(text: string): string {
-  const trimmed = text.trim();
-  const fenced = /^```(?:json)?\s*([\s\S]*?)\s*```$/.exec(trimmed);
-  const body = fenced?.[1] ?? trimmed;
-  const start = body.indexOf("{");
-  const end = body.lastIndexOf("}");
-  if (start === -1 || end === -1 || end < start) {
-    throw new ModelOutputError("no JSON object found in the response");
-  }
-  return body.slice(start, end + 1);
-}
-
-function parseEnvelope<T extends z.ZodType>(text: string, schema: T): z.output<T> {
-  let parsedJson: unknown;
-  try {
-    parsedJson = JSON.parse(extractJsonObject(text));
-  } catch (error) {
-    throw new ModelOutputError(error instanceof Error ? error.message : String(error));
-  }
-  const parsed = schema.safeParse(parsedJson);
-  if (!parsed.success) {
-    const issue = parsed.error.issues[0];
-    const where = issue === undefined ? "root" : issue.path.map(String).join(".") || "root";
-    throw new ModelOutputError(
-      `model output did not match the expected envelope shape at "${where}": ${issue?.message ?? parsed.error.message}`,
-    );
-  }
-  return parsed.data;
-}
 
 /** One modeling pass result: the parsed payload plus the model that produced it. */
 export interface ModelingPassResult<T> {
