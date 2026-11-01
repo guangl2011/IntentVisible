@@ -11,7 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@intentvisible/core-schema": "workspace:*"
+    "@intentvisible/core-schema": "workspace:*",
+    "@intentvisible/intent-lib-export": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^3.2.4"

@@ -1,39 +1,18 @@
-import { NotFoundError } from "@intentvisible/client";
+import { loadResult, type LoadError, type LoadErrorKind, type LoadResult } from "../load-result";
+
+export type { LoadError, LoadErrorKind, LoadResult };
 
 /**
- * A single normalization point for page data fetches: every loader returns
- * a result instead of throwing, so containers can render the error state
- * (404 → the store id is wrong; anything else → the API is unreachable)
- * without try/catch scatters.
+ * A single normalization point for the Shopify pages' data fetches: every
+ * loader returns a result instead of throwing, so containers can render the
+ * error state (404 → the store id is wrong; anything else → the API is
+ * unreachable) without try/catch scatters. Failure wording lives here;
+ * the generic runner is shared with the pipeline pages (../load-result).
  */
-export type LoadErrorKind = "not_found" | "unavailable" | "invalid_input";
-
-export interface LoadError {
-  kind: LoadErrorKind;
-  message: string;
-}
-
-export type LoadResult<T> = { ok: true; data: T } | { ok: false; error: LoadError };
-
 export async function loadPage<T>(run: () => Promise<T>): Promise<LoadResult<T>> {
-  try {
-    return { ok: true, data: await run() };
-  } catch (error: unknown) {
-    if (error instanceof NotFoundError) {
-      return {
-        ok: false,
-        error: { kind: "not_found", message: "No store matches that id — reconnect to get a fresh one." },
-      };
-    }
-    return {
-      ok: false,
-      error: {
-        kind: "unavailable",
-        message:
-          error instanceof Error
-            ? `The Shopify API is unreachable: ${error.message}`
-            : "The Shopify API is unreachable.",
-      },
-    };
-  }
+  return loadResult(run, {
+    notFound: "No store matches that id — reconnect to get a fresh one.",
+    unreachable: (detail) =>
+      detail === null ? "The Shopify API is unreachable." : `The Shopify API is unreachable: ${detail}`,
+  });
 }

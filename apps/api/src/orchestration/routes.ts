@@ -17,7 +17,10 @@ import {
 
 import type { PipelineOrchestrator } from "./pipeline.js";
 import type { PipelineStore } from "./store.js";
-import { MixedDataModeError } from "@intentvisible/intent-lib-export";
+import {
+  buildLibExport,
+  MixedDataModeError,
+} from "@intentvisible/intent-lib-export";
 import { PlanDataModeMismatchError } from "./stage-c.js";
 import { PIPELINE_TRIGGERS, type GateNumber } from "./types.js";
 import { UsageCapExceeded } from "./usage.js";
@@ -204,6 +207,81 @@ export function registerOrchestrationRoutes(
       });
     }
     return await reply.send({ records: await store.listPublishedIntents(projectId) });
+  });
+  // ── Gate/dashboard reads ─────────────────────────────────────────────────
+  // Read-only projections of stored pipeline records — the Gate 1–3 screens
+  // and the metrics dashboard render exactly these; none of them recompute
+  // or mutate anything.
+
+  const unknownProjectBody = (projectId: string) => ({
+    error: { reason: "invalid_request", detail: `unknown project ${projectId}` },
+  });
+
+  /** The latest run's plan, when Stage B has baselined one. */
+  const latestPlanId = async (projectId: string): Promise<string | null> => {
+    const rows = await store.listPipelines(projectId);
+    return rows[rows.length - 1]?.plan_id ?? null;
+  };
+
+  app.get("/v2/projects/:project_id/graph", async (request, reply) => {
+    const projectId = param(request, "project_id");
+    const project = await orchestrator.getProject(projectId);
+    if (project === null) {
+      return typed400(reply, unknownProjectBody(projectId));
+    }
+    return await reply.send({ graph: await store.getGraph(project.brand_id) });
+  });
+
+  app.get("/v2/projects/:project_id/prompts", async (request, reply) => {
+    const projectId = param(request, "project_id");
+    const project = await orchestrator.getProject(projectId);
+    if (project === null) {
+      return typed400(reply, unknownProjectBody(projectId));
+    }
+    return await reply.send({ prompts: await store.getPrompts(project.brand_id) });
+  });
+
+  app.get("/v2/projects/:project_id/metrics", async (request, reply) => {
+    const projectId = param(request, "project_id");
+    const project = await orchestrator.getProject(projectId);
+    if (project === null) {
+      return typed400(reply, unknownProjectBody(projectId));
+    }
+    const planId = await latestPlanId(projectId);
+    const snapshots = planId === null ? [] : await store.getMetrics(planId);
+    return await reply.send({ snapshots });
+  });
+
+  /**
+   * The Gate 3 pre-publish render: the same deterministic buildLibExport the
+   * publisher runs, over the plan's confirmed prompts and pooled per-prompt
+   * metrics. Null until a monitoring plan exists; recomputes nothing the
+   * stored metrics do not already say.
+   */
+  const buildPreviewLib = async (projectId: string, brandId: string): Promise<unknown> => {
+    const planId = await latestPlanId(projectId);
+    if (planId === null) return null;
+    const [plan, graph] = await Promise.all([store.getPlan(planId), store.getGraph(brandId)]);
+    if (plan === null || graph === null) return null;
+    const prompts = (await store.getPrompts(brandId)).filter((prompt) =>
+      plan.prompt_ids.includes(prompt.prompt_id),
+    );
+    const pooledPerPrompt = (await store.getMetrics(planId)).filter(
+      (snapshot) => snapshot.prompt_id !== undefined && snapshot.platform === undefined,
+    );
+    // Pre-monitoring previews (gates 1–2) have no pooled metrics yet; the
+    // renderer's empty-metrics invariant guards publishing, not previews.
+    if (pooledPerPrompt.length === 0) return null;
+    return buildLibExport({ graph, prompts, metrics: pooledPerPrompt });
+  };
+
+  app.get("/v2/projects/:project_id/lib-preview", async (request, reply) => {
+    const projectId = param(request, "project_id");
+    const project = await orchestrator.getProject(projectId);
+    if (project === null) {
+      return typed400(reply, unknownProjectBody(projectId));
+    }
+    return await reply.send({ lib: await buildPreviewLib(projectId, project.brand_id) });
   });
 }
 

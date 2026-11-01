@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./schemas/*": "./schemas/*"
+    "./schemas/*": "./schemas/*",
+    "./testing-v2": "./src/fixtures-v2.ts"
   },
   "scripts": {
     "generate": "node scripts/generate-types.mjs",

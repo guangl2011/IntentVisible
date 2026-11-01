@@ -14,6 +14,20 @@ export {
   type IntentRecord,
   type SkuIntentMapping,
 } from "@intentvisible/core-schema";
+// Pipeline v2 contract payloads (Gate screens, metrics dashboard, lib browser).
+export type {
+  BuyerStageV2,
+  DemandTier,
+  IntentCategoryV2,
+  IntentRecordV2,
+  MarketingGraph,
+  MetricsSnapshot,
+  PromptRecord,
+  RunDataMode,
+} from "@intentvisible/core-schema";
+// The Gate 3 lib preview carries the lib-export structured model (type-only —
+// the renderers stay server-side in @intentvisible/intent-lib-export).
+export type { BuyerIntentLib, LibIntent, LibPrompt } from "@intentvisible/intent-lib-export";
 export type {
   BuyerStage,
   IntentCategory,
@@ -32,6 +46,38 @@ export {
   ValidationError,
   type ValidationIssue,
 } from "./errors.js";
+export {
+  createPipelineClient,
+  GATE_NUMBERS,
+  PIPELINE_STATUSES,
+  PIPELINE_TRIGGERS,
+  type CreatePipelineProjectRequest,
+  type DriftEvent,
+  type GateConfig,
+  type GateDecision,
+  type GateNumber,
+  type GateReview,
+  type GateReviewStatus,
+  type GraphResponse,
+  type LibPreviewResponse,
+  type MetricsResponse,
+  type MonitoringCadence,
+  type MonitoringCycle,
+  type MonitoringSchedule,
+  type PipelineClient,
+  type PipelineClientOptions,
+  type PipelineProject,
+  type PipelineProjectStart,
+  type PipelineRun,
+  type PipelineStatus,
+  type PipelineTrigger,
+  type ProjectBundle,
+  type ProjectDataMode,
+  type PromptsResponse,
+  type PublishedIntent,
+  type PublishedResponse,
+  type UpdatePipelineProjectRequest,
+} from "./pipeline.js";
 export {
   createShopifyClient,
   intentFiltersQuery,
