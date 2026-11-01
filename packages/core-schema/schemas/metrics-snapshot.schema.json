@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "metrics-snapshot.schema.json",
+  "title": "MetricsSnapshot",
+  "description": "One published metrics aggregate (Pipeline v2 blueprint Stage C.2) — pure-function output over parsed runs, never recomputed by consumers. Provenance is mandatory: run count, platforms, date range, provider/model, and data_mode must all be present. The high-differentiation opportunity tag is derived (void_rate_pct >= 25), not stored.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "metrics_id",
+    "brand_id",
+    "intent_id",
+    "visibility_pct",
+    "top_competitor_id",
+    "leader_gap_pct",
+    "void_rate_pct",
+    "sentiment_index",
+    "citation_share",
+    "consensus",
+    "run_count",
+    "platforms",
+    "date_range",
+    "provider_model",
+    "data_mode",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersionV2"
+    },
+    "metrics_id": {
+      "$ref": "#/$defs/MetricsId"
+    },
+    "brand_id": {
+      "$ref": "#/$defs/BrandId"
+    },
+    "intent_id": {
+      "$ref": "#/$defs/IntentId"
+    },
+    "prompt_id": {
+      "$ref": "#/$defs/PromptId",
+      "description": "Absent = pooled across the intent's prompts."
+    },
+    "platform": {
+      "$ref": "#/$defs/Platform",
+      "description": "Absent = pooled across platforms."
+    },
+    "visibility_pct": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Answers mentioning the brand / total answers x 100."
+    },
+    "top_competitor_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BrandId"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Highest-visibility monitored competitor; null when no monitored competitor appeared."
+    },
+    "leader_gap_pct": {
+      "type": ["number", "null"],
+      "minimum": -100,
+      "maximum": 100,
+      "description": "Top-1 competitor visibility minus brand visibility. Must be set or null together with top_competitor_id."
+    },
+    "void_rate_pct": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Answers recommending no monitored competitor x 100; >= 25 auto-tags the prompt as a high-differentiation opportunity (derived downstream, not stored)."
+    },
+    "sentiment_index": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Normalized 0-100 from weighted sentiment facts."
+    },
+    "citation_share": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/CitationShare"
+      }
+    },
+    "consensus": {
+      "$ref": "#/$defs/ConsensusFlag",
+      "description": "Baseline-round consensus: all rounds agree within 10 points -> stable; otherwise noisy (number not published)."
+    },
+    "run_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/Platform"
+      }
+    },
+    "date_range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "to": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "provider_model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Provider/model whose runs were aggregated, e.g. 'gemini-2.5-pro'."
+    },
+    "data_mode": {
+      "$ref": "#/$defs/RunDataMode"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "SchemaVersionV2": {
+      "type": "string",
+      "pattern": "^2\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+    },
+    "MetricsId": {
+      "type": "string",
+      "pattern": "^mtrc_[a-z0-9_]{1,100}$"
+    },
+    "BrandId": {
+      "type": "string",
+      "pattern": "^brand_[a-z0-9_]{1,100}$"
+    },
+    "IntentId": {
+      "type": "string",
+      "pattern": "^int_[a-z0-9_]{1,100}$"
+    },
+    "PromptId": {
+      "type": "string",
+      "pattern": "^prompt_[a-z0-9_]{1,100}$"
+    },
+    "Platform": {
+      "enum": ["chatgpt_search", "perplexity", "google_ai_overviews", "gemini"]
+    },
+    "ConsensusFlag": {
+      "enum": ["stable", "noisy"]
+    },
+    "RunDataMode": {
+      "enum": ["llm_simulated", "provider_measured"]
+    },
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "retrieved_at"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Producing source, e.g. 'gemini-2.5-pro' or 'dataforseo'."
+        },
+        "retrieved_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "CitationShare": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domain", "share_pct"],
+      "properties": {
+        "domain": {
+          "type": "string",
+          "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$"
+        },
+        "share_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    }
+  }
+}

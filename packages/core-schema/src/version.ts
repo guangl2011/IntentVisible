@@ -49,3 +49,27 @@ export function isSchemaVersionCompatible(version: string): boolean {
   const parts = parseSchemaVersion(version);
   return parts !== null && parts.major === SUPPORTED_SCHEMA_MAJOR;
 }
+
+/**
+ * Pipeline v2 contract (blueprint art_9zAvKcEq), published alongside v1 —
+ * never instead of it: v1 records stay valid and map to v2 values at read
+ * time (legacy-mapping.ts), so no stored data is rewritten.
+ */
+export const SCHEMA_VERSION_V2 = "2.0.0";
+
+/** The only major version readers of the v2 pipeline schemas accept. */
+export const SUPPORTED_SCHEMA_MAJOR_V2 = 2;
+
+/**
+ * JSON-Schema-ready pattern for a v2-compatible schema_version: SemVer
+ * X.Y.Z with the major pinned to 2. Kept as a string so the Zod schemas
+ * and the v2 JSON Schema files share one source (parity tests enforce the
+ * sync).
+ */
+export const SCHEMA_VERSION_PATTERN_V2 = "^2\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$";
+
+/** True when a record's schema_version can be read by consumers of the v2 pipeline contract. */
+export function isSchemaVersionCompatibleV2(version: string): boolean {
+  const parts = parseSchemaVersion(version);
+  return parts !== null && parts.major === SUPPORTED_SCHEMA_MAJOR_V2;
+}

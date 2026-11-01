@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "scenario.schema.json",
+  "title": "Scenario",
+  "description": "Scenario node (Pipeline v2 blueprint Stage A.2): one of the three MECE scenario types mapped for a persona (daily pain, acute trigger, final-shelf comparison). Scenarios are graph edges — persona_id must resolve inside the embedding Marketing Graph (graph-level referential integrity), which a standalone scenario record cannot check.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "scenario_id",
+    "persona_id",
+    "brand_id",
+    "scenario_type",
+    "description",
+    "data_mode",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersionV2"
+    },
+    "scenario_id": {
+      "$ref": "#/$defs/ScenarioId"
+    },
+    "persona_id": {
+      "$ref": "#/$defs/PersonaId",
+      "description": "The persona this scenario belongs to."
+    },
+    "brand_id": {
+      "$ref": "#/$defs/BrandId"
+    },
+    "scenario_type": {
+      "$ref": "#/$defs/ScenarioType"
+    },
+    "description": {
+      "$ref": "#/$defs/Trait"
+    },
+    "data_mode": {
+      "$ref": "#/$defs/DataMode"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "SchemaVersionV2": {
+      "type": "string",
+      "pattern": "^2\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+    },
+    "ScenarioId": {
+      "type": "string",
+      "pattern": "^scenario_[a-z0-9_]{1,100}$"
+    },
+    "PersonaId": {
+      "type": "string",
+      "pattern": "^persona_[a-z0-9_]{1,100}$"
+    },
+    "BrandId": {
+      "type": "string",
+      "pattern": "^brand_[a-z0-9_]{1,100}$"
+    },
+    "ScenarioType": {
+      "enum": ["daily_pain", "acute_trigger", "final_shelf_comparison"]
+    },
+    "DataMode": {
+      "enum": ["llm_estimated", "llm_simulated", "provider_measured"]
+    },
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "retrieved_at"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Producing source, e.g. 'gemini-2.5-pro' or 'dataforseo'."
+        },
+        "retrieved_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "Trait": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "assumption", "evidence_urls"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "assumption": {
+          "type": "boolean",
+          "description": "True when the claim is not stated by the crawled site; uncited claims must be flagged, never silently presented as evidenced."
+        },
+        "evidence_urls": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https?://"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "assumption": {
+                "const": false
+              }
+            },
+            "required": ["assumption"]
+          },
+          "then": {
+            "properties": {
+              "evidence_urls": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

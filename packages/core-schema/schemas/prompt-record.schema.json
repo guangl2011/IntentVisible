@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "prompt-record.schema.json",
+  "title": "PromptRecord",
+  "description": "One monitoring prompt (Pipeline v2 blueprint Stage B.2): a first-person buyer-voiced expansion of a selected intent, grounded in the Marketing Graph. Every prompt restates at least one graph claim that cites evidence or is flagged as an assumption (evidence_urls); prompts inventing product facts are dropped by validation. Field shapes follow the blueprint's PromptRecord, plus the required data_mode/provenance provenance block.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "prompt_id",
+    "intent_id",
+    "persona_id",
+    "scenario_id",
+    "text",
+    "buyer_stage",
+    "intent_category",
+    "language",
+    "country",
+    "brand_id",
+    "competitors",
+    "evidence_urls",
+    "status",
+    "data_mode",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersionV2"
+    },
+    "prompt_id": {
+      "$ref": "#/$defs/PromptId"
+    },
+    "intent_id": {
+      "$ref": "#/$defs/IntentId",
+      "description": "Links back to the graph / lib."
+    },
+    "persona_id": {
+      "$ref": "#/$defs/PersonaId"
+    },
+    "scenario_id": {
+      "$ref": "#/$defs/ScenarioId"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 1000,
+      "description": "The buyer's actual AI-search phrasing — first person, no SEO keyword concatenation."
+    },
+    "buyer_stage": {
+      "$ref": "#/$defs/BuyerStageV2"
+    },
+    "intent_category": {
+      "$ref": "#/$defs/IntentCategoryV2"
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2}$",
+      "description": "ISO 639-1 code; defaults from onboarding."
+    },
+    "country": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$",
+      "description": "ISO 3166-1 alpha-2 market; defaults from onboarding (US)."
+    },
+    "brand_id": {
+      "$ref": "#/$defs/BrandId"
+    },
+    "competitors": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "$ref": "#/$defs/BrandId"
+      },
+      "description": "Competitor brand ids monitored for this prompt."
+    },
+    "evidence_urls": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https?://"
+      },
+      "description": "Graph claims the prompt encodes; at least one cited or assumption-flagged claim."
+    },
+    "status": {
+      "$ref": "#/$defs/PromptStatus",
+      "description": "Stage B emits drafts; Gate 2 approval flips to confirmed; retired prompts are kept for history."
+    },
+    "data_mode": {
+      "$ref": "#/$defs/DataMode"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    }
+  },
+  "$defs": {
+    "SchemaVersionV2": {
+      "type": "string",
+      "pattern": "^2\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+    },
+    "PromptId": {
+      "type": "string",
+      "pattern": "^prompt_[a-z0-9_]{1,100}$"
+    },
+    "IntentId": {
+      "type": "string",
+      "pattern": "^int_[a-z0-9_]{1,100}$"
+    },
+    "PersonaId": {
+      "type": "string",
+      "pattern": "^persona_[a-z0-9_]{1,100}$"
+    },
+    "ScenarioId": {
+      "type": "string",
+      "pattern": "^scenario_[a-z0-9_]{1,100}$"
+    },
+    "BrandId": {
+      "type": "string",
+      "pattern": "^brand_[a-z0-9_]{1,100}$"
+    },
+    "BuyerStageV2": {
+      "enum": [
+        "Awareness",
+        "Problem Discovery",
+        "Solution Research",
+        "Vendor Evaluation",
+        "Purchase",
+        "Expansion"
+      ]
+    },
+    "IntentCategoryV2": {
+      "enum": [
+        "Educational",
+        "Pain Point",
+        "Solution Research",
+        "Vendor Comparison",
+        "Pricing",
+        "ROI",
+        "Implementation",
+        "Technical",
+        "Compliance",
+        "Future Trends"
+      ]
+    },
+    "PromptStatus": {
+      "enum": ["draft", "confirmed", "retired"]
+    },
+    "DataMode": {
+      "enum": ["llm_estimated", "llm_simulated", "provider_measured"]
+    },
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "retrieved_at"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Producing source, e.g. 'gemini-2.5-pro' or 'dataforseo'."
+        },
+        "retrieved_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
