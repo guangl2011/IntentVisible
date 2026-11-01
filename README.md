@@ -1,5 +1,7 @@
 # IntentVisible — Buyer Intent Library (BIL)
 
+Branch protection on `main` requires pull requests with the `secrets` and `dependencies` checks green.
+
 Buyer Intent Lib turns a brand's public website and product-page content into a
 versioned, machine-callable library of buyer intents — category questions,
 comparison moments, scenario needs, risk objections — with every record traced
