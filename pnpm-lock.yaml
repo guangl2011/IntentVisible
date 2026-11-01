@@ -320,6 +320,12 @@ importers:
       '@intentvisible/core-schema':
         specifier: workspace:*
         version: link:../core-schema
+      '@intentvisible/metrics':
+        specifier: workspace:*
+        version: link:../metrics
+      '@intentvisible/url-extractor':
+        specifier: workspace:*
+        version: link:../url-extractor
       zod:
         specifier: ^4.6.7
         version: 4.6.7
