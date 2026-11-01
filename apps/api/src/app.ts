@@ -29,6 +29,10 @@ import type { AnalyzePipeline } from "./pipeline.js";
 import type { JobFailureReason } from "./types.js";
 import { registerRawBodyParser } from "./raw-body.js";
 import type { ShopifyStore } from "./shopify/store.js";
+import {
+  registerOrchestrationRoutes,
+  type OrchestrationDeps,
+} from "./orchestration/routes.js";
 
 export interface ApiDeps {
   pipeline: AnalyzePipeline;
@@ -40,6 +44,11 @@ export interface ApiDeps {
    * analyze store has no such job.
    */
   shopifyStore?: ShopifyStore;
+  /**
+   * When the Pipeline v2 orchestrator is composed, the /v2 surface mounts:
+   * install-triggered pipelines, gates, monitoring schedules, publishes.
+   */
+  orchestration?: OrchestrationDeps;
 }
 
 const MarketsSchema = z
@@ -153,6 +162,10 @@ export function buildApp(deps: ApiDeps): FastifyInstance {
   app.get("/v1/products/:product_id/intents", async (request, reply) => {
     return await serveIntents(deps, request, reply, "product");
   });
+
+  if (deps.orchestration) {
+    registerOrchestrationRoutes(app, deps.orchestration);
+  }
 
   return app;
 }

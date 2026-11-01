@@ -130,7 +130,14 @@ export function buildMonitoringPlan(input: MonitoringPlanInput): MonitoringPlan 
     throw new RangeError(`unknown platforms: ${unknown.join(", ")} (monitored set: ${PLATFORMS.join(", ")})`);
   }
 
-  const planIdMaterial = slugify(`${input.graph.graph_id}_v${input.graph.graph_version}`).slice(0, 80);
+  // The market is part of the plan's identity (blueprint Iteration: a market
+  // change re-baselines — two markets can never share a plan_id, so their
+  // runs can never pool into one baseline).
+  const country = input.prompts[0]?.country;
+  const language = input.prompts[0]?.language;
+  const planIdMaterial = slugify(
+    `${input.graph.graph_id}_v${input.graph.graph_version}_${country ?? "unknown"}_${language ?? "unknown"}`,
+  ).slice(0, 80);
   const plan = MonitoringPlanSchema.parse({
     schema_version: SCHEMA_VERSION_V2,
     plan_id: freshStableId("plan", planIdMaterial, new Set()),
@@ -142,8 +149,8 @@ export function buildMonitoringPlan(input: MonitoringPlanInput): MonitoringPlan 
     baseline_rounds: options.baseline_rounds ?? DEFAULT_BASELINE_ROUNDS,
     cadence: options.cadence ?? DEFAULT_CADENCE,
     prompt_ids: input.prompts.map((prompt) => prompt.prompt_id),
-    country: input.prompts[0]?.country,
-    language: input.prompts[0]?.language,
+    country,
+    language,
     data_mode: options.data_mode ?? DEFAULT_PLAN_DATA_MODE,
     created_at: input.createdAt,
     provenance: { source: input.source, retrieved_at: input.createdAt },

@@ -31,6 +31,12 @@ export interface ComputeMetricsOptions {
   brandId: BrandId;
   /** Intent the runs belong to (snapshots group per prompt × platform). */
   intentId: string;
+  /**
+   * Set when pooling a single prompt's runs across platforms: the snapshot
+   * carries prompt_id (the lib export's join key) and a per-prompt snapshot
+   * id. Omitted for the whole-intent pooled snapshot.
+   */
+  promptId?: string;
   /** Brand/competitor alias lexicon for the parser. */
   aliases: BrandAliasConfig;
   /** Defaults to "2.0.0". */
@@ -271,9 +277,15 @@ export function computePooledMetrics(
 
   return MetricsSnapshotSchema.parse({
     schema_version: options.schemaVersion ?? "2.0.0",
-    metrics_id: snapshotId([options.brandId, options.intentId, "pooled"]),
+    metrics_id: snapshotId([
+      options.brandId,
+      options.intentId,
+      ...(options.promptId !== undefined ? [options.promptId] : []),
+      "pooled",
+    ]),
     brand_id: options.brandId,
     intent_id: options.intentId,
+    ...(options.promptId !== undefined ? { prompt_id: options.promptId } : {}),
     visibility_pct: brandVisibility,
     top_competitor_id: gap.topCompetitorId,
     leader_gap_pct: gap.gapPct,

@@ -312,4 +312,16 @@ describe("computePooledMetrics", () => {
     const pooled = computePooledMetrics(SCENARIO_B, OPTIONS);
     expect(pooled.consensus).toBe("stable");
   });
+
+  it("stamps prompt_id and a distinct id when pooling a single prompt's runs", () => {
+    const intentPooled = computePooledMetrics(SCENARIO_B, OPTIONS);
+    const promptPooled = computePooledMetrics(SCENARIO_B, {
+      ...OPTIONS,
+      promptId: "prompt_fridge_runtime",
+    });
+    expect(promptPooled.prompt_id).toBe("prompt_fridge_runtime");
+    expect(promptPooled.platform).toBeUndefined();
+    expect(promptPooled.metrics_id).not.toBe(intentPooled.metrics_id);
+    expect(intentPooled.prompt_id).toBeUndefined();
+  });
 });

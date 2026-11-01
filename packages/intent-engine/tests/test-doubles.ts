@@ -20,6 +20,10 @@ export class FakeClock implements Clock {
     return new Date(this.#now).toISOString();
   }
 
+  nowMs(): number {
+    return this.#now;
+  }
+
   /** Delay sequence handed to sleep(), in order. */
   get sleeps(): readonly number[] {
     return this.#sleeps;
