@@ -1,0 +1,13 @@
+export_spec: Buyer Intent GEO Export v2
+data_mode: llm_simulated
+provenance:
+  source: gemini-2.5-pro
+  retrieved_at: 2026-11-01T00:00:00Z
+brand: brand_solix
+industry: Portable Power Stations
+competitors:
+  - EcoFlow
+  - Jackery
+excluded_prompts:
+  below_visibility_floor: 1
+  noisy_baseline: 1

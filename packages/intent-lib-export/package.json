@@ -1,0 +1,21 @@
+{
+  "name": "@intentvisible/intent-lib-export",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@intentvisible/core-schema": "workspace:*",
+    "yaml": "^2.8.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}

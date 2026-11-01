@@ -1,0 +1,62 @@
+Data Mode: llm_simulated
+(Directional research artifact — LLM-simulated answers, not measured visibility. Connect a measured data provider to re-baseline in provider_measured mode.)
+
+Industry
+
+Portable Power Stations
+
+Brand
+
+brand_solix
+
+Competitors
+- EcoFlow
+- Jackery
+
+------------------------------------------------
+
+Camping fridge runtime
+
+Monthly Search Volume: high tier
+Buyer Stage: Solution Research
+Intent Category: Technical
+
+Revenue Expansion (Visibility ≥50%)
+
+- Which portable power station can run my camping fridge for two nights? (prompt_fridge_runtime_overnight)
+
+Market Expansion (Visibility 30%–49%)
+
+- What size power station do I need for a two-night camping trip with a 12V fridge?
+
+Recommended Content
+
+Comparison page: runtime benchmarks for 12V camping fridges
+
+Recommended CTA
+
+See the runtime calculator
+
+------------------------------------------------
+
+------------------------------------------------
+
+Solar panel compatibility
+
+Monthly Search Volume: medium tier
+Buyer Stage: Vendor Evaluation
+Intent Category: Technical
+
+Market Expansion (Visibility 30%–49%)
+
+- Which solar panels pair with the Solix S2000 for off-grid charging?
+
+Recommended Content
+
+Compatibility matrix: panels and stations
+
+Recommended CTA
+
+Check panel compatibility
+
+------------------------------------------------

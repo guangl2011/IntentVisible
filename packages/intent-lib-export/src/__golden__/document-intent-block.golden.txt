@@ -1,0 +1,24 @@
+
+
+Camping fridge runtime
+
+Monthly Search Volume: high tier
+Buyer Stage: Solution Research
+Intent Category: Technical
+
+Revenue Expansion (Visibility ≥50%)
+
+- Which portable power station can run my camping fridge for two nights? (prompt_fridge_runtime_overnight)
+
+Market Expansion (Visibility 30%–49%)
+
+- What size power station do I need for a two-night camping trip with a 12V fridge?
+
+Recommended Content
+
+Comparison page: runtime benchmarks for 12V camping fridges
+
+Recommended CTA
+
+See the runtime calculator
+
