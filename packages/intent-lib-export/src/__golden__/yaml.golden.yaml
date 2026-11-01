@@ -1,0 +1,83 @@
+export_spec: Buyer Intent GEO Export v2
+data_mode: llm_simulated
+provenance:
+  source: gemini-2.5-pro
+  retrieved_at: 2026-11-01T00:00:00Z
+brand: brand_solix
+industry: Portable Power Stations
+competitors:
+  - EcoFlow
+  - Jackery
+excluded_prompts:
+  below_visibility_floor: 1
+  noisy_baseline: 1
+records:
+  - prompt_id: prompt_fridge_runtime_overnight
+    intent_id: int_camping_fridge_runtime
+    Prompt: Which portable power station can run my camping fridge for two nights? (prompt_fridge_runtime_overnight)
+    Visibility: 84%
+    Data Mode: llm_simulated
+    Buyer Stage: Solution Research
+    Intent Category: Technical
+    Pain Point: Selecting a portable power station that reliably covers fridge runtime
+    Persona: Weekend Camper
+    Scenario Context: Planning a weekend trip and unsure what capacity covers a fridge plus lights
+    Language: en
+    Country: US
+    Brand: brand_solix
+    Competitors:
+      - EcoFlow
+      - Jackery
+    Source: chatgpt_search, perplexity
+    Date: 2026-11-01
+    Provenance:
+      source: gemini-2.5-pro
+      retrieved_at: 2026-11-01T00:00:00Z
+    Recommended Content Strategy: "Comparison page: runtime benchmarks for 12V camping fridges"
+    Recommended CTA: See the runtime calculator
+  - prompt_id: prompt_fridge_runtime_weekend
+    intent_id: int_camping_fridge_runtime
+    Prompt: What size power station do I need for a two-night camping trip with a 12V fridge?
+    Visibility: 42%
+    Data Mode: llm_simulated
+    Buyer Stage: Solution Research
+    Intent Category: Technical
+    Pain Point: Selecting a portable power station that reliably covers fridge runtime
+    Persona: Weekend Camper
+    Scenario Context: Planning a weekend trip and unsure what capacity covers a fridge plus lights
+    Language: en
+    Country: US
+    Brand: brand_solix
+    Competitors:
+      - EcoFlow
+      - Jackery
+    Source: chatgpt_search, perplexity
+    Date: 2026-11-01
+    Provenance:
+      source: gemini-2.5-pro
+      retrieved_at: 2026-11-01T00:00:00Z
+    Recommended Content Strategy: "Comparison page: runtime benchmarks for 12V camping fridges"
+    Recommended CTA: See the runtime calculator
+  - prompt_id: prompt_solar_panel_pairing
+    intent_id: int_solar_panel_compatibility
+    Prompt: Which solar panels pair with the Solix S2000 for off-grid charging?
+    Visibility: 35%
+    Data Mode: llm_simulated
+    Buyer Stage: Vendor Evaluation
+    Intent Category: Technical
+    Pain Point: Selecting a portable power station that reliably covers fridge runtime
+    Persona: Weekend Camper
+    Scenario Context: Planning a weekend trip and unsure what capacity covers a fridge plus lights
+    Language: en
+    Country: US
+    Brand: brand_solix
+    Competitors:
+      - EcoFlow
+      - Jackery
+    Source: chatgpt_search, perplexity
+    Date: 2026-11-01
+    Provenance:
+      source: gemini-2.5-pro
+      retrieved_at: 2026-11-01T00:00:00Z
+    Recommended Content Strategy: "Compatibility matrix: panels and stations"
+    Recommended CTA: Check panel compatibility
