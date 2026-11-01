@@ -9,6 +9,8 @@
  * it names the Stage A contract, not the adapter's.
  */
 
+import type { z, ZodType } from "zod";
+
 import type { Clock } from "../clock.js";
 import { LlmError, type LlmAdapter, type LlmRequest } from "../adapter.js";
 import { type RetryOptions } from "../generate.js";
@@ -86,6 +88,46 @@ export async function completeAndParse<T>(
 /** Same backoff curve as the v1 generator: base doubling, capped at max_delay_ms. */
 function backoffDelayMs(retry: RetryOptions, attempt: number): number {
   return Math.min(retry.max_delay_ms, retry.base_delay_ms * 2 ** (attempt - 1));
+}
+
+/**
+ * Extracts the JSON object from a model response — tolerant at the
+ * envelope level (markdown fences, stray prose). Shared by every
+ * pipeline stage's pass parsers (Stage A modeling, Stage B expansion).
+ */
+export function extractJsonObject(text: string): string {
+  const trimmed = text.trim();
+  const fenced = /^```(?:json)?\s*([\s\S]*?)\s*```$/.exec(trimmed);
+  const body = fenced?.[1] ?? trimmed;
+  const start = body.indexOf("{");
+  const end = body.lastIndexOf("}");
+  if (start === -1 || end === -1 || end < start) {
+    throw new ModelOutputError("no JSON object found in the response");
+  }
+  return body.slice(start, end + 1);
+}
+
+/**
+ * Parses a model response against an envelope schema — the strict outer
+ * shape whose violation is a retryable output error, distinct from the
+ * per-entry content failures that become typed drop events.
+ */
+export function parseEnvelope<S extends ZodType>(text: string, schema: S): z.output<S> {
+  let parsedJson: unknown;
+  try {
+    parsedJson = JSON.parse(extractJsonObject(text));
+  } catch (error) {
+    throw new ModelOutputError(error instanceof Error ? error.message : String(error));
+  }
+  const parsed = schema.safeParse(parsedJson);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const where = issue === undefined ? "root" : issue.path.map(String).join(".") || "root";
+    throw new ModelOutputError(
+      `model output did not match the expected envelope shape at "${where}": ${issue?.message ?? parsed.error.message}`,
+    );
+  }
+  return parsed.data;
 }
 
 export type { RetryOptions };

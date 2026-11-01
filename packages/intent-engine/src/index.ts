@@ -102,6 +102,65 @@ export {
   type StageAReport,
 } from "./stage-a/stage-a.js";
 export {
+  collectGraphClaims,
+  matchClaim,
+  type GraphClaim,
+} from "./stage-b/claims.js";
+export {
+  MAX_PROMPTS_PER_INTENT,
+  MIN_PROMPTS_PER_INTENT,
+  STAGE_B_DROP_REASONS,
+  buildExpansionUserPrompt,
+  buildPromptRecords,
+  dedupPrompts,
+  expansionSystemPrompt,
+  parseExpansion,
+  personaScenarioPairs,
+  type ExpandedPromptDraft,
+  type ExpansionContext,
+  type ExpansionParse,
+  type ExpansionPromptInput,
+  type ExpansionVoice,
+  type PromptCollapse,
+  type PromptDedupReport,
+  type PromptProvenance,
+  type StageBDropEvent,
+  type StageBDropReason,
+} from "./stage-b/expand.js";
+export {
+  DEFAULT_BASELINE_ROUNDS,
+  DEFAULT_CADENCE,
+  DEFAULT_PLAN_DATA_MODE,
+  MONITORING_CADENCES,
+  MonitoringPlanSchema,
+  buildMonitoringPlan,
+  type MonitoringCadence,
+  type MonitoringPlan,
+  type PlanOptions,
+} from "./stage-b/plan.js";
+export {
+  DEFAULT_BATCH_SIZE,
+  MAX_BATCH_SIZE,
+  applySelectionOverrides,
+  selectIntents,
+  type IntentSelection,
+  type SelectOptions,
+  type SelectionReplacement,
+} from "./stage-b/select.js";
+export {
+  DEFAULT_STAGE_B_MARKET,
+  STAGE_B_FAILURE_REASONS,
+  StageBFailure,
+  runStageB,
+  type CollapsedPrompt,
+  type StageBDeps,
+  type StageBFailureReason,
+  type StageBInput,
+  type StageBMarket,
+  type StageBOutcome,
+  type StageBReport,
+} from "./stage-b/stage-b.js";
+export {
   FetchChatAdapter,
   LlmError,
   LLM_ERROR_REASONS,
