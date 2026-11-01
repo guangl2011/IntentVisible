@@ -19,13 +19,22 @@ const nextConfig: NextConfig = {
     // to the API server (default port 4310, or SHOPIFY_API_PROXY).
     // Production sets NEXT_PUBLIC_SHOPIFY_API_BASE instead and no rewrite
     // is needed.
-    if (process.env.NEXT_PUBLIC_SHOPIFY_API_BASE !== undefined) return [];
-    return [
-      {
+    // The Pipeline v2 pages do the same for /pipeline-api/*, driven by
+    // NEXT_PUBLIC_PIPELINE_API_BASE / PIPELINE_API_PROXY.
+    const rewrites: { source: string; destination: string }[] = [];
+    if (process.env.NEXT_PUBLIC_SHOPIFY_API_BASE === undefined) {
+      rewrites.push({
         source: "/shopify-api/:path*",
         destination: `${process.env.SHOPIFY_API_PROXY ?? "http://127.0.0.1:4310"}/:path*`,
-      },
-    ];
+      });
+    }
+    if (process.env.NEXT_PUBLIC_PIPELINE_API_BASE === undefined) {
+      rewrites.push({
+        source: "/pipeline-api/:path*",
+        destination: `${process.env.PIPELINE_API_PROXY ?? "http://127.0.0.1:4310"}/:path*`,
+      });
+    }
+    return rewrites;
   },
 };
 

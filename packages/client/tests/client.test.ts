@@ -10,6 +10,7 @@ import {
   ValidationError,
   createAgentClient,
   createDashboardClient,
+  createPipelineClient,
   type FetchLike,
 } from "../src/index.js";
 import { parseJsonBody, stubFetch } from "./test-doubles.js";
@@ -230,5 +231,45 @@ describe("createDashboardClient.decide", () => {
     await expect(badSession.client.decide("int_1", "APPROVED")).rejects.toBeInstanceOf(
       UnauthorizedError,
     );
+  });
+});
+
+describe("createPipelineClient.decideGate", () => {
+  function makePipeline(responses: Array<{ status: number; body?: unknown }>) {
+    const fetchImpl = stubFetch(responses);
+    const client = createPipelineClient({ baseUrl: BASE, fetchImpl });
+    return { client, fetchImpl };
+  }
+
+  const review = {
+    review_id: "rev_1",
+    project_id: "prj_1",
+    pipeline_id: "pl_1",
+    gate: 1,
+    status: "approved",
+    timeout_at: "2026-11-01T00:00:00.000Z",
+    decided_at: "2026-11-01T00:00:00.000Z",
+    note: null,
+    created_at: "2026-11-01T00:00:00.000Z",
+  } as const;
+
+  it("posts approvals to the API's approve route", async () => {
+    const { client, fetchImpl } = makePipeline([{ status: 200, body: review }]);
+
+    await client.decideGate("rev_1", "approved");
+
+    expect(fetchImpl.calls[0]!.url).toBe(`${BASE}/v2/gates/rev_1/approve`);
+    expect(parseJsonBody(fetchImpl.calls[0]!.init)).toEqual({});
+  });
+
+  it("posts rejections to the reject route with the feedback note", async () => {
+    const { client, fetchImpl } = makePipeline([
+      { status: 200, body: { ...review, status: "rejected", note: "tighten personas" } },
+    ]);
+
+    await client.decideGate("rev_1", "rejected", "tighten personas");
+
+    expect(fetchImpl.calls[0]!.url).toBe(`${BASE}/v2/gates/rev_1/reject`);
+    expect(parseJsonBody(fetchImpl.calls[0]!.init)).toEqual({ notes: "tighten personas" });
   });
 });

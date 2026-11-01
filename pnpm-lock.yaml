@@ -257,6 +257,12 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
     devDependencies:
+      '@intentvisible/core-schema':
+        specifier: workspace:*
+        version: link:../../packages/core-schema
+      '@intentvisible/intent-lib-export':
+        specifier: workspace:*
+        version: link:../../packages/intent-lib-export
       '@playwright/test':
         specifier: ^1.50.0
         version: 1.64.1
@@ -284,6 +290,9 @@ importers:
       '@intentvisible/core-schema':
         specifier: workspace:*
         version: link:../core-schema
+      '@intentvisible/intent-lib-export':
+        specifier: workspace:*
+        version: link:../intent-lib-export
     devDependencies:
       vitest:
         specifier: ^3.2.4

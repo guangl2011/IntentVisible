@@ -9,6 +9,7 @@
   "scripts": {
     "start": "tsx src/server.ts",
     "dev:fixtures": "tsx src/dev-fixture-server.ts",
+    "dev:pipeline": "tsx src/dev-pipeline-server.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
