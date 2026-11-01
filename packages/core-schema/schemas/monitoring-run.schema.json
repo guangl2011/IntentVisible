@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "monitoring-run.schema.json",
+  "title": "MonitoringRun",
+  "description": "One monitoring answer (Pipeline v2 blueprint Stage C.1): the immutable snapshot of a single simulated or measured answer to a single prompt on one platform. raw_answer is snapshotted before parsing — parsed fields must be reproducible from it. data_mode is restricted to the measurement-side modes: llm_estimated is a demand-side mode and can never describe a run.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "prompt_id",
+    "platform",
+    "round",
+    "raw_answer",
+    "raw_answer_content_hash",
+    "citations",
+    "model_id",
+    "country",
+    "language",
+    "ran_at",
+    "data_mode",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersionV2"
+    },
+    "run_id": {
+      "$ref": "#/$defs/RunId"
+    },
+    "prompt_id": {
+      "$ref": "#/$defs/PromptId"
+    },
+    "platform": {
+      "$ref": "#/$defs/Platform"
+    },
+    "round": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Baseline round this run belongs to (1-3 for a standard baseline)."
+    },
+    "raw_answer": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100000,
+      "description": "Immutable answer snapshot, stored before any parsing."
+    },
+    "raw_answer_content_hash": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Content hash of raw_answer; the snapshot key downstream parsers re-derive from."
+    },
+    "citations": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https?://"
+      },
+      "description": "Domains/URLs cited in the answer (simulated: the plausible domain set)."
+    },
+    "model_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Provider/model that produced the answer, e.g. 'gemini-2.5-pro'."
+    },
+    "country": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$"
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2}$"
+    },
+    "ran_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data_mode": {
+      "$ref": "#/$defs/RunDataMode"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    }
+  },
+  "$defs": {
+    "SchemaVersionV2": {
+      "type": "string",
+      "pattern": "^2\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+    },
+    "RunId": {
+      "type": "string",
+      "pattern": "^run_[a-z0-9_]{1,100}$"
+    },
+    "PromptId": {
+      "type": "string",
+      "pattern": "^prompt_[a-z0-9_]{1,100}$"
+    },
+    "Platform": {
+      "enum": ["chatgpt_search", "perplexity", "google_ai_overviews", "gemini"]
+    },
+    "RunDataMode": {
+      "enum": ["llm_simulated", "provider_measured"]
+    },
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "retrieved_at"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Producing source, e.g. 'gemini-2.5-pro' or 'dataforseo'."
+        },
+        "retrieved_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

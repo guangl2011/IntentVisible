@@ -13,3 +13,16 @@ export type {
   SkuSummary,
 } from "./product-profile.js";
 export type { SkuIntentMapping } from "./sku-intent-mapping.js";
+export type { Persona, Provenance, Trait } from "./persona.js";
+export type { Scenario } from "./scenario.js";
+export type { PromptRecord } from "./prompt-record.js";
+export type { MonitoringRun } from "./monitoring-run.js";
+export type { MetricsSnapshot, CitationShare } from "./metrics-snapshot.js";
+export type {
+  MarketingGraph,
+  CompetitorNode,
+  DemandEstimate,
+  FitEstimate,
+  GapEstimate,
+  IntentTopicNode,
+} from "./marketing-graph.js";

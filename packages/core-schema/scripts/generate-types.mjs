@@ -66,6 +66,52 @@ const ENTITIES = [
     outFile: "sku-intent-mapping.ts",
     reExports: ["SkuIntentMapping"],
   },
+  // Pipeline v2 schemas (blueprint art_9zAvKcEq). Provenance and Trait are
+  // defined in every v2 file's $defs (self-contained files, v1 pattern);
+  // the index re-exports them exactly once, from the persona module.
+  {
+    schema: "persona.schema.json",
+    typeName: "Persona",
+    outFile: "persona.ts",
+    reExports: ["Persona", "Provenance", "Trait"],
+  },
+  {
+    schema: "scenario.schema.json",
+    typeName: "Scenario",
+    outFile: "scenario.ts",
+    reExports: ["Scenario"],
+  },
+  {
+    schema: "prompt-record.schema.json",
+    typeName: "PromptRecord",
+    outFile: "prompt-record.ts",
+    reExports: ["PromptRecord"],
+  },
+  {
+    schema: "monitoring-run.schema.json",
+    typeName: "MonitoringRun",
+    outFile: "monitoring-run.ts",
+    reExports: ["MonitoringRun"],
+  },
+  {
+    schema: "metrics-snapshot.schema.json",
+    typeName: "MetricsSnapshot",
+    outFile: "metrics-snapshot.ts",
+    reExports: ["MetricsSnapshot", "CitationShare"],
+  },
+  {
+    schema: "marketing-graph.schema.json",
+    typeName: "MarketingGraph",
+    outFile: "marketing-graph.ts",
+    reExports: [
+      "MarketingGraph",
+      "CompetitorNode",
+      "DemandEstimate",
+      "FitEstimate",
+      "GapEstimate",
+      "IntentTopicNode",
+    ],
+  },
 ];
 
 const STYLE = {

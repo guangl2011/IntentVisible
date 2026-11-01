@@ -8,16 +8,40 @@
  */
 
 export * from "./enums.js";
+export * from "./enums-v2.js";
 export * from "./version.js";
 export * from "./primitives.js";
+export * from "./primitives-v2.js";
 export * from "./intent-record.js";
 export * from "./brand-profile.js";
 export * from "./product-profile.js";
 export * from "./sku-intent-mapping.js";
+export * from "./persona.js";
+export * from "./scenario.js";
+export * from "./prompt-record.js";
+export * from "./monitoring-run.js";
+export * from "./metrics-snapshot.js";
+export * from "./marketing-graph.js";
+export * from "./legacy-mapping.js";
 
 export type {
   BrandProfile,
   IntentRecord,
   ProductProfile,
   SkuIntentMapping,
+  Persona,
+  Scenario,
+  PromptRecord,
+  MonitoringRun,
+  MetricsSnapshot,
+  MarketingGraph,
+  // Shared v2 defs (defined once per generated module; re-exported here exactly once).
+  Provenance,
+  Trait,
+  CitationShare,
+  CompetitorNode,
+  DemandEstimate,
+  FitEstimate,
+  GapEstimate,
+  IntentTopicNode,
 } from "./generated/index.js";

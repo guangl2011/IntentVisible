@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "persona.schema.json",
+  "title": "Persona",
+  "description": "Persona node (Pipeline v2 blueprint Stage A.2): one of the 3-4 MECE personas, with the six standard fields (PSI Skill section 2). Evidence integrity: every trait cites snapshot evidence via evidence_urls or carries the explicit assumption flag — an uncited, unflagged trait is a typed validation drop (validation family 1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "persona_id",
+    "brand_id",
+    "archetype",
+    "demographics",
+    "core_frustrations",
+    "cognitive_biases",
+    "decision_triggers",
+    "ai_language_fingerprint",
+    "data_mode",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersionV2",
+      "description": "SemVer of the Pipeline v2 contract; major version must be 2."
+    },
+    "persona_id": {
+      "$ref": "#/$defs/PersonaId",
+      "description": "Stable identifier; Stage B prompts reference persona_id so metrics can be cut by persona."
+    },
+    "brand_id": {
+      "$ref": "#/$defs/BrandId"
+    },
+    "archetype": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Short persona label, e.g. 'Weekend Camper'."
+    },
+    "demographics": {
+      "$ref": "#/$defs/Trait"
+    },
+    "core_frustrations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "$ref": "#/$defs/Trait"
+      }
+    },
+    "cognitive_biases": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "$ref": "#/$defs/Trait"
+      },
+      "description": "Cognitive biases and objections (PSI Skill field 4)."
+    },
+    "decision_triggers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "$ref": "#/$defs/Trait"
+      }
+    },
+    "ai_language_fingerprint": {
+      "$ref": "#/$defs/Trait",
+      "description": "The AI-search phrasing patterns this persona uses (PSI Skill field 6)."
+    },
+    "data_mode": {
+      "$ref": "#/$defs/DataMode",
+      "description": "Mode of the modeling pass that produced this persona (llm_estimated in lightweight mode)."
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "SchemaVersionV2": {
+      "type": "string",
+      "pattern": "^2\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+    },
+    "PersonaId": {
+      "type": "string",
+      "pattern": "^persona_[a-z0-9_]{1,100}$"
+    },
+    "BrandId": {
+      "type": "string",
+      "pattern": "^brand_[a-z0-9_]{1,100}$"
+    },
+    "DataMode": {
+      "enum": ["llm_estimated", "llm_simulated", "provider_measured"]
+    },
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "retrieved_at"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Producing source, e.g. 'gemini-2.5-pro' or 'dataforseo'."
+        },
+        "retrieved_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "Trait": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "assumption", "evidence_urls"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "assumption": {
+          "type": "boolean",
+          "description": "True when the claim is not stated by the crawled site; uncited claims must be flagged, never silently presented as evidenced."
+        },
+        "evidence_urls": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https?://"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "assumption": {
+                "const": false
+              }
+            },
+            "required": ["assumption"]
+          },
+          "then": {
+            "properties": {
+              "evidence_urls": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
