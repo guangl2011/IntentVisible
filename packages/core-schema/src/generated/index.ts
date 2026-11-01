@@ -18,6 +18,7 @@ export type { Scenario } from "./scenario.js";
 export type { PromptRecord } from "./prompt-record.js";
 export type { MonitoringRun } from "./monitoring-run.js";
 export type { MetricsSnapshot, CitationShare } from "./metrics-snapshot.js";
+export type { IntentRecordV2, MeasurementProvenance } from "./intent-record-v2.js";
 export type {
   MarketingGraph,
   CompetitorNode,

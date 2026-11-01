@@ -14,7 +14,10 @@
   },
   "dependencies": {
     "@intentvisible/core-schema": "workspace:*",
+    "@intentvisible/data-providers": "workspace:*",
+    "@intentvisible/intent-lib-export": "workspace:*",
     "@intentvisible/intent-engine": "workspace:*",
+    "@intentvisible/metrics": "workspace:*",
     "@intentvisible/shopify-connector": "workspace:*",
     "@intentvisible/url-extractor": "workspace:*",
     "@libsql/client": "^0.18.0",

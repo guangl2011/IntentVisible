@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  IntentRecordV2Schema,
   MarketingGraphSchema,
   MetricsSnapshotSchema,
   MonitoringRunSchema,
@@ -10,6 +11,7 @@ import {
 } from "./index.js";
 import {
   cloneFixture,
+  exampleIntentRecordV2,
   exampleIntentTopic,
   exampleMarketingGraph,
   exampleMetricsSnapshot,
@@ -17,6 +19,7 @@ import {
   examplePersona,
   examplePromptRecord,
   exampleScenario,
+  V2_TIMESTAMP,
 } from "./fixtures-v2.js";
 
 import { ensureParsed, isRejected, issuePaths } from "../tests/helpers.js";
@@ -35,9 +38,9 @@ describe("PersonaRecordSchema", () => {
   });
 
   it("requires provenance on generated records (data-mode integrity)", () => {
-    expect(isRejected(PersonaRecordSchema, { ...cloneFixture(examplePersona), provenance: undefined })).toBe(
-      true,
-    );
+    expect(
+      isRejected(PersonaRecordSchema, { ...cloneFixture(examplePersona), provenance: undefined }),
+    ).toBe(true);
     expect(
       isRejected(PersonaRecordSchema, {
         ...cloneFixture(examplePersona),
@@ -47,9 +50,9 @@ describe("PersonaRecordSchema", () => {
   });
 
   it("requires data_mode", () => {
-    expect(isRejected(PersonaRecordSchema, { ...cloneFixture(examplePersona), data_mode: undefined })).toBe(
-      true,
-    );
+    expect(
+      isRejected(PersonaRecordSchema, { ...cloneFixture(examplePersona), data_mode: undefined }),
+    ).toBe(true);
   });
 
   it("rejects a non-assumption trait with no evidence (evidence integrity)", () => {
@@ -59,7 +62,9 @@ describe("PersonaRecordSchema", () => {
   });
 
   it("rejects unknown extra keys (strict objects)", () => {
-    expect(isRejected(PersonaRecordSchema, { ...cloneFixture(examplePersona), title: "Dr" })).toBe(true);
+    expect(isRejected(PersonaRecordSchema, { ...cloneFixture(examplePersona), title: "Dr" })).toBe(
+      true,
+    );
   });
 });
 
@@ -70,9 +75,12 @@ describe("ScenarioRecordSchema", () => {
   });
 
   it("rejects an unknown scenario type", () => {
-    expect(isRejected(ScenarioRecordSchema, { ...cloneFixture(exampleScenario), scenario_type: "final_compare" })).toBe(
-      true,
-    );
+    expect(
+      isRejected(ScenarioRecordSchema, {
+        ...cloneFixture(exampleScenario),
+        scenario_type: "final_compare",
+      }),
+    ).toBe(true);
   });
 });
 
@@ -84,15 +92,23 @@ describe("PromptRecordSchema", () => {
   });
 
   it("rejects legacy v1 enum values (Consideration is not a v2 stage)", () => {
-    expect(isRejected(PromptRecordSchema, { ...cloneFixture(examplePromptRecord), buyer_stage: "Consideration" })).toBe(
-      true,
-    );
+    expect(
+      isRejected(PromptRecordSchema, {
+        ...cloneFixture(examplePromptRecord),
+        buyer_stage: "Consideration",
+      }),
+    ).toBe(true);
   });
 
   it("enforces the prompt text bounds (the buyer's actual phrasing)", () => {
-    expect(isRejected(PromptRecordSchema, { ...cloneFixture(examplePromptRecord), text: "too short" })).toBe(true);
     expect(
-      isRejected(PromptRecordSchema, { ...cloneFixture(examplePromptRecord), text: `x${"x".repeat(1000)}` }),
+      isRejected(PromptRecordSchema, { ...cloneFixture(examplePromptRecord), text: "too short" }),
+    ).toBe(true);
+    expect(
+      isRejected(PromptRecordSchema, {
+        ...cloneFixture(examplePromptRecord),
+        text: `x${"x".repeat(1000)}`,
+      }),
     ).toBe(true);
   });
 
@@ -106,7 +122,9 @@ describe("PromptRecordSchema", () => {
   });
 
   it("rejects an unknown status", () => {
-    expect(isRejected(PromptRecordSchema, { ...cloneFixture(examplePromptRecord), status: "approved" })).toBe(true);
+    expect(
+      isRejected(PromptRecordSchema, { ...cloneFixture(examplePromptRecord), status: "approved" }),
+    ).toBe(true);
   });
 });
 
@@ -119,7 +137,10 @@ describe("MonitoringRunSchema", () => {
 
   it("rejects llm_estimated as a run data mode — estimates never describe answers", () => {
     expect(
-      isRejected(MonitoringRunSchema, { ...cloneFixture(exampleMonitoringRun), data_mode: "llm_estimated" }),
+      isRejected(MonitoringRunSchema, {
+        ...cloneFixture(exampleMonitoringRun),
+        data_mode: "llm_estimated",
+      }),
     ).toBe(true);
   });
 
@@ -130,12 +151,17 @@ describe("MonitoringRunSchema", () => {
 
   it("requires the raw-answer snapshot hash", () => {
     expect(
-      isRejected(MonitoringRunSchema, { ...cloneFixture(exampleMonitoringRun), raw_answer_content_hash: undefined }),
+      isRejected(MonitoringRunSchema, {
+        ...cloneFixture(exampleMonitoringRun),
+        raw_answer_content_hash: undefined,
+      }),
     ).toBe(true);
   });
 
   it("rejects baseline round 0", () => {
-    expect(isRejected(MonitoringRunSchema, { ...cloneFixture(exampleMonitoringRun), round: 0 })).toBe(true);
+    expect(
+      isRejected(MonitoringRunSchema, { ...cloneFixture(exampleMonitoringRun), round: 0 }),
+    ).toBe(true);
   });
 
   it("rejects non-http(s) citations", () => {
@@ -157,10 +183,16 @@ describe("MetricsSnapshotSchema", () => {
 
   it("rejects a metric without its provenance block", () => {
     expect(
-      isRejected(MetricsSnapshotSchema, { ...cloneFixture(exampleMetricsSnapshot), provenance: undefined }),
+      isRejected(MetricsSnapshotSchema, {
+        ...cloneFixture(exampleMetricsSnapshot),
+        provenance: undefined,
+      }),
     ).toBe(true);
     expect(
-      isRejected(MetricsSnapshotSchema, { ...cloneFixture(exampleMetricsSnapshot), data_mode: undefined }),
+      isRejected(MetricsSnapshotSchema, {
+        ...cloneFixture(exampleMetricsSnapshot),
+        data_mode: undefined,
+      }),
     ).toBe(true);
   });
 
@@ -182,7 +214,10 @@ describe("MetricsSnapshotSchema", () => {
 
   it("keeps void_rate within 0-100 (the >=25 tag is derived downstream)", () => {
     expect(
-      isRejected(MetricsSnapshotSchema, { ...cloneFixture(exampleMetricsSnapshot), void_rate_pct: 100.1 }),
+      isRejected(MetricsSnapshotSchema, {
+        ...cloneFixture(exampleMetricsSnapshot),
+        void_rate_pct: 100.1,
+      }),
     ).toBe(true);
   });
 });
@@ -203,15 +238,18 @@ describe("MarketingGraphSchema", () => {
 
   it("rejects duplicate ids in any node collection", () => {
     const duplicateIntent = cloneFixture(exampleMarketingGraph);
-    (duplicateIntent.intent_topics as Array<Record<string, unknown>>)[1]!.intent_id = "int_camping_fridge_runtime";
+    (duplicateIntent.intent_topics as Array<Record<string, unknown>>)[1]!.intent_id =
+      "int_camping_fridge_runtime";
     expect(issuePaths(MarketingGraphSchema, duplicateIntent)).toContain("intent_topics");
 
     const duplicatePersona = cloneFixture(exampleMarketingGraph);
-    (duplicatePersona.personas as Array<Record<string, unknown>>)[1]!.persona_id = "persona_weekend_camper";
+    (duplicatePersona.personas as Array<Record<string, unknown>>)[1]!.persona_id =
+      "persona_weekend_camper";
     expect(issuePaths(MarketingGraphSchema, duplicatePersona)).toContain("personas");
 
     const duplicateCompetitor = cloneFixture(exampleMarketingGraph);
-    (duplicateCompetitor.competitors as Array<Record<string, unknown>>)[1]!.brand_id = "brand_ecoflow";
+    (duplicateCompetitor.competitors as Array<Record<string, unknown>>)[1]!.brand_id =
+      "brand_ecoflow";
     expect(issuePaths(MarketingGraphSchema, duplicateCompetitor)).toContain("competitors");
   });
 
@@ -226,10 +264,16 @@ describe("MarketingGraphSchema", () => {
     const lowFitWithoutReason = {
       ...exampleIntentTopic,
       intent_id: "int_other",
-      fit: { score: 0.4, data_mode: "llm_estimated", provenance: { source: "gemini-2.5-pro", retrieved_at: "2026-11-01T00:00:00Z" } },
+      fit: {
+        score: 0.4,
+        data_mode: "llm_estimated",
+        provenance: { source: "gemini-2.5-pro", retrieved_at: "2026-11-01T00:00:00Z" },
+      },
     };
     (graph.intent_topics as Array<Record<string, unknown>>)[1] = lowFitWithoutReason;
-    expect(issuePaths(MarketingGraphSchema, graph)).toContain("intent_topics.1.fit.mismatch_reason");
+    expect(issuePaths(MarketingGraphSchema, graph)).toContain(
+      "intent_topics.1.fit.mismatch_reason",
+    );
   });
 
   it("accepts a fit score of exactly 0.5 without a mismatch reason", () => {
@@ -237,7 +281,11 @@ describe("MarketingGraphSchema", () => {
     const boundary = {
       ...exampleIntentTopic,
       intent_id: "int_other",
-      fit: { score: 0.5, data_mode: "llm_estimated", provenance: { source: "gemini-2.5-pro", retrieved_at: "2026-11-01T00:00:00Z" } },
+      fit: {
+        score: 0.5,
+        data_mode: "llm_estimated",
+        provenance: { source: "gemini-2.5-pro", retrieved_at: "2026-11-01T00:00:00Z" },
+      },
     };
     (graph.intent_topics as Array<Record<string, unknown>>)[1] = boundary;
     expect(isRejected(MarketingGraphSchema, graph)).toBe(false);
@@ -249,7 +297,9 @@ describe("MarketingGraphSchema", () => {
       ...(exampleIntentTopic.volume as Record<string, unknown>),
       monthly_volume: 840,
     };
-    expect(issuePaths(MarketingGraphSchema, graph)).toContain("intent_topics.0.volume.monthly_volume");
+    expect(issuePaths(MarketingGraphSchema, graph)).toContain(
+      "intent_topics.0.volume.monthly_volume",
+    );
   });
 
   it("accepts a volume number only under provider_measured", () => {
@@ -261,5 +311,96 @@ describe("MarketingGraphSchema", () => {
       provenance: { source: "dataforseo", retrieved_at: "2026-11-01T00:00:00Z" },
     };
     expect(isRejected(MarketingGraphSchema, graph)).toBe(false);
+  });
+});
+
+describe("IntentRecordV2Schema", () => {
+  it("parses the published example record (simulated with full provenance)", () => {
+    const record = ensureParsed(IntentRecordV2Schema, exampleIntentRecordV2);
+    expect(record.measurement_status).toBe("simulated");
+    expect(record.measurement_provenance?.model_id).toBe("gemini-2.5-pro");
+    expect(record.measurement_provenance?.date_range.from).toBe(V2_TIMESTAMP);
+  });
+
+  it("rejects legacy v1 enum values (Consideration is not a v2 stage)", () => {
+    expect(
+      isRejected(IntentRecordV2Schema, {
+        ...cloneFixture(exampleIntentRecordV2),
+        buyer_stage: "Consideration",
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects a simulated record without measurement provenance (a number without its origin)", () => {
+    const noProvenance = cloneFixture(exampleIntentRecordV2);
+    delete noProvenance.measurement_provenance;
+    expect(isRejected(IntentRecordV2Schema, noProvenance)).toBe(true);
+  });
+
+  it("rejects a simulated record with null visibility or null source", () => {
+    expect(
+      isRejected(IntentRecordV2Schema, {
+        ...cloneFixture(exampleIntentRecordV2),
+        visibility_pct: null,
+      }),
+    ).toBe(true);
+    expect(
+      isRejected(IntentRecordV2Schema, {
+        ...cloneFixture(exampleIntentRecordV2),
+        measurement_source: null,
+      }),
+    ).toBe(true);
+  });
+
+  it("accepts a not_measured draft only with null measurement fields and no provenance", () => {
+    const draft = {
+      ...cloneFixture(exampleIntentRecordV2),
+      intent_version: 1,
+      measurement_status: "not_measured",
+      measurement_source: null,
+      measurement_provenance: undefined,
+      visibility_pct: null,
+    };
+    expect(isRejected(IntentRecordV2Schema, draft)).toBe(false);
+    expect(isRejected(IntentRecordV2Schema, { ...draft, visibility_pct: 12 })).toBe(true);
+    expect(
+      isRejected(IntentRecordV2Schema, {
+        ...draft,
+        measurement_provenance: {
+          source: "x",
+          model_id: "y",
+          date_range: { from: V2_TIMESTAMP, to: V2_TIMESTAMP },
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it("accepts provider_measured for the advanced tier", () => {
+    const measured = {
+      ...cloneFixture(exampleIntentRecordV2),
+      measurement_status: "measured",
+      measurement_source: "dataforseo",
+      measurement_provenance: {
+        source: "dataforseo",
+        model_id: "dataforseo",
+        date_range: { from: V2_TIMESTAMP, to: V2_TIMESTAMP },
+      },
+    };
+    expect(isRejected(IntentRecordV2Schema, measured)).toBe(false);
+  });
+
+  it("rejects an inverted provenance date range", () => {
+    const inverted = cloneFixture(exampleIntentRecordV2);
+    (inverted.measurement_provenance as Record<string, unknown>).date_range = {
+      from: "2026-11-02T00:00:00Z",
+      to: "2026-11-01T00:00:00Z",
+    };
+    expect(isRejected(IntentRecordV2Schema, inverted)).toBe(true);
+  });
+
+  it("rejects unknown extra keys (strict objects)", () => {
+    expect(
+      isRejected(IntentRecordV2Schema, { ...cloneFixture(exampleIntentRecordV2), title: "Dr" }),
+    ).toBe(true);
   });
 });

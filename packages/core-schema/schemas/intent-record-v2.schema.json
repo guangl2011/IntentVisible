@@ -1,0 +1,309 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "intent-record-v2.schema.json",
+  "title": "IntentRecordV2",
+  "description": "Canonical buyer-intent record for the Pipeline v2 contract (blueprint art_9zAvKcEq, Stage C.3 lib publish): the v1 record's fields under the canonical Export Spec v2 vocabulary, with the measurement vocabulary extended to 'simulated' (lightweight tier) alongside 'measured' (advanced tier). Lib publish flips matching intent records to one of the two with full measurement provenance (source, model_id, date range) and bumps the intent version. The v1 invariant is preserved and sharpened: a not_measured record carries no measurement values and no measurement provenance, and a simulated record is never presented as measured.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "intent_id",
+    "intent_version",
+    "scope",
+    "brand_id",
+    "intent_name",
+    "buyer_stage",
+    "intent_category",
+    "country",
+    "language",
+    "prompts",
+    "sku_ids",
+    "evidence_urls",
+    "generation_method",
+    "measurement_status",
+    "measurement_source",
+    "visibility_pct",
+    "monthly_search_volume",
+    "confidence"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersionV2"
+    },
+    "intent_id": {
+      "$ref": "#/$defs/IntentId",
+      "description": "Stable identifier; survives rewording via semantic dedup so re-runs update rather than duplicate."
+    },
+    "intent_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Bumped on every regeneration of the same intent_id — including the lib publish and monitoring-drift bumps."
+    },
+    "scope": {
+      "enum": ["brand", "product"],
+      "description": "Brand-level or product-level intent."
+    },
+    "brand_id": {
+      "$ref": "#/$defs/BrandId"
+    },
+    "intent_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "buyer_stage": {
+      "$ref": "#/$defs/BuyerStageV2"
+    },
+    "intent_category": {
+      "$ref": "#/$defs/IntentCategoryV2"
+    },
+    "persona": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Target buyer persona."
+    },
+    "pain_point": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "country": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$",
+      "description": "ISO 3166-1 alpha-2 market."
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2}$",
+      "description": "ISO 639-1 language code."
+    },
+    "prompts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      },
+      "description": "Natural-language buyer prompts; may be multi-language per market."
+    },
+    "recommended_content": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "recommended_cta": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "sku_ids": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/SkuId"
+      },
+      "description": "Related SKUs; typically empty for brand-scope intents. Authoritative SKU linkage lives in SkuIntentMapping."
+    },
+    "evidence_urls": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https?://"
+      },
+      "description": "Page evidence this record was derived from; every record carries at least one URL."
+    },
+    "generation_method": {
+      "$ref": "#/$defs/GenerationMethod"
+    },
+    "generation_model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Model identifier and version that produced the record, when LLM-generated."
+    },
+    "measurement_status": {
+      "$ref": "#/$defs/MeasurementStatusV2"
+    },
+    "measurement_source": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Origin of measured values (e.g. 'gemini-2.5-pro' or 'dataforseo'). Must be null when measurement_status is 'not_measured', non-null when 'simulated' or 'measured'."
+    },
+    "measurement_provenance": {
+      "$ref": "#/$defs/MeasurementProvenance",
+      "description": "Full publish provenance (source, model_id, date range over the underlying runs). Required when measurement_status is 'simulated' or 'measured'; must be absent when 'not_measured'."
+    },
+    "visibility_pct": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Measured (or simulated, under the data mode's label) visibility. Must be null when measurement_status is 'not_measured'."
+    },
+    "monthly_search_volume": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Third-party measured search volume. Must be null when measurement_status is 'not_measured' and stays null under llm_simulated demand tiers."
+    },
+    "confidence": {
+      "$ref": "#/$defs/Confidence",
+      "description": "Confidence in page-evidence support for this record — never a conversion prediction."
+    },
+    "opportunity_type": {
+      "enum": ["hypothesis"],
+      "description": "Standalone-mode substitute for the measurement-derived revenue/market expansion labels."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the record was generated."
+    }
+  },
+  "$defs": {
+    "SchemaVersionV2": {
+      "type": "string",
+      "pattern": "^2\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+    },
+    "IntentId": {
+      "type": "string",
+      "pattern": "^int_[a-z0-9_]{1,100}$"
+    },
+    "BrandId": {
+      "type": "string",
+      "pattern": "^brand_[a-z0-9_]{1,100}$"
+    },
+    "SkuId": {
+      "type": "string",
+      "pattern": "^sku_[a-z0-9_]{1,100}$"
+    },
+    "BuyerStageV2": {
+      "enum": [
+        "Awareness",
+        "Problem Discovery",
+        "Solution Research",
+        "Vendor Evaluation",
+        "Purchase",
+        "Expansion"
+      ]
+    },
+    "IntentCategoryV2": {
+      "enum": [
+        "Educational",
+        "Pain Point",
+        "Solution Research",
+        "Vendor Comparison",
+        "Pricing",
+        "ROI",
+        "Implementation",
+        "Technical",
+        "Compliance",
+        "Future Trends"
+      ]
+    },
+    "GenerationMethod": {
+      "enum": ["llm_with_page_evidence", "deterministic_extraction", "imported"]
+    },
+    "MeasurementStatusV2": {
+      "enum": ["not_measured", "imported", "simulated", "measured"]
+    },
+    "Confidence": {
+      "enum": ["low", "medium", "high"]
+    },
+    "MeasurementProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "model_id", "date_range"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Producing source, e.g. 'gemini-2.5-pro' or 'dataforseo'."
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Provider/model that produced the underlying monitoring answers."
+        },
+        "date_range": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["from", "to"],
+          "properties": {
+            "from": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "to": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "measurement_status": {
+            "const": "not_measured"
+          }
+        },
+        "required": ["measurement_status"]
+      },
+      "then": {
+        "properties": {
+          "measurement_source": {
+            "const": null
+          },
+          "visibility_pct": {
+            "const": null
+          },
+          "monthly_search_volume": {
+            "const": null
+          }
+        },
+        "not": {
+          "required": ["measurement_provenance"]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "measurement_status": {
+            "enum": ["simulated", "measured"]
+          }
+        },
+        "required": ["measurement_status"]
+      },
+      "then": {
+        "required": ["measurement_provenance"],
+        "properties": {
+          "measurement_source": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "visibility_pct": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "measurement_provenance": {
+            "$ref": "#/$defs/MeasurementProvenance"
+          }
+        }
+      }
+    }
+  ]
+}

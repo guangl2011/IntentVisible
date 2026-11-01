@@ -100,6 +100,7 @@ export {
   type StageAInput,
   type StageAOutcome,
   type StageAReport,
+  type StageAStep,
 } from "./stage-a/stage-a.js";
 export {
   collectGraphClaims,
@@ -159,6 +160,7 @@ export {
   type StageBMarket,
   type StageBOutcome,
   type StageBReport,
+  type StageBStep,
 } from "./stage-b/stage-b.js";
 export {
   FetchChatAdapter,

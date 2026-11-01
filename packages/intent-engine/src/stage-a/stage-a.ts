@@ -70,7 +70,15 @@ export interface StageADeps {
   keywordProvider: KeywordVolumeSource;
   /** The simulated visibility probe (A.1 spot check; v1 SimulatedMonitoringRunner fits). */
   spotCheckRunner: SpotCheckRunner;
+  /**
+   * Optional per-phase progress hook — the pipeline orchestrator maps these
+   * onto its job state machine (crawling → research → modeling → estimating).
+   */
+  onStep?: (step: StageAStep) => void;
 }
+
+/** Pipeline state-machine statuses Stage A walks through, in run order. */
+export type StageAStep = "crawling" | "research" | "modeling" | "estimating";
 
 export interface StageAReport {
   pages_crawled: number;
@@ -112,6 +120,7 @@ export async function runStageA(input: StageAInput, deps: StageADeps): Promise<S
   const graphVersion = input.graph_version ?? 1;
   const retry: RetryOptions = { ...DEFAULT_RETRY_OPTIONS, ...deps.retry };
 
+  deps.onStep?.("crawling");
   // --- 1. crawl plan ---
   const crawl = await executeCrawlPlan(
     { siteUrl: input.siteUrl, cap },
@@ -142,6 +151,7 @@ export async function runStageA(input: StageAInput, deps: StageADeps): Promise<S
   });
 
   // --- 3. A.1 entity resolution ---
+  deps.onStep?.("research");
   let entityParse: Awaited<ReturnType<typeof runEntityPass>>;
   try {
     entityParse = await runEntityPass(input, deps, evidence, registry, retry);
@@ -175,6 +185,7 @@ export async function runStageA(input: StageAInput, deps: StageADeps): Promise<S
   }
 
   // --- 5. A.2 personas, scenarios, candidate intent topics ---
+  deps.onStep?.("modeling");
   let modelingParse: Awaited<ReturnType<typeof runPersonasPass>>;
   try {
     modelingParse = await runPersonasPass(input, deps, evidence, entity, registry, retry);
@@ -196,6 +207,7 @@ export async function runStageA(input: StageAInput, deps: StageADeps): Promise<S
   }
 
   // --- 6. tier-only demand (A.3), then assembly + deterministic tier (A.4) ---
+  deps.onStep?.("estimating");
   const scoredTopics: ScoredTopicParts[] = [];
   try {
     for (const topic of topics) {

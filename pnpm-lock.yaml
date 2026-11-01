@@ -195,9 +195,18 @@ importers:
       '@intentvisible/core-schema':
         specifier: workspace:*
         version: link:../../packages/core-schema
+      '@intentvisible/data-providers':
+        specifier: workspace:*
+        version: link:../../packages/data-providers
       '@intentvisible/intent-engine':
         specifier: workspace:*
         version: link:../../packages/intent-engine
+      '@intentvisible/intent-lib-export':
+        specifier: workspace:*
+        version: link:../../packages/intent-lib-export
+      '@intentvisible/metrics':
+        specifier: workspace:*
+        version: link:../../packages/metrics
       '@intentvisible/shopify-connector':
         specifier: workspace:*
         version: link:../../packages/shopify-connector

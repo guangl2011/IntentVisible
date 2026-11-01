@@ -95,7 +95,15 @@ export interface StageBDeps {
   adapter: LlmAdapter;
   clock: Clock;
   retry?: Partial<RetryOptions>;
+  /**
+   * Optional per-phase progress hook — the pipeline orchestrator maps these
+   * onto its job state machine (selecting → expanding).
+   */
+  onStep?: (step: StageBStep) => void;
 }
+
+/** Pipeline state-machine statuses Stage B walks through, in run order. */
+export type StageBStep = "selecting" | "expanding";
 
 /** One collapsed near-duplicate, joined to the canonical's minted prompt id (QA log only). */
 export interface CollapsedPrompt {
@@ -135,6 +143,7 @@ export async function runStageB(deps: StageBDeps, input: StageBInput): Promise<S
   const market = input.market ?? DEFAULT_STAGE_B_MARKET;
   const dropped: StageBDropEvent[] = [];
 
+  deps.onStep?.("selecting");
   // B.1 — deterministic selection (+ optional customer replacements).
   let selection = selectIntents(graph, { batch_size: input.batch_size });
   if (input.overrides !== undefined && input.overrides.length > 0) {
@@ -175,6 +184,7 @@ export async function runStageB(deps: StageBDeps, input: StageBInput): Promise<S
   const drafts: ExpandedPromptDraft[] = [];
   let expansionModel = "unknown";
 
+  deps.onStep?.("expanding");
   for (const intent of batch) {
     const request = {
       system: expansionSystemPrompt(),

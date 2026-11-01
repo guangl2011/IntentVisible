@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
+  IntentRecordV2Schema,
   MarketingGraphSchema,
   MetricsSnapshotSchema,
   MonitoringRunSchema,
@@ -13,6 +14,7 @@ import {
   ScenarioRecordSchema,
   SCHEMA_VERSION_V2,
   SUPPORTED_SCHEMA_MAJOR_V2,
+  type IntentRecordV2,
   type MarketingGraph,
   type MetricsSnapshot,
   type MonitoringRun,
@@ -21,6 +23,7 @@ import {
   type Scenario,
 } from "../src/index.js";
 import {
+  exampleIntentRecordV2,
   exampleMarketingGraph,
   exampleMetricsSnapshot,
   exampleMonitoringRun,
@@ -38,6 +41,7 @@ type AddFormats = (ajv: Ajv2020) => void;
 const addFormats = addFormatsDefault as unknown as AddFormats;
 
 const V2_SCHEMA_FILES = [
+  "intent-record-v2.schema.json",
   "marketing-graph.schema.json",
   "metrics-snapshot.schema.json",
   "monitoring-run.schema.json",
@@ -85,6 +89,7 @@ describe("v2 published JSON Schemas (Ajv draft 2020-12)", () => {
   const validateRun = ajv.compile(loadSchema("monitoring-run.schema.json"));
   const validateMetrics = ajv.compile(loadSchema("metrics-snapshot.schema.json"));
   const validateGraph = ajv.compile(loadSchema("marketing-graph.schema.json"));
+  const validateIntentRecordV2 = ajv.compile(loadSchema("intent-record-v2.schema.json"));
 
   it("accepts all v2 example fixtures", () => {
     expect(validatePersona(examplePersona)).toBe(true);
@@ -93,6 +98,7 @@ describe("v2 published JSON Schemas (Ajv draft 2020-12)", () => {
     expect(validateRun(exampleMonitoringRun)).toBe(true);
     expect(validateMetrics(exampleMetricsSnapshot)).toBe(true);
     expect(validateGraph(exampleMarketingGraph)).toBe(true);
+    expect(validateIntentRecordV2(exampleIntentRecordV2)).toBe(true);
   });
 
   it("keeps Ajv in agreement with Zod: a trait must cite evidence or flag an assumption", () => {
@@ -127,6 +133,29 @@ describe("v2 published JSON Schemas (Ajv draft 2020-12)", () => {
     expect(validateGraph(graph)).toBe(false);
     expect(isRejected(MarketingGraphSchema, graph)).toBe(true);
   });
+
+  it("keeps Ajv in agreement with Zod: a not_measured record never carries measurement provenance", () => {
+    const draft = clone(exampleIntentRecordV2) as Record<string, unknown>;
+    draft.measurement_status = "not_measured";
+    draft.measurement_source = null;
+    draft.visibility_pct = null;
+    delete draft.measurement_provenance;
+    expect(validateIntentRecordV2(draft)).toBe(true);
+    draft.measurement_provenance = {
+      source: "gemini-2.5-pro",
+      model_id: "gemini-2.5-pro",
+      date_range: { from: "2026-11-01T00:00:00Z", to: "2026-11-01T00:00:00Z" },
+    };
+    expect(validateIntentRecordV2(draft)).toBe(false);
+    expect(isRejected(IntentRecordV2Schema, draft)).toBe(true);
+  });
+
+  it("keeps Ajv in agreement with Zod: a simulated record without provenance is rejected", () => {
+    const unpublished = clone(exampleIntentRecordV2) as Record<string, unknown>;
+    delete unpublished.measurement_provenance;
+    expect(validateIntentRecordV2(unpublished)).toBe(false);
+    expect(isRejected(IntentRecordV2Schema, unpublished)).toBe(true);
+  });
 });
 
 describe("v2 generated types (type-drift check)", () => {
@@ -154,6 +183,10 @@ describe("v2 generated types (type-drift check)", () => {
     const graph = ensureParsed(MarketingGraphSchema, exampleMarketingGraph);
     expectTypeOf(graph).toExtend<MarketingGraph>();
     expectTypeOf<MarketingGraph>().toExtend<typeof graph>();
+
+    const intentRecord = ensureParsed(IntentRecordV2Schema, exampleIntentRecordV2);
+    expectTypeOf(intentRecord).toExtend<IntentRecordV2>();
+    expectTypeOf<IntentRecordV2>().toExtend<typeof intentRecord>();
   });
 });
 

@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./testing": "./tests/test-doubles.ts",
+    "./testing/stage-a": "./tests/stage-a/helpers.ts",
+    "./testing/stage-b": "./tests/stage-b/helpers.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
