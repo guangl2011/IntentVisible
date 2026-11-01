@@ -100,6 +100,12 @@ const ENTITIES = [
     reExports: ["MetricsSnapshot", "CitationShare"],
   },
   {
+    schema: "intent-record-v2.schema.json",
+    typeName: "IntentRecordV2",
+    outFile: "intent-record-v2.ts",
+    reExports: ["IntentRecordV2", "MeasurementProvenance"],
+  },
+  {
     schema: "marketing-graph.schema.json",
     typeName: "MarketingGraph",
     outFile: "marketing-graph.ts",

@@ -100,8 +100,7 @@ export const exampleMonitoringRun: Record<string, unknown> = {
   platform: "perplexity",
   round: 1,
   raw_answer: "For a two-night trip, the Example S2000 covers a 12V fridge with headroom...",
-  raw_answer_content_hash:
-    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  raw_answer_content_hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   citations: ["https://www.example.com/products/s2000", "https://rival.example.com/delta2"],
   model_id: "gemini-2.5-pro",
   country: "US",
@@ -231,6 +230,43 @@ export const exampleMarketingGraph: Record<string, unknown> = {
   ],
   data_mode: "llm_estimated",
   provenance: V2_PROVENANCE,
+  generated_at: V2_TIMESTAMP,
+};
+
+/**
+ * Published intent record as lib publish produces it (Stage C.3): flipped to
+ * `simulated` (lightweight tier) with full measurement provenance and the
+ * intent version bumped. The not_measured draft variant is derived in tests
+ * by resetting the measurement fields.
+ */
+export const exampleIntentRecordV2: Record<string, unknown> = {
+  schema_version: "2.0.0",
+  intent_id: "int_camping_fridge_runtime",
+  intent_version: 2,
+  scope: "brand",
+  brand_id: "brand_solix",
+  intent_name: "Camping Fridge Runtime",
+  buyer_stage: "Solution Research",
+  intent_category: "Technical",
+  persona: "Weekend Camper",
+  pain_point: "Cannot tell which power station runs a camping fridge overnight",
+  country: "US",
+  language: "en",
+  prompts: ["Which portable power station can run my camping fridge for two nights?"],
+  sku_ids: [],
+  evidence_urls: ["https://www.example.com/products/s2000"],
+  generation_method: "llm_with_page_evidence",
+  generation_model: "gemini-2.5-pro",
+  measurement_status: "simulated",
+  measurement_source: "gemini-2.5-pro",
+  measurement_provenance: {
+    source: "gemini-2.5-pro",
+    model_id: "gemini-2.5-pro",
+    date_range: { from: V2_TIMESTAMP, to: V2_TIMESTAMP },
+  },
+  visibility_pct: 42.5,
+  monthly_search_volume: null,
+  confidence: "high",
   generated_at: V2_TIMESTAMP,
 };
 

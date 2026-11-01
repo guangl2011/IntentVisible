@@ -13,6 +13,7 @@ export * from "./version.js";
 export * from "./primitives.js";
 export * from "./primitives-v2.js";
 export * from "./intent-record.js";
+export * from "./intent-record-v2.js";
 export * from "./brand-profile.js";
 export * from "./product-profile.js";
 export * from "./sku-intent-mapping.js";
@@ -35,6 +36,7 @@ export type {
   MonitoringRun,
   MetricsSnapshot,
   MarketingGraph,
+  IntentRecordV2,
   // Shared v2 defs (defined once per generated module; re-exported here exactly once).
   Provenance,
   Trait,
@@ -44,4 +46,5 @@ export type {
   FitEstimate,
   GapEstimate,
   IntentTopicNode,
+  MeasurementProvenance,
 } from "./generated/index.js";
