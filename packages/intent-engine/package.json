@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@intentvisible/core-schema": "workspace:*",
+    "@intentvisible/metrics": "workspace:*",
+    "@intentvisible/url-extractor": "workspace:*",
     "zod": "^4.6.7"
   },
   "devDependencies": {

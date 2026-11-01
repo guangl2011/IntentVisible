@@ -8,6 +8,100 @@
 export { ENGINE_PACKAGE_NAME } from "./package-name.js";
 export { SystemClock, type Clock } from "./clock.js";
 export {
+  CRAWL_PAGE_CAP_DEFAULT,
+  CRAWL_PAGE_CAP_WEEKLY,
+  MAX_CRAWL_PAGE_CAP,
+  PAGE_PRIORITY_CLASSES,
+  classifyPagePriority,
+  resolveCrawlCap,
+  executeCrawlPlan,
+  CRAWL_FAILURE_REASONS,
+  type CrawlCapConfig,
+  type CrawlFailureReason,
+  type CrawlPlanFailure,
+  type CrawlPlanInput,
+  type CrawlPlanDeps,
+  type CrawlPlanOutcome,
+  type CrawledPage,
+  type PagePriorityClass,
+} from "./stage-a/crawl-plan.js";
+export {
+  FIT_STRONG_THRESHOLD,
+  FIT_MODERATE_THRESHOLD,
+  derivePriorityTier,
+  type ScoringDimensions,
+} from "./stage-a/scoring.js";
+export {
+  MIN_GRAPH_EVIDENCE_PAGES,
+  STAGE_A_DROP_REASONS,
+  validateTrait,
+  collectGraphEvidenceUrls,
+  type StageADropEvent,
+  type StageADropReason,
+  type RawTrait,
+  type TraitValidationOutcome,
+} from "./stage-a/evidence.js";
+export {
+  SPOT_CHECK_PROMPT_COUNT,
+  entityResolutionSystemPrompt,
+  buildEntityResolutionUserPrompt,
+  personasSystemPrompt,
+  buildPersonasUserPrompt,
+  serializeProfileEvidence,
+  parseEntityResolution,
+  parsePersonasModeling,
+  runModelingPass,
+  type EntityResolutionPromptInput,
+  type EntityResolutionParse,
+  type PersonasModelingParse,
+  type PersonasPromptInput,
+  type ModeledIntentTopic,
+  type ModeledPersona,
+  type ModelingPassResult,
+  type ResolvedCompetitor,
+  type ResolvedEntity,
+  type StageAProfiles,
+} from "./stage-a/modeling.js";
+export {
+  ModelOutputError,
+  StageAFailure,
+  completeAndParse,
+  type StageAFailureShape,
+} from "./stage-a/llm.js";
+export {
+  runSpotCheck,
+  createLlmSpotCheckRunner,
+  StageASpotCheckError,
+  type SpotCheckAnswer,
+  type SpotCheckInput,
+  type SpotCheckResult,
+  type SpotCheckRunner,
+} from "./stage-a/spot-check.js";
+export {
+  estimateTopicDemand,
+  assertVolumeTier,
+  StageADemandError,
+  MAX_KEYWORDS_PER_STAGE_A_REQUEST,
+  type KeywordVolumeSource,
+} from "./stage-a/demand.js";
+export {
+  buildMarketingGraph,
+  freshStableId,
+  STAGE_A_SCHEMA_VERSION,
+  type MarketingGraph,
+  type ScoredTopicParts,
+  type StageAGraphParts,
+} from "./stage-a/graph.js";
+export {
+  runStageA,
+  STAGE_A_FAILURE_REASONS,
+  type StageADeps,
+  type StageAFailureReason,
+  type StageAInput,
+  type StageAOutcome,
+  type StageAReport,
+} from "./stage-a/stage-a.js";
+export {
   FetchChatAdapter,
   LlmError,
   LLM_ERROR_REASONS,
