@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import {
   DASHBOARD_SESSION_COOKIE,
   dashboardSessionToken,
@@ -31,7 +32,10 @@ export async function signIn(formData: FormData): Promise<void> {
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   });
-  redirect("/queue");
+  // No redirect here: proxies that follow redirect responses may drop the
+  // Set-Cookie header, leaving the browser unauthenticated. The login page
+  // re-renders (HTTP 200, cookie intact) and forwards to /queue itself.
+  revalidatePath("/login");
 }
 
 /** Clear the session cookie and return to the login page. */

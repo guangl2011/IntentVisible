@@ -34,7 +34,9 @@ describe("PipelineNav", () => {
   it("marks the active page and links the others", () => {
     const html = renderToStaticMarkup(<PipelineNav active="onboarding" />);
     expect(html).toContain("shopify-nav-active");
-    expect(html).toContain("Onboarding");
+    expect(html).toContain("Site Research");
+    expect(html).toContain("Marketing Map");
+    expect(html).toContain('href="/pipeline/map"');
     expect(html).toContain('href="/pipeline/gates"');
     expect(html).toContain('href="/pipeline/library"');
   });

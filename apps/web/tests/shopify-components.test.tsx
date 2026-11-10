@@ -33,7 +33,8 @@ describe("ShopifyNav", () => {
   it("marks the active page and links the others", () => {
     const html = renderToStaticMarkup(<ShopifyNav active="catalog" />);
     expect(html).toContain("shopify-nav-active");
-    expect(html).toContain("Catalog");
+    expect(html).toContain("Product Pages");
+    expect(html).toContain("Intent → Page");
     expect(html).toContain('href="/shopify/intents"');
   });
 });

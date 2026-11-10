@@ -11,10 +11,10 @@ export { EmptyPanel, ErrorPanel, LoadingPanel };
 export function ShopifyNav({ active }: { active: string }) {
   const items: Array<[string, string]> = [
     ["overview", "Overview"],
-    ["catalog", "Catalog"],
+    ["catalog", "Product Pages"],
     ["intents", "Intents"],
-    ["mappings", "Mappings"],
-    ["pipeline", "Pipeline v2"],
+    ["mappings", "Intent → Page"],
+    ["pipeline", "Site Research"],
   ];
   return (
     <div className="shopify-nav">
