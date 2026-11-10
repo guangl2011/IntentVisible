@@ -3,7 +3,8 @@ import Link from "next/link";
 /** Sub-navigation for the Pipeline v2 pages; presentational only. */
 export function PipelineNav({ active }: { active: string }) {
   const items: Array<[string, string]> = [
-    ["onboarding", "Onboarding"],
+    ["onboarding", "Site Research"],
+    ["map", "Marketing Map"],
     ["gates", "Gates"],
     ["metrics", "Metrics"],
     ["library", "Library"],

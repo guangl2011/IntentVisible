@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // The hosted preview proxy serves the app from a different public origin;
+  // allow its dev-mode cross-origin asset and RSC requests.
+  allowedDevOrigins: ["1ebcqaukxp-3000.hosted.obvious.ai"],
   // Lint runs as a dedicated CI job (`pnpm lint` from the repo root);
   // the production build must not depend on the ESLint toolchain.
   eslint: { ignoreDuringBuilds: true },

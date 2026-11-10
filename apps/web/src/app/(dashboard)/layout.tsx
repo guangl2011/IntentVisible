@@ -24,9 +24,11 @@ export default async function DashboardLayout({
         </Link>
         <div className="nav-links">
           <Link href="/queue">Queue</Link>
+          <Link href="/pipeline/onboarding">Research</Link>
+          <Link href="/pipeline/map">Marketing Map</Link>
+          <Link href="/shopify">Intent Match</Link>
           <Link href="/history">History</Link>
           <Link href="/agents">Agents</Link>
-          <Link href="/shopify">Shopify</Link>
         </div>
         <form action={signOut}>
           <button type="submit" className="linklike">
