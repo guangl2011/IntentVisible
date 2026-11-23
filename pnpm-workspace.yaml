@@ -14,3 +14,5 @@ overrides:
   # Two critical advisories (GHSA affecting tinypool <=2.1.0 and <2.1.2) arrive
   # transitively via vitest@3; vitest 3's own range still resolves 1.x.
   tinypool: ">=2.1.2"
+  # effect <=3.22.0 high advisory arrives transitively via @prisma/config.
+  effect: ">=3.22.1"
