@@ -26,6 +26,7 @@ export default async function DashboardLayout({
           <Link href="/queue">Queue</Link>
           <Link href="/pipeline/onboarding">Research</Link>
           <Link href="/pipeline/map">Marketing Map</Link>
+          <Link href="/plugin">Plugin</Link>
           <Link href="/shopify">Intent Match</Link>
           <Link href="/history">History</Link>
           <Link href="/agents">Agents</Link>
