@@ -19,6 +19,7 @@
     "@intentvisible/intent-lib-export": "workspace:*",
     "@intentvisible/intent-engine": "workspace:*",
     "@intentvisible/metrics": "workspace:*",
+    "@intentvisible/plugin-schema": "workspace:*",
     "@intentvisible/shopify-connector": "workspace:*",
     "@intentvisible/url-extractor": "workspace:*",
     "@libsql/client": "^0.18.0",

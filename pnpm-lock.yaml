@@ -208,6 +208,9 @@ importers:
       '@intentvisible/metrics':
         specifier: workspace:*
         version: link:../../packages/metrics
+      '@intentvisible/plugin-schema':
+        specifier: workspace:*
+        version: link:../../packages/plugin-schema
       '@intentvisible/shopify-connector':
         specifier: workspace:*
         version: link:../../packages/shopify-connector
