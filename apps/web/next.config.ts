@@ -37,6 +37,14 @@ const nextConfig: NextConfig = {
         destination: `${process.env.PIPELINE_API_PROXY ?? "http://127.0.0.1:4310"}/:path*`,
       });
     }
+    // The plugin Phase I pages call /plugin-api/*; same dev proxy default
+    // (the fixture server serves the plugin read surface on the API port).
+    if (process.env.NEXT_PUBLIC_PLUGIN_API_BASE === undefined) {
+      rewrites.push({
+        source: "/plugin-api/:path*",
+        destination: `${process.env.PLUGIN_API_PROXY ?? "http://127.0.0.1:4310"}/:path*`,
+      });
+    }
     return rewrites;
   },
 };
