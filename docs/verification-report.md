@@ -115,3 +115,81 @@ First-cohort crawl-yield quality and the spot-check of simulated vs real platfor
 ## Visual evidence
 
 This change set is documentation-only (no UI diff); visual evidence is not applicable. The UI acceptance criteria were evidenced on PR #39 against its tested head SHA.
+
+---
+
+# Plugin Phase I acceptance evidence
+
+Verified against `main` at `bac6d22` (PR #47 merged), on branch `test/plugin-dashboard`. Local runs used Node 20 + pnpm 12.16.1 + PostgreSQL 17 (CI gates on 16; the suites are version-agnostic). Spec: `docs/plan/intentvisible-plugin-design-v1.4.md` §2, verification bars from the local testing plan's Test Dashboard Design.
+
+## Merged PRs shipping plugin Phase I
+
+| PR | Merge commit | Area |
+|---|---|---|
+| #44 | `32c466b` | plugin-schema: Phase I data model + deterministic demo seed |
+| #45 | `1fa912b` | plugin-logic: performance billing + attribution engine + connector stubs |
+| #46 | `716e3f4` | api: plugin Phase I endpoints — fixtures mode, `data_mode` guard, five-module reads |
+| #47 | `bac6d22` | web: seven plugin surfaces, fixtures `data_mode`, typed client, demo-tenant binding |
+
+## Test counts per layer (local run)
+
+**Layer 1 — static checks:** `pnpm lint`, `pnpm typecheck`, `pnpm generate:check`, `pnpm build` — all exit 0.
+
+**Layer 2 — full fixture suite (`pnpm test`, no DB, no keys):** **816 passed, 33 skipped** (the skips are exactly the DB-backed `apps/web` block, which Layer 3 runs). Per workspace:
+
+| Workspace | Tests |
+|---|---|
+| packages/core-schema | 128 |
+| packages/data-providers | 56 |
+| packages/metrics | 40 |
+| packages/intent-lib-export | 32 |
+| packages/intent-engine | 130 |
+| packages/url-extractor | 29 |
+| packages/intent-importer | 16 |
+| packages/shopify-connector | 52 |
+| packages/plugin-schema | 21 |
+| packages/plugin-logic | 62 |
+| packages/client | 23 |
+| apps/api | 80 |
+| apps/web (without DB) | 147 passed, 33 skipped |
+
+**Layer 3 — DB-backed web suite (`DATABASE_URL` + `prisma migrate deploy`):** **180 passed, 0 skipped** (17 files; the 33 DB-backed tests now run and pass).
+
+**Layer 7 — Playwright e2e (`pnpm --filter @intentvisible/web e2e`):** **15 passed**, including the 8-test plugin-flow spec (`apps/web/e2e/plugin-flow.spec.ts`) added by this branch. Playwright boots both servers itself: the Next dev server (as before) plus the API fixture server (`dev:fixtures`, in-memory SQLite — no Postgres, no keys) as a second `webServer`, readiness-probed on the seeded overview endpoint.
+
+## Seed rules → passing checks (scope ①)
+
+The deterministic demo seed drives every dashboard panel correctly on merged `main`; no drift was found, so no fixture patch was needed. Every number below is asserted *exactly* in the new e2e spec, so seed drift now fails CI instead of surfacing in front of a merchant:
+
+| Test-plan seed rule | Evidence |
+|---|---|
+| One unit left not_measured; one unit single-day-snapshot labeled | `packages/plugin-schema/tests/seed.test.ts` — "leaves exactly one unit not_measured"; "labels exactly one unit as a single-day snapshot"; e2e "buyer intents" renders `12.8% · chatgpt.com · 2026-11-22 → 2026-11-22 · single-day snapshot` and the explicit `not measured` badge for `intent_solar_sizing` |
+| S2000-shaped intent units with persona × stage × pain point | `seed.test.ts` — "uses S2000-shaped intent units…"; "is deterministic — two builds are deep-equal"; e2e asserts three unit names render |
+| AI-referral sessions from chatgpt.com / gemini / perplexity | `seed.test.ts` — "covers all three AI-referral sources and carries a refund-offset ledger row"; e2e overview asserts "5 AI-referral sessions in the last 7 days" |
+| Refunded order with the exact refund offset | e2e "commission" asserts totals `$146.72` gross / `−$49.90` refund offsets / `$96.82` net and the `#1002` row netting to `$0.00` with status `refunded`; `apps/api/src/plugin/routes.test.ts` — "reconciles gross → refund offsets → net per order" |
+| Visibility provenance (engine set + measurement window) | `routes.test.ts` — "carries visibility provenance: engine set and measurement window"; e2e asserts the full provenance string `41.2% · chatgpt.com, perplexity · 2026-11-16 → 2026-11-22 · rolling` |
+
+## Red lines → passing checks (scope ②)
+
+| Red line (test plan) | Evidence |
+|---|---|
+| No invented search volumes anywhere | `plugin-logic/tests/attribution.test.ts` — "keeps not_measured demand not_measured — no invented volumes"; "refuses a not_measured estimate that smuggles a demand value"; e2e asserts the funnel renders "Demand is held tier-only (no invented search volumes)" and a negative scan for "search volume" on Buyer Intents |
+| Single-day snapshot never presented as steady state | e2e asserts the `single-day snapshot` suffix on the snapshot badge; `routes.test.ts` — "labels the single-day snapshot as its own state" |
+| Settlement withheld for simulated data | `routes.test.ts` — "withholds settlement over llm_simulated data"; e2e asserts the "Settlement — withheld" panel with its reason |
+| Estimated / heuristic labeling | e2e asserts the `estimated` badge on demand tiers and "every score on this table is estimated" on Opportunity Scores, the withheld state for the not-measured unit's score, and the heuristic label on both the Intent Health Score and Intent Audit readiness |
+| Measured vs simulated separation | `routes.test.ts` data_mode contract block (serving-mode check, typed `data_mode_mismatch`, mixed-mode rejection, unknown-mode rejection); e2e asserts the simulated Data Mode header on Overview |
+| Not-measured never fabricates a value | `routes.test.ts` — "serves not_measured as its own state — never a fabricated value"; e2e asserts the explicit badge |
+| Free install + performance-only pricing | `packages/plugin-logic/tests/billing.test.ts` (commission calculator: free install, tier bands, refund offsets; Track B stub rejected); Commission page renders per-order billing fields only |
+| Private data never routes through treg.to | `packages/plugin-logic/tests/connectors.test.ts` (treg.to stub is public-intel only, developer key, pay-per-call); e2e Integrations asserts "no private data of yours ever routes through treg.to" and the Phase II stub state |
+
+## Dashboard acceptance checklist (Test Dashboard Design)
+
+| Acceptance point | Status |
+|---|---|
+| Passcode login gates the plugin pages | ✅ verified — exercised by every e2e test (`/login` → `/queue`) |
+| All plugin pages render 200 with seeded data (Overview, Buyer Intents, Attribution, Intent Audit, Intent Match, Commission, Integrations) | ✅ verified — all seven surfaces navigated and asserted against the deterministic seed |
+| Every number shows provenance or an estimated/heuristic label | ✅ verified — per the red-line table above |
+| Clean browser with no localStorage binding auto-selects the demo project | ✅ verified — each e2e test runs in a fresh context (no stored binding) and still reaches `shop_solix_demo`; unit-backed by `apps/web/tests/plugin-pages.test.ts` "defaults to the demo tenant when nothing is stored" |
+| Passcode login works **through the hosted proxy** (`https://1ebcqaukxp-3000.hosted.obvious.ai`) | ⚠️ unverified this run — verified locally (the login flow the e2e exercises is the same one the proxy fronts); the hosted deployment itself was not re-tested |
+| Demand Gap Market Expansion bucket renders from seed data | ⚠️ partially verified — the bucket thresholds are unit-tested ("buckets 30–49% as market_expansion (edges inclusive)") and the rendered bucket vocabulary includes Market Expansion, but no seed row currently falls in the 30–49% band, so the row-level badge is not exercised by the demo seed |
+
