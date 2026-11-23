@@ -33,6 +33,7 @@ import {
   registerOrchestrationRoutes,
   type OrchestrationDeps,
 } from "./orchestration/routes.js";
+import { registerPluginRoutes, type PluginDeps } from "./plugin/routes.js";
 
 export interface ApiDeps {
   pipeline: AnalyzePipeline;
@@ -49,6 +50,12 @@ export interface ApiDeps {
    * install-triggered pipelines, gates, monitoring schedules, publishes.
    */
   orchestration?: OrchestrationDeps;
+  /**
+   * When the plugin Phase I surface is composed, the /v1/plugin routes
+   * mount: overview, buyer intents, attribution, audit, match, commission
+   * — read-only, shop-scoped, data_mode-headered.
+   */
+  plugin?: PluginDeps;
 }
 
 const MarketsSchema = z
@@ -165,6 +172,10 @@ export function buildApp(deps: ApiDeps): FastifyInstance {
 
   if (deps.orchestration) {
     registerOrchestrationRoutes(app, deps.orchestration);
+  }
+
+  if (deps.plugin) {
+    registerPluginRoutes(app, deps.plugin);
   }
 
   return app;

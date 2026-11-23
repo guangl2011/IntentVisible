@@ -21,6 +21,8 @@ import { AnalyzePipeline } from "./pipeline.js";
 import { MemoryJobStore, MemoryLibraryStore } from "./store.js";
 import { buildApp } from "./app.js";
 import { registerShopifyRoutes } from "./shopify/routes.js";
+import { DrizzlePluginReadStore, openSeededPluginDb } from "./plugin/store.js";
+import { DEMO_SHOP_ID, SEED_AS_OF } from "@intentvisible/plugin-schema/seed";
 import {
   TEST_ACCESS_TOKEN,
   TEST_CLIENT_SECRET,
@@ -151,6 +153,11 @@ async function main(): Promise<void> {
     jobStore,
     libraryStore,
     shopifyStore: deps.store,
+    plugin: {
+      store: new DrizzlePluginReadStore(await openSeededPluginDb()),
+      dataMode: "llm_simulated",
+      asOf: SEED_AS_OF,
+    },
   });
   registerShopifyRoutes(app, deps);
 
@@ -160,6 +167,7 @@ async function main(): Promise<void> {
   console.log(`  store id:     ${TEST_STORE_ID} (${TEST_SHOP_DOMAIN})`);
   console.log(`  access token: ${TEST_ACCESS_TOKEN} / client secret: ${TEST_CLIENT_SECRET} (fixtures only)`);
   console.log("  catalog fake: 2 derivable products; sync/generate jobs run in-process.");
+  console.log(`  plugin demo:  /v1/plugin/shops/${DEMO_SHOP_ID}/… (data_mode: llm_simulated, as of ${SEED_AS_OF})`);
 }
 
 main().catch((error: unknown) => {
