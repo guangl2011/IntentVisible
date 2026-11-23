@@ -30,9 +30,10 @@ pnpm --filter @intentvisible/web generate   # prisma client — required before 
 pnpm -r build                               # build all workspaces
 pnpm test                                   # all suites (DB-backed web suites skip without DATABASE_URL)
 pnpm lint && pnpm typecheck && pnpm generate:check
-pnpm --filter @intentvisible/api start             # API server (tsx src/server.ts)
-pnpm --filter @intentvisible/web dev               # web app
-pnpm --filter @intentvisible/web e2e               # Playwright (needs DATABASE_URL + running app)
+pnpm --filter @intentvisible/api dev:fixtures      # API on fixtures (port 4310) — deterministic demo seed, no keys
+pnpm --filter @intentvisible/api dev:pipeline      # API with real orchestration
+pnpm --filter @intentvisible/web dev               # web app (proxies /plugin-api/* etc. to 4310 in dev)
+pnpm --filter @intentvisible/web e2e               # Playwright — boots BOTH servers itself (web + API fixtures)
 ```
 
 If you run a `next build` locally, note it rewrites the tracked
@@ -152,9 +153,14 @@ installed → crawling → research → modeling → estimating
 ## Local verification steps (evidence)
 
 1. `pnpm lint`, `pnpm typecheck`, `pnpm generate:check` — all exit 0.
-2. `pnpm test` — 671 tests passing (core-schema 128, intent-engine 130,
-   data-providers 56, api 56, shopify-connector 52, metrics 40,
-   intent-lib-export 32, url-extractor 29, importer 16, client 23, web 109;
-   web DB suites skip locally, run in CI against Postgres 16).
-3. Full breakdown of spec criterion → test file is in
-   `docs/verification-report.md`; CI on `main` green across all merged PRs.
+2. `pnpm test` — 816 tests passing, 33 skipped (the DB-backed web block;
+   core-schema 128, intent-engine 130, plugin-logic 62, data-providers 56,
+   api 80, shopify-connector 52, metrics 40, intent-lib-export 32,
+   url-extractor 29, importer 16, plugin-schema 21, client 23, web 147).
+3. With `DATABASE_URL` + `prisma migrate deploy`: web suites run 180/180.
+4. `pnpm --filter @intentvisible/web e2e` — 15 Playwright tests, including
+   the 8-test plugin-flow spec asserting the seed rules and red lines;
+   Playwright boots the web server and the API fixture server itself.
+5. Full breakdown of spec criterion → test file is in
+   `docs/verification-report.md` (Pipeline v2 13 criteria + plugin Phase I
+   acceptance evidence); CI on `main` green across all merged PRs.
