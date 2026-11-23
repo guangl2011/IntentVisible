@@ -398,6 +398,16 @@ importers:
         specifier: ^3.2.4
         version: 3.2.7(@types/node@20.19.43)(jiti@2.7.0)(supports-color@7.2.0)(tsx@4.23.15)(yaml@2.9.1)
 
+  packages/plugin-logic:
+    dependencies:
+      '@intentvisible/plugin-schema':
+        specifier: workspace:*
+        version: link:../plugin-schema
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@20.19.43)(jiti@2.7.0)(supports-color@7.2.0)(tsx@4.23.15)(yaml@2.9.1)
+
   packages/plugin-schema:
     dependencies:
       '@intentvisible/core-schema':
