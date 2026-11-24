@@ -710,7 +710,7 @@ export const zh: Dictionary = {
 
   overview: {
     title: "概览",
-    subtitle: "店铺的 agentic 状态一览：今天要处理什么、AI 引擎如何看你的店、意图系统是否健康。",
+    subtitle: "店铺的 AI 就绪状态一览：今天要处理什么、AI 引擎如何看你的店、意图系统是否健康。",
     alert: {
       title: "今日提醒",
       calmTitle: "一切正常",
@@ -739,7 +739,7 @@ export const zh: Dictionary = {
       milestoneNote: "首笔意图归因成交里程碑：在账本记录到第一笔意图关联销售当天推送。",
     },
     summary: {
-      title: "店铺 Agentic 摘要",
+      title: "店铺 AI 就绪摘要",
       summary: (intents: number, personas: number, sessions: number) =>
         `${intents} 个生效意图，覆盖 ${personas} 类人群画像；近 7 天 ${sessions} 次 AI 推荐会话。`,
       statPersonas: "人群画像（地图规模）",
