@@ -147,7 +147,7 @@ export function StoreSummaryBlock({ summary }: { summary: OverviewPayload["agent
               <span className="muted">{t.overview.summary.statSessions}</span> <SourceLabel kind="measured" />
             </div>
             <div className="iv-stat">
-              <span className="iv-stat-value iv-stat-live">live</span>
+              <span className="iv-stat-value iv-stat-live">{t.overview.summary.liveStatus}</span>
               <span className="muted">{t.overview.summary.statLlms}</span> <SimulatedLabel what="llms.txt" />
             </div>
           </div>
@@ -162,8 +162,8 @@ export function StoreSummaryBlock({ summary }: { summary: OverviewPayload["agent
         <div className="iv-hero-side">
           <p className="iv-hero-side-title">{t.overview.summary.platformCloudTitle}</p>
           <PlatformCloud platforms={AI_PLATFORMS} />
-          <DonutChart slices={AI_PLATFORM_DISTRIBUTION_FIXTURE} title={t.common.simulatedTitle("platform distribution")} />
-          <SimulatedLabel what="platform distribution" />
+          <DonutChart slices={AI_PLATFORM_DISTRIBUTION_FIXTURE} title={t.common.simulatedTitle(t.simLabels.platformDistribution)} />
+          <SimulatedLabel what={t.simLabels.platformDistribution} />
           <Link className="btn iv-hero-cta" href="/plugin/attribution">
             {t.overview.summary.cta}
           </Link>
@@ -258,7 +258,7 @@ export function ModuleCardsBlock({ data }: { data: ModuleCardData }) {
             {data.activeIntentCount} <span className="muted">{t.overview.modules.library.metricLabel}</span>
           </p>
           <MiniTrendLine points={INTENT_TREND_FIXTURE} title={t.common.simulatedTitle(t.overview.modules.library.trendLabel)} />
-          <p className="muted">{t.overview.modules.library.trendLabel} <SimulatedLabel what="trend" /></p>
+          <p className="muted">{t.overview.modules.library.trendLabel} <SimulatedLabel what={t.simLabels.trend} /></p>
           <p className="iv-module-desc">{t.overview.modules.library.desc}</p>
           <Link className="btn" href="/plugin/library">{t.overview.modules.library.open}</Link>
         </div>

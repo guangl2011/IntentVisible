@@ -102,7 +102,6 @@ export function PluginTopNav() {
       <div className="iv-topnav-main">
         <Link href="/plugin" className="iv-topnav-brand">
           <PluginLogo />
-          <span className="iv-topnav-name">IntentVisible</span>
           <span className="iv-topnav-suffix">{t.nav.appSuffix}</span>
         </Link>
         <ul className="iv-topnav-links">

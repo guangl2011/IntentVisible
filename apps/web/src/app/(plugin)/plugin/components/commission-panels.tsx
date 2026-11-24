@@ -216,14 +216,14 @@ export function CommissionOrderTable({ payload }: { payload: CommissionLedgerPay
             <tr>
               <th>{t.commission.headers.order}</th>
               <th>
-                {t.commission.headers.orderDate} <SimulatedLabel what="demo dates" />
+                {t.commission.headers.orderDate} <SimulatedLabel what={t.simLabels.demoDates} />
               </th>
               <th>{t.commission.headers.billedPeriod}</th>
               <th>
                 {t.commission.headers.attribution} <SourceLabel kind="attribution_model" />
               </th>
               <th>
-                {t.commission.headers.orderTotal} <SimulatedLabel what="demo totals" />
+                {t.commission.headers.orderTotal} <SimulatedLabel what={t.simLabels.demoTotals} />
               </th>
               <th>{t.commission.headers.rate}</th>
               <th>
