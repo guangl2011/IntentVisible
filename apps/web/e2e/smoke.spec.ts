@@ -21,3 +21,31 @@ test("root URL serves the passcode form and login lands on the queue", async ({
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.waitForURL("/queue");
 });
+
+/**
+ * Proxied-login regression: behind the hosted proxy, x-forwarded-host is the
+ * internal upstream host while the browser origin stays the public URL, and
+ * Next.js Server Actions abort that mismatch. Simulate it here by injecting
+ * a mismatched x-forwarded-host onto every request (the browser origin stays
+ * http://localhost:3000). The middleware must reconcile the headers on the
+ * login POST to / — otherwise the sign-in click fails with "Invalid Server
+ * Actions request" exactly as it does on hosted.
+ */
+test("login works when forwarded headers mismatch the origin, like the hosted proxy", async ({
+  page,
+}) => {
+  await page.route("**/*", async (route) => {
+    await route.continue({
+      headers: {
+        ...route.request().headers(),
+        "x-forwarded-host": "3000-id5offrwj3hj3mibwwjui.e2b.app",
+      },
+    });
+  });
+
+  await page.goto("/");
+
+  await page.getByLabel("Passcode").fill(E2E_PASSCODE);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.waitForURL("/queue");
+});
