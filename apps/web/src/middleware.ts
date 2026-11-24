@@ -20,10 +20,10 @@ import { NextResponse, type NextRequest } from "next/server";
  * caller's origin.
  */
 export function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname === "/") {
-    return NextResponse.rewrite(new URL("/login", request.url));
-  }
-
+  // Reconcile forwarding headers FIRST, for every request: the login Server
+  // Action POSTs to /, so the root rewrite below is exactly the request that
+  // needs normalized headers — an early return before this block would skip
+  // reconciliation and Next.js would abort the action behind the proxy.
   const headers = new Headers(request.headers);
   const origin = headers.get("origin");
   const forwardedHost = headers.get("x-forwarded-host");
@@ -33,7 +33,13 @@ export function middleware(request: NextRequest) {
     headers.set("x-forwarded-proto", new URL(origin).protocol.replace(":", ""));
   }
 
-  return NextResponse.next({ request: { headers } });
+  const requestInit = { request: { headers } };
+
+  if (request.nextUrl.pathname === "/") {
+    return NextResponse.rewrite(new URL("/login", request.url), requestInit);
+  }
+
+  return NextResponse.next(requestInit);
 }
 
 export const config = {
