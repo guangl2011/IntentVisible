@@ -967,3 +967,321 @@ button.danger:disabled {
   margin-bottom: 0.4rem;
 }
 
+
+/* ============================================================
+   Plugin frame — Polaris-faithful local tokens (design §2.7).
+   No custom visual skin: surface, subdued text, interactive blue,
+   and semantic status colors follow Polaris token values.
+   ============================================================ */
+:root {
+  --p-surface: #ffffff;
+  --p-surface-subdued: #fafafa;
+  --p-background: #f1f1f1;
+  --p-border: #e3e3e3;
+  --p-divider: #ebebeb;
+  --p-text: #1a1a1a;
+  --p-text-subdued: #6d7175;
+  --p-interactive: #2c6ecb;
+  --p-critical: #d72c0d;
+  --p-warning: #8a6116;
+  --p-success: #008060;
+}
+
+.polaris-frame {
+  min-height: 100vh;
+  background: var(--p-background);
+  color: var(--p-text);
+}
+
+.polaris-contextbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--p-surface);
+  border-bottom: 1px solid var(--p-border);
+  padding: 0.6rem 1.25rem;
+  font-size: 0.85rem;
+}
+
+.polaris-contextbar-shop {
+  font-weight: 600;
+}
+
+.polaris-contextbar-app {
+  color: var(--p-text-subdued);
+}
+
+.polaris-body {
+  display: flex;
+  align-items: stretch;
+}
+
+.polaris-nav {
+  width: 232px;
+  flex: 0 0 232px;
+  background: var(--p-surface);
+  border-right: 1px solid var(--p-border);
+  padding: 0.75rem 0.5rem 2rem;
+}
+
+.polaris-nav-group {
+  margin-bottom: 1rem;
+}
+
+.polaris-nav-title {
+  margin: 0 0 0.25rem;
+  padding: 0 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--p-text-subdued);
+}
+
+.polaris-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.polaris-nav-item {
+  display: block;
+  padding: 0.4rem 0.75rem;
+  border-radius: 7px;
+  color: var(--p-text);
+  font-size: 0.875rem;
+}
+
+.polaris-nav-item:hover {
+  text-decoration: none;
+  background: var(--p-surface-subdued);
+}
+
+.polaris-nav-active {
+  background: #e5f1fa;
+  color: var(--p-interactive);
+  font-weight: 600;
+}
+
+.polaris-content {
+  flex: 1;
+  padding: 1.5rem 1.75rem 3rem;
+  max-width: 1080px;
+}
+
+.polaris-content h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+}
+
+/* ============================================================
+   §2.9 visual patterns — score ring, terminal pipeline, gauge.
+   Class names match components/visual-patterns.tsx.
+   ============================================================ */
+.score-ring {
+  display: inline-flex;
+}
+
+.score-ring .ring-track {
+  stroke: var(--p-divider);
+}
+
+.score-ring .ring-fill {
+  stroke: var(--p-interactive);
+}
+
+.score-ring .ring-score {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--p-text);
+}
+
+.score-ring.ring-fair .ring-fill {
+  stroke: #e5a83b;
+}
+
+.score-ring.ring-poor .ring-fill {
+  stroke: var(--p-critical);
+}
+
+.terminal-pipeline {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+}
+
+.terminal-step {
+  margin-bottom: 0.9rem;
+}
+
+.terminal-step-title {
+  margin: 0 0 0.25rem;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.terminal-window {
+  background: #1f2328;
+  color: #e6edf3;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.terminal-prompt {
+  color: #7ee2b8;
+}
+
+.terminal-ok {
+  color: #7ee2b8;
+}
+
+.terminal-done {
+  color: var(--p-success);
+  font-weight: 600;
+  margin: 0.5rem 0 0;
+}
+
+.gauge-visual {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.gauge-dial {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.gauge-value {
+  font-size: 2.5rem;
+}
+
+.gauge-max {
+  color: var(--p-text-subdued);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.gauge-subscores {
+  border-top: 1px solid var(--p-divider);
+  padding-top: 0.5rem;
+}
+
+.gauge-subscores summary {
+  cursor: pointer;
+  color: var(--p-interactive);
+  font-size: 0.875rem;
+}
+
+.gauge-subscores ul {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+
+.gauge-subscores li {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--p-divider);
+  font-size: 0.875rem;
+}
+
+.gauge-subscores li:last-child {
+  border-bottom: none;
+}
+
+/* ============================================================
+   §2.2 Overview blocks & shortcuts, §2.5 filter bar, how-it-works.
+   ============================================================ */
+.overview-block {
+  margin-bottom: 1.5rem;
+}
+
+.overview-block > h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.shortcut-card {
+  display: block;
+  color: inherit;
+}
+
+.shortcut-card:hover {
+  text-decoration: none;
+  border-color: var(--p-interactive);
+}
+
+.opportunity-top-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.opportunity-top-list li {
+  margin-bottom: 0.35rem;
+}
+
+.stat-grid-four {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.commission-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.commission-filterbar input[type="search"],
+.commission-filterbar select {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--p-border);
+  border-radius: 7px;
+  background: var(--p-surface);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.commission-export {
+  margin-left: auto;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--p-interactive);
+}
+
+.commission-entry-detail {
+  margin: 0.25rem 0 0;
+  padding-left: 1rem;
+  font-size: 0.8rem;
+  color: var(--p-text-subdued);
+}
+
+.how-it-works {
+  border-left: 3px solid var(--p-interactive);
+  font-size: 0.875rem;
+}
+
+.attribution-subview {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+}
+

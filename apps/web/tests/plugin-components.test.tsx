@@ -1,14 +1,14 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { EstimatedBadge, HeuristicBadge, SeverityBadge, VisibilityProvenanceBadge, bucketLabel, usd } from "../src/app/(dashboard)/plugin/components/badges";
-import { AttributionPanels, DemandGapTable, FunnelTable } from "../src/app/(dashboard)/plugin/components/attribution-panels";
-import { AuditPanels } from "../src/app/(dashboard)/plugin/components/audit-panels";
-import { IntentGroupTable, groupByPersonaStage } from "../src/app/(dashboard)/plugin/components/buyer-intents-panels";
-import { CommissionPanels } from "../src/app/(dashboard)/plugin/components/commission-panels";
-import { MatchPanels, SettlementPanel } from "../src/app/(dashboard)/plugin/components/match-panels";
-import { AlertsPanel, HealthScorePanel, StoreSummaryPanel } from "../src/app/(dashboard)/plugin/components/overview-panels";
-import { PluginNav } from "../src/app/(dashboard)/plugin/components/plugin-nav";
+import { AuditPanels } from "../src/app/(plugin)/plugin/components/audit-panels";
+import { EstimatedBadge, HeuristicBadge, SeverityBadge, VisibilityProvenanceBadge, bucketLabel, usd } from "../src/app/(plugin)/plugin/components/badges";
+import { AttributionPanels, DemandGapTable, FunnelTable } from "../src/app/(plugin)/plugin/components/attribution-panels";
+import { IntentGroupTable, groupByPersonaStage } from "../src/app/(plugin)/plugin/components/buyer-intents-panels";
+import { CommissionPanels } from "../src/app/(plugin)/plugin/components/commission-panels";
+import { NAV_GROUPS } from "../src/app/(plugin)/plugin/components/plugin-frame";
+import { AffiliateVisitsPanel, SettlementPanel } from "../src/app/(plugin)/plugin/components/match-visit-panels";
+import { TodaysAlertBlock, StoreSummaryBlock, HealthScoreBlock, healthSubScores } from "../src/app/(plugin)/plugin/components/overview-panels";
 import {
   ATTRIBUTION,
   AUDIT,
@@ -31,26 +31,48 @@ import {
  * The red-line assertions live here on purpose: provenance on every
  * measured number, not_measured as its own state, estimated/heuristic
  * labels present, single-day snapshots labeled, and settlement withheld
- * for simulated data.
+ * for simulated data. The §2.1 IA grouping is asserted on NAV_GROUPS.
  */
 
-describe("PluginNav", () => {
-  it("links all five modules plus Commission and Integrations, with Overview active by default", () => {
-    const html = renderToStaticMarkup(<PluginNav active="" />);
-    expect(html).toContain('href="/plugin/intents"');
-    expect(html).toContain('href="/plugin/attribution"');
-    expect(html).toContain('href="/plugin/audit"');
-    expect(html).toContain('href="/plugin/match"');
-    expect(html).toContain('href="/plugin/commission"');
-    expect(html).toContain('href="/plugin/integrations"');
-    expect(html).not.toContain('href="/plugin"'); // the active entry renders as a span
-    expect(html).toContain("plugin-nav-active");
+describe("NAV_GROUPS — the §2.1 IA grouping", () => {
+  it("groups the plugin surfaces into Build / Optimize / Monetize / Settings", () => {
+    const titles = NAV_GROUPS.map((group) => group.title);
+    expect(titles).toEqual([
+      "Overview",
+      "Intent Library · Build",
+      "Intent Audit · Optimize",
+      "Intent Match · Monetize",
+      "Settings",
+    ]);
   });
 
-  it("marks the active entry without a link", () => {
-    const html = renderToStaticMarkup(<PluginNav active="attribution" />);
-    expect(html).toContain("plugin-nav-active");
-    expect(html).not.toContain('href="/plugin/attribution"');
+  it("carries every designed surface as a nav entry", () => {
+    const entries = NAV_GROUPS.flatMap((group) => group.items);
+    const hrefs = entries.map((item) => item.href);
+    for (const href of [
+      "/plugin",
+      "/plugin/site-research",
+      "/plugin/marketing-map",
+      "/plugin/intents",
+      "/plugin/products",
+      "/plugin/attribution",
+      "/plugin/audit",
+      "/plugin/ad-optimization",
+      "/plugin/ai-insights",
+      "/plugin/match",
+      "/plugin/channels",
+      "/plugin/affiliate-visit",
+      "/plugin/commission",
+      "/plugin/integrations",
+      "/plugin/billing",
+      "/plugin/uninstall",
+    ]) {
+      expect(hrefs, href).toContain(href);
+    }
+    // The old dashboard navigation must not leak into the plugin frame.
+    for (const legacy of ["/queue", "/research", "/agents", "/history"]) {
+      expect(hrefs, legacy).not.toContain(legacy);
+    }
   });
 });
 
@@ -102,9 +124,9 @@ describe("Buyer Intents — persona × stage grouping and prompt provenance", ()
   });
 });
 
-describe("Overview — alerts, summary provenance, heuristic score", () => {
+describe("Overview §2.2 — alerts, summary provenance, heuristic gauge", () => {
   it("renders each alert with its typed reason and severity", () => {
-    const html = renderToStaticMarkup(<AlertsPanel alerts={OVERVIEW.todays_alerts} />);
+    const html = renderToStaticMarkup(<TodaysAlertBlock alerts={OVERVIEW.todays_alerts} dropOff={null} />);
     expect(html).toContain("Review queue");
     expect(html).toContain("Measurement quality");
     expect(html).toContain("badge-P1");
@@ -112,25 +134,45 @@ describe("Overview — alerts, summary provenance, heuristic score", () => {
     expect(html).toContain("single-day snapshot");
   });
 
+  it("renders the Intent Drop-off warning as its own alert state", () => {
+    const html = renderToStaticMarkup(
+      <TodaysAlertBlock alerts={[]} dropOff={{ sessions: 5, orders: 0 }} />,
+    );
+    expect(html).toContain("Intent Drop-off");
+  });
+
   it("renders an explaining empty state when there are no alerts", () => {
-    const html = renderToStaticMarkup(<AlertsPanel alerts={[]} />);
+    const html = renderToStaticMarkup(<TodaysAlertBlock alerts={[]} dropOff={null} />);
     expect(html).toContain("No alerts today");
   });
 
   it("carries the provenance footer on the Agentic Store Summary", () => {
-    const html = renderToStaticMarkup(<StoreSummaryPanel summary={OVERVIEW.agentic_store_summary} />);
+    const html = renderToStaticMarkup(<StoreSummaryBlock summary={OVERVIEW.agentic_store_summary} />);
     expect(html).toContain("Generated by fixture-seed");
     expect(html).toContain("2026-11-16 → 2026-11-22");
-    expect(html).toContain("AI-referral sessions (7d)");
+    expect(html).toContain("AI / affiliate sessions (7d)");
   });
 
-  it("labels the Intent Health Score as a heuristic with its components", () => {
-    const html = renderToStaticMarkup(<HealthScorePanel score={OVERVIEW.intent_health_score} />);
-    expect(html).toContain("heuristic — not a conversion or revenue forecast");
+  it("renders the gauge with the three §2.2 sub-scores and the heuristic label", () => {
+    const subScores = healthSubScores(OVERVIEW, null);
+    const html = renderToStaticMarkup(
+      <HealthScoreBlock score={OVERVIEW.intent_health_score} subScores={subScores} />,
+    );
+    expect(html).toContain("not a conversion or revenue forecast");
     expect(html).toContain("58.33");
-    expect(html).toContain("Intent coverage");
-    expect(html).toContain("Measurement coverage");
-    expect(html).toContain("Attribution health");
+    expect(html).toContain("意图覆盖");
+    expect(html).toContain("页面承接");
+    expect(html).toContain("数据健康");
+  });
+
+  it("computes the three sub-scores from the overview payload", () => {
+    const subScores = healthSubScores(OVERVIEW, 82);
+    expect(subScores.map((s) => s.label)).toEqual([
+      "意图覆盖 · Intent coverage",
+      "页面承接 · Page readiness",
+      "数据健康 · Data health",
+    ]);
+    expect(subScores[1]?.score).toBe(82);
   });
 });
 
@@ -163,7 +205,7 @@ describe("Attribution — estimated labels and withheld fabrications", () => {
 describe("Intent Audit — heuristic readiness and the 5–20% rate band", () => {
   it("labels readiness as a heuristic and cites intent ids in recommendations", () => {
     const html = renderToStaticMarkup(<AuditPanels payload={AUDIT} />);
-    expect(html).toContain("heuristic — not a conversion or revenue forecast");
+    expect(html).toContain("not a guarantee of performance");
     expect(html).toContain("intent_solar_sizing");
     expect(html).toContain("Pending review");
   });
@@ -192,8 +234,8 @@ describe("Intent Match — settlement withheld for simulated data", () => {
   });
 
   it("renders affiliate visits with channel, partner, and tracking provenance", () => {
-    const html = renderToStaticMarkup(<MatchPanels payload={MATCH_WITHHELD} />);
-    expect(html).toContain("Intent Affiliate Visits");
+    const html = renderToStaticMarkup(<AffiliateVisitsPanel payload={MATCH_WITHHELD} />);
+    expect(html).toContain("Affiliate visits by channel / partner / intent");
     expect(html).toContain("ai-catalog-weekly");
     expect(html).toContain("TID-PLAY-002");
     expect(html).toContain("no order yet");
