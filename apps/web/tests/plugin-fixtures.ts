@@ -357,6 +357,17 @@ export const COMMISSION: CommissionLedgerPayload = {
       billed_period_end: "2026-11-21",
       entry: { entry_type: "commission", amount: 19.32, status: "pending", base_amount: 258.9 },
     },
+    {
+      entry_id: 4,
+      order_id: "order_1004",
+      order_number: "#1004",
+      intent_id: "intent_solar_sizing",
+      channel: "play",
+      tracking_code: "TID-ADS-001",
+      billed_period_start: "2026-11-22",
+      billed_period_end: "2026-11-22",
+      entry: { entry_type: "commission", amount: 6.99, status: "confirmed", base_amount: 99.9 },
+    },
   ],
   per_order: [
     {
@@ -375,7 +386,15 @@ export const COMMISSION: CommissionLedgerPayload = {
       net_commission: 19.32,
       status: "pending",
     },
+    {
+      order_id: "order_1004",
+      order_number: "#1004",
+      gross_commission: 6.99,
+      refund_offsets: 0,
+      net_commission: 6.99,
+      status: "confirmed",
+    },
   ],
   unbilled_order_ids: ["order_1003"],
-  totals: { gross: 38.63, refunds: -19.31, net: 19.32 },
+  totals: { gross: 45.62, refunds: -19.31, net: 26.31 },
 };
