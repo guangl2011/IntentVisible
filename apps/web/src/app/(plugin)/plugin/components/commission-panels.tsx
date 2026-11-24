@@ -6,6 +6,7 @@ import type { CommissionLedgerPayload, PerOrderReconciliation } from "../../../.
 import { COMMISSION_DEMO_COLUMNS } from "../../../../lib/plugin/demo-fixtures";
 import { usd } from "./badges";
 import { EmptyWithWhy, SimulatedLabel, SourceLabel } from "./red-lines";
+import { useT } from "../../../../lib/plugin/i18n/locale";
 
 /**
  * Commission page panels (design v1.4 §2.5, Track A billing): the
@@ -109,40 +110,41 @@ function CommissionFilterBar({
   filters: { search: string; status: string; channel: string };
   setFilters: (next: { search: string; status: string; channel: string }) => void;
 }) {
+  const t = useT().commission.filter;
   const rows = filterRows(payload, filters);
   const csvHref = `data:text/csv;charset=utf-8,${encodeURIComponent(commissionCsv(payload, rows))}`;
   return (
     <div className="commission-filterbar" data-testid="commission-filterbar">
       <input
         type="search"
-        aria-label="Search order number"
-        placeholder="Order number…"
+        aria-label={t.searchLabel}
+        placeholder={t.searchPlaceholder}
         value={filters.search}
         onChange={(event) => setFilters({ ...filters, search: event.target.value })}
       />
       <select
-        aria-label="Order date range"
+        aria-label={t.dateRangeLabel}
         value="since"
         onChange={() => undefined}
       >
-        <option value="since">Order date: Since commission started</option>
+        <option value="since">{t.sinceCommissionStarted}</option>
       </select>
       <select
-        aria-label="Status"
+        aria-label={t.statusLabel}
         value={filters.status}
         onChange={(event) => setFilters({ ...filters, status: event.target.value })}
       >
-        <option value="all">Status: all</option>
+        <option value="all">{t.all}</option>
         <option value="pending">pending</option>
         <option value="confirmed">confirmed</option>
         <option value="refunded">refunded</option>
       </select>
       <select
-        aria-label="Attribution channel"
+        aria-label={t.attributionLabel}
         value={filters.channel}
         onChange={(event) => setFilters({ ...filters, channel: event.target.value })}
       >
-        <option value="all">Attribution: all channels</option>
+        <option value="all">{t.allChannels}</option>
         {distinctChannels(payload).map((channel) => (
           <option key={channel} value={channel}>
             {channel}
@@ -150,7 +152,7 @@ function CommissionFilterBar({
         ))}
       </select>
       <a className="commission-export" href={csvHref} download="commission-ledger.csv">
-        Export CSV
+        {t.export}
       </a>
     </div>
   );
@@ -158,25 +160,26 @@ function CommissionFilterBar({
 
 /** The four §2.5 stat cards. */
 function CommissionStatCards({ payload }: { payload: CommissionLedgerPayload }) {
+  const t = useT().commission;
   const channels = distinctChannels(payload);
   return (
     <div className="stat-grid stat-grid-four">
       <div className="stat">
         <span className="stat-value">{payload.per_order.length}</span>
-        <span className="muted">全部归属订单 · all attributed orders</span> <SourceLabel kind="measured" />
+        <span className="muted">{t.statAllOrders}</span> <SourceLabel kind="measured" />
       </div>
       <div className="stat">
         <span className="stat-value">{channels.length}</span>
-        <span className="muted">分渠道订单 · channels ({channels.join(", ") || "none"})</span>{" "}
+        <span className="muted">{t.statChannels(channels.join(", ") || "")}</span>{" "}
         <SourceLabel kind="attribution_model" />
       </div>
       <div className="stat">
         <span className="stat-value">{usd(payload.totals.net)}</span>
-        <span className="muted">Commission 总额 · net billed commission</span> <SourceLabel kind="measured" />
+        <span className="muted">{t.statNet}</span> <SourceLabel kind="measured" />
       </div>
       <div className="stat">
         <span className="stat-value">{usd(payload.totals.refunds)}</span>
-        <span className="muted">refund offsets (auto-credited)</span> <SourceLabel kind="measured" />
+        <span className="muted">{t.statRefunds}</span> <SourceLabel kind="measured" />
       </div>
     </div>
   );
@@ -184,15 +187,16 @@ function CommissionStatCards({ payload }: { payload: CommissionLedgerPayload }) 
 
 /** The §2.5 order-level table with the DeepLumen-parity column set. */
 export function CommissionOrderTable({ payload }: { payload: CommissionLedgerPayload }) {
+  const t = useT();
   const [filters, setFilters] = useState({ search: "", status: "all", channel: "all" });
   const rows = filterRows(payload, filters);
 
   if (payload.per_order.length === 0) {
     return (
       <EmptyWithWhy
-        title="No attributed orders yet — nothing is billed."
-        hint="Commission appears per order only after an order is attributed through the ledger."
-        why="Billing rows come from ledger entries joined to attributed orders. If affiliate traffic is arriving but orders are not, the Attribution ▸ Channel Quality view diagnoses the drop-off; unattributed orders are deliberately never billed."
+        title={t.commission.empty.title}
+        hint={t.commission.empty.hint}
+        why={t.commission.empty.why}
       />
     );
   }
@@ -202,31 +206,31 @@ export function CommissionOrderTable({ payload }: { payload: CommissionLedgerPay
       <CommissionFilterBar payload={payload} filters={filters} setFilters={setFilters} />
       {rows.length === 0 ? (
         <EmptyWithWhy
-          title="No orders match these filters."
-          hint="Loosen the search, status, or channel filters to see the rest of the ledger."
-          why="The ledger contains orders outside the current filter combination — clear a filter to widen the view."
+          title={t.commission.noMatch.title}
+          hint={t.commission.noMatch.hint}
+          why={t.commission.noMatch.why}
         />
       ) : (
         <table className="table" data-testid="commission-order-table">
           <thead>
             <tr>
-              <th>Order</th>
+              <th>{t.commission.headers.order}</th>
               <th>
-                Order date <SimulatedLabel what="demo dates" />
+                {t.commission.headers.orderDate} <SimulatedLabel what={t.simLabels.demoDates} />
               </th>
-              <th>Billed period</th>
+              <th>{t.commission.headers.billedPeriod}</th>
               <th>
-                Attribution <SourceLabel kind="attribution_model" />
+                {t.commission.headers.attribution} <SourceLabel kind="attribution_model" />
               </th>
               <th>
-                Order total <SimulatedLabel what="demo totals" />
+                {t.commission.headers.orderTotal} <SimulatedLabel what={t.simLabels.demoTotals} />
               </th>
-              <th>Rate</th>
+              <th>{t.commission.headers.rate}</th>
               <th>
-                Billed commission (USD) <SourceLabel kind="measured" />
+                {t.commission.headers.billedCommission} <SourceLabel kind="measured" />
               </th>
-              <th>Status</th>
-              <th>Details</th>
+              <th>{t.commission.headers.status}</th>
+              <th>{t.commission.headers.details}</th>
             </tr>
           </thead>
           <tbody>
@@ -266,7 +270,7 @@ export function CommissionOrderTable({ payload }: { payload: CommissionLedgerPay
                   </td>
                   <td>
                     <details>
-                      <summary>Entries</summary>
+                      <summary>{t.commission.entries}</summary>
                       <ul className="commission-entry-detail">
                         {payload.entries
                           .filter((entry) => entry.order_id === row.order_id)
@@ -286,28 +290,21 @@ export function CommissionOrderTable({ payload }: { payload: CommissionLedgerPay
           </tbody>
         </table>
       )}
-      <p className="muted">
-        Status machine: pending → confirmed → refunded. Refunds credit back per order — the ledger is never
-        destructively edited. {payload.unbilled_order_ids.length} unattributed order(s) are never billed.
-      </p>
+      <p className="muted">{t.commission.statusNote(payload.unbilled_order_ids.length)}</p>
     </>
   );
 }
 
 export function CommissionPanels({ payload }: { payload: CommissionLedgerPayload }) {
+  const t = useT();
   const promise = useMemo(
     () => (
       <div className="card notice" data-testid="commission-promise">
-        <strong>每笔佣金都可对应到具体订单号并与 Shopify 核对</strong> — Every commission traces to a specific
-        order number and reconciles against Shopify.
-        <span className="muted">
-          {" "}
-          Billing basis is net sales (order value minus refunds), at the tiered 5–20% rate — free install,
-          performance-only billing.
-        </span>
+        <strong>{t.commission.promise}</strong>{" "}
+        <span className="muted">{t.commission.promiseNote}</span>
       </div>
     ),
-    [],
+    [t],
   );
 
   return (
@@ -315,13 +312,13 @@ export function CommissionPanels({ payload }: { payload: CommissionLedgerPayload
       {promise}
       <div className="card">
         <div className="intent-head">
-          <h3>Billing summary</h3>
+          <h3>{t.commission.billingSummaryTitle}</h3>
         </div>
         <CommissionStatCards payload={payload} />
       </div>
       <div className="card">
         <div className="intent-head">
-          <h3>Per-order commission ledger</h3>
+          <h3>{t.commission.ledgerTitle}</h3>
         </div>
         <CommissionOrderTable payload={payload} />
       </div>

@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { DataModeHeader } from "../../../../(dashboard)/pipeline/components/data-mode-header";
 import { ErrorPanel, LoadingPanel } from "../../../../(dashboard)/components/panels";
 import { getPluginClient } from "../../../../../lib/plugin/endpoint";
+import { useT } from "../../../../../lib/plugin/i18n/locale";
 import { loadPlugin } from "../../../../../lib/plugin/load";
 import { IntentUnitCard } from "../../components/buyer-intents-panels";
 import { usePluginPage } from "../../use-plugin-page";
@@ -23,15 +24,16 @@ function loadIntent(shopId: string, intentId: string) {
 export default function BuyerIntentDetailPage() {
   const params = useParams<{ intentId: string }>();
   const intentId = typeof params?.intentId === "string" ? params.intentId : "";
+  const t = useT();
   const loader = useCallback((shopId: string) => loadIntent(shopId, intentId), [intentId]);
   const { binding, result } = usePluginPage(loader);
 
   return (
     <>
-      <h1>Buyer Intent detail</h1>
+      <h1>{t.intentDetail.title}</h1>
       {result?.ok ? <DataModeHeader dataMode={result.data.dataMode} /> : null}
       {binding === null || result === null || intentId === "" ? (
-        <LoadingPanel label="the intent" />
+        <LoadingPanel label={t.simLabels.loadingIntent} />
       ) : !result.ok ? (
         <ErrorPanel message={result.error.message} />
       ) : (
@@ -44,7 +46,7 @@ export default function BuyerIntentDetailPage() {
           </div>
           <IntentUnitCard unit={result.data.payload} />
           <div className="intent-evidence">
-            <strong className="muted">Evidence chain:</strong>
+            <strong className="muted">{t.intentDetail.evidenceChain}:</strong>
             <ul>
               {result.data.payload.evidence_urls.map((url) => (
                 <li key={url}>
@@ -56,8 +58,9 @@ export default function BuyerIntentDetailPage() {
             </ul>
           </div>
           <p className="muted">
-            Persona: {result.data.payload.persona} · Stage: {result.data.payload.buyer_stage} · Category:{" "}
-            {result.data.payload.intent_category} · Confidence: {result.data.payload.confidence}
+            {t.intentDetail.fields.persona}: {result.data.payload.persona} · {t.intentDetail.fields.stage}:{" "}
+            {result.data.payload.buyer_stage} · {t.intentDetail.fields.category}: {result.data.payload.intent_category} ·{" "}
+            {t.intentDetail.fields.confidence}: {result.data.payload.confidence}
           </p>
         </div>
       )}

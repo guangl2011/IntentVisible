@@ -1,6 +1,7 @@
 "use client";
 
 import { MARKETING_MAP_NODES } from "../../../../lib/plugin/demo-fixtures";
+import { useT } from "../../../../lib/plugin/i18n/locale";
 import { BlindSpotFooter, SimulatedLabel } from "../components/red-lines";
 
 /**
@@ -9,22 +10,20 @@ import { BlindSpotFooter, SimulatedLabel } from "../components/red-lines";
  * behind each node — Gate 1 review lives in the pipeline pages.
  */
 export default function MarketingMapPage() {
+  const t = useT();
   return (
     <>
-      <h1>Marketing Map</h1>
-      <p className="muted">
-        The derived market structure behind your intent library: who buys (persona), in which scenario, and
-        against which competitor — every node carries its evidence sentence or an explicit assumption mark.
-      </p>
-      <SimulatedLabel what="map nodes (fixture)" />
+      <h1>{t.marketingMap.title}</h1>
+      <p className="muted">{t.marketingMap.intro}</p>
+      <SimulatedLabel what={t.simLabels.mapNodes} />
       <table className="table" data-testid="marketing-map-table">
         <thead>
           <tr>
-            <th>Persona</th>
-            <th>Scenario</th>
-            <th>Competitor</th>
-            <th>Evidence</th>
-            <th>Status</th>
+            <th>{t.marketingMap.headers.persona}</th>
+            <th>{t.marketingMap.headers.scenario}</th>
+            <th>{t.marketingMap.headers.competitor}</th>
+            <th>{t.marketingMap.headers.evidence}</th>
+            <th>{t.marketingMap.headers.status}</th>
           </tr>
         </thead>
         <tbody>
@@ -36,24 +35,17 @@ export default function MarketingMapPage() {
               <td className="muted">{node.evidence}</td>
               <td>
                 {node.assumption ? (
-                  <span className="badge badge-not-measured">assumption — needs review</span>
+                  <span className="badge badge-not-measured">{t.marketingMap.assumptionBadge}</span>
                 ) : (
-                  <span className="badge badge-APPROVED">evidence-backed</span>
+                  <span className="badge badge-APPROVED">{t.marketingMap.evidenceBadge}</span>
                 )}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      <p className="muted">
-        Assumption nodes are never eligible for intent generation until a reviewer confirms them (Gate 1).
-      </p>
-      <BlindSpotFooter
-        items={[
-          "Map nodes shown are a labeled fixture — the live derivation graph renders in the pipeline map page.",
-          "Assumptions are marked rather than presented as measured demand.",
-        ]}
-      />
+      <p className="muted">{t.marketingMap.gateNote}</p>
+      <BlindSpotFooter items={t.blindSpots.marketingMap} />
     </>
   );
 }

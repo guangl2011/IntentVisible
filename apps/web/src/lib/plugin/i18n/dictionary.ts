@@ -1,0 +1,1264 @@
+/**
+ * The plugin UI's single dictionary (design v1.5 §0.6 rule 2): every user-
+ * visible string renders in exactly one language, chosen in Settings.
+ * `en` defines the Dictionary shape; `zh` must satisfy the same type, so a
+ * key that exists in one locale but not the other is a compile error — and
+ * the runtime completeness test (tests/i18n.test.ts) walks the key trees
+ * anyway to catch missing/undefined values in plain-JS contexts.
+ *
+ * Parameterized entries are pure functions `(x) => string`; both locales
+ * must provide the same function signatures.
+ */
+
+export type Locale = "en" | "zh";
+
+const en = {
+  common: {
+    loading: (what: string) => `Loading ${what}…`,
+    errorTitle: "Could not load data.",
+    dataModeTitle: "Data mode",
+    dataModeSimulated:
+      "Simulated — numbers come from LLM-simulated runs (lightweight tier). They describe the simulation: platform personas approximate, not replicate, real platform behavior.",
+    dataModeMeasured: "Measured — numbers come from live provider runs (advanced tier).",
+    simulatedChip: (what: string) => `simulated · ${what}`,
+    simulatedTitle: (what: string) => `${what} — demo fixture, not a measurement`,
+    blindSpotsTitle: "Data blind spots",
+    whyTitle: "Why can't I see this data?",
+    notMeasured: "not measured",
+    statusPending: "pending",
+    statusConfirmed: "confirmed",
+    statusRefunded: "refunded",
+    entryTypeCommission: "commission",
+    entryTypeRefundOffset: "refund offset",
+    heuristicBadge: "heuristic — not a conversion or revenue forecast",
+    heuristicShort: "heuristic score, not a conversion prediction",
+    estimated: "estimated",
+    singleDaySnapshot: "single-day snapshot",
+    rolling: "rolling",
+    enginesNotRecorded: "engines not recorded",
+  },
+
+  sourceLabel: {
+    measured: "measured",
+    attributionModel: "attribution model",
+    platformReported: "platform-reported",
+  },
+
+  nav: {
+    overview: "Overview",
+    library: "Intent Library",
+    audit: "Intent Audit",
+    match: "Intent Match",
+    settings: "Settings",
+    appSuffix: "Shopify plugin",
+  },
+
+  subnav: {
+    overview: "Overview",
+    siteResearch: "Site Research",
+    marketingMap: "Marketing Map",
+    buyerIntents: "Buyer Intents",
+    productsSkus: "Products & SKUs",
+    attribution: "Attribution",
+    landingPageAudit: "Landing Page Audit",
+    adOptimization: "Ad Optimization",
+    aiInsights: "AI Insights",
+    intentToPage: "Intent → Page",
+    channels: "Channels",
+    affiliateVisit: "Affiliate Visit",
+    commission: "Commission",
+    settingsHome: "Settings",
+    integrations: "Integrations",
+    billing: "Billing",
+    uninstall: "Uninstall & data deletion",
+  },
+
+  overview: {
+    title: "Overview",
+    subtitle:
+      "Your store's agentic state at a glance: what needs attention today, how AI engines see the store, and how healthy the intent system is.",
+    alert: {
+      title: "Today's Alert",
+      calmTitle: "All clear",
+      calmBody: "Nothing needs your attention today: no pending reviews, no measurement gaps, no billing surprises.",
+      alertTitle: "Needs attention",
+      dropOffTitle: "Intent Drop-off warning",
+      dropOffBody: (sessions: number, orders: number) =>
+        `${sessions} affiliate visits arrived but ${orders} converted to orders. Landing pages are persuading poorly, or price / shipping thresholds are stopping checkout.`,
+      dropOffCta: "Open Channel Quality diagnosis",
+      milestoneBadge: "milestone",
+      countdown: (intent: string) =>
+        `72h auto-approve countdown — auto-approves within 72 hours of submission (submitted as ${intent}).`,
+      reasonKind: {
+        first_intent_attributed_order: "Milestone — first intent-attributed order",
+        intent_pending_review: "Review queue",
+        refund_offset_recorded: "Billing integrity",
+        single_day_snapshot: "Measurement quality",
+        visibility_not_measured: "Measurement gap",
+      },
+      reasonBody: {
+        first_intent_attributed_order: (order: string) => `First intent-attributed order ${order} landed.`,
+        intent_pending_review: (intent: string) => `Intent ${intent} is pending review and not yet active.`,
+        refund_offset_recorded: (order: string) => `Refund recorded on order ${order}: commission offset, ledger stays reconciled.`,
+        single_day_snapshot: (intent: string) => `Intent ${intent}'s visibility is a single-day snapshot — treat as indicative, not steady state.`,
+        visibility_not_measured: (intent: string) => `Intent ${intent} has no visibility measurement yet — shown as not measured, never an invented value.`,
+      },
+      milestoneNote:
+        "First intent-attributed order milestone: pushed the day the ledger records your first intent-linked sale.",
+    },
+    summary: {
+      title: "Agentic Store Summary",
+      summary: (intents: number, personas: number, sessions: number) =>
+        `${intents} active intents across ${personas} personas; ${sessions} AI-referral sessions in the last 7 days.`,
+      statPersonas: "personas (map size)",
+      statIntents: "active intents",
+      statSessions: "AI / affiliate sessions (7d)",
+      statLlms: "llms.txt published at /llms.txt (structured layer v1)",
+      liveStatus: "live",
+      provenance: (by: string, start: string, end: string) => `Generated by ${by} · data window ${start} → ${end}`,
+      cta: "View AI performance",
+      platformCloudTitle: "AI engines reading your store",
+    },
+    health: {
+      title: "Intent Health Score",
+      expand: "Expand sub-scores",
+      diagnosisCta: "Run diagnosis",
+      note: "Heuristic score over coverage components — not a conversion or revenue forecast.",
+      subs: {
+        coverage: { label: "Intent coverage", detail: "Active intents against the map-derived intent set." },
+        readiness: { label: "Page readiness", detail: "Average readiness across audited intents." },
+        dataHealth: { label: "Data health", detail: "Pixel coverage, UTM attribution share, and discount-code anchoring." },
+      },
+      readinessMissing: "Landing page audit has not scored any intent yet.",
+    },
+    modules: {
+      title: "The three modules",
+      library: {
+        desc: "Research the store, build the intent library, and correlate intents with traffic and orders.",
+        metricLabel: "active intents",
+        trendLabel: "active intents, last 8 weeks",
+        open: "Open Intent Library",
+      },
+      audit: {
+        desc: "Audit landing pages per intent, get P0/P1/P2 fixes, and see performance billing.",
+        metricLabel: "avg readiness",
+        open: "Open Intent Audit",
+      },
+      match: {
+        desc: "Route AI-engine demand to product pages, track affiliate visits, and bill commission per order.",
+        metric: (orders: number, amount: string) => `${orders} attributed orders · ${amount} billed`,
+        open: "Open Intent Match",
+      },
+    },
+  },
+
+  library: {
+    title: "Intent Library",
+    intro:
+      "Everything you need to understand your buyers: research the public store, derive the marketing map, and maintain the buyer intent library that powers attribution and matching.",
+    cards: {
+      siteResearch: {
+        title: "Site Research",
+        desc: "Evidence-first crawl of public pages, source verification, and map derivation — reviewed by you before anything publishes.",
+      },
+      marketingMap: {
+        title: "Marketing Map",
+        desc: "Who buys (persona), in which scenario, against which competitor — every node carries evidence or an explicit assumption mark.",
+      },
+      buyerIntents: {
+        title: "Buyer Intents",
+        desc: "The intent library as AI engines see it: persona, stage, pain point, prompts, and visibility provenance per intent.",
+      },
+      products: {
+        title: "Products & SKUs",
+        desc: "Which SKUs are eligible to match which intents, and how inventory interacts with matching.",
+      },
+      attribution: {
+        title: "Attribution",
+        desc: "The intent correlation model: Intent Yield (orders × intents), Demand Gap (traffic × intents), Channel Quality (traffic × orders).",
+      },
+    },
+    openCta: "Open",
+    healthTitle: "Intent correlation model",
+    healthDesc: "Intent Yield, Demand Gap, and Channel Quality — the correlation layer over your traffic, orders, and intents.",
+    healthCta: "Open Attribution",
+  },
+
+  siteResearch: {
+    title: "Site Research",
+    intro:
+      "How the plugin studies your public store before any intent is written: an evidence-first crawl of public pages, source verification, and map derivation.",
+    pipelineDone: "Research complete — map and intents await review",
+    sourcesTitle: "Crawl sources",
+    sources: [
+      "Shopify App ping — products and collections the install can already see",
+      "Script ping — public page templates reachable without any merchant credential",
+      "URL fallback — merchant-supplied URLs that need coverage",
+    ],
+    cadenceTitle: "Research cadence",
+    cadenceBody:
+      "Monthly research is the Phase I default; the weekly switch activates with the cadence writer. Re-running research never auto-publishes — new intents enter review.",
+  },
+
+  marketingMap: {
+    title: "Marketing Map",
+    intro:
+      "The derived market structure behind your intent library — every node carries its evidence sentence or an explicit assumption mark.",
+    headers: { persona: "Persona", scenario: "Scenario", competitor: "Competitor", evidence: "Evidence", status: "Status" },
+    assumptionBadge: "assumption — needs review",
+    evidenceBadge: "evidence-backed",
+    gateNote: "Assumption nodes are never eligible for intent generation until a reviewer confirms them (Gate 1).",
+  },
+
+  buyerIntents: {
+    title: "Buyer Intents",
+    intro:
+      "Your buyer intents as AI engines see them: who is asking, where they are in the journey, what they are trying to solve, and how visible each intent currently is.",
+    unitCount: (n: number) => `${n} intent(s)`,
+    promptsTitle: "Buyer prompts (the questions AI engines see):",
+    primaryTag: "primary",
+    detailTitle: "Buyer Intent detail",
+    evidenceTitle: "Evidence chain:",
+    meta: (persona: string, stage: string, category: string, confidence: string) =>
+      `Persona: ${persona} · Stage: ${stage} · Category: ${category} · Confidence: ${confidence}`,
+    empty: {
+      title: "No buyer intents yet.",
+      hint: "Intent units appear once site research derives them from your own pages.",
+      why: "Intents are derived from evidence, not invented: research must run first. Until then this library is honestly empty.",
+    },
+  },
+
+  products: {
+    title: "Products & SKUs",
+    intro:
+      "Which SKUs are eligible to match which intents, and how inventory interacts with matching — the same eligibility data Intent Match consults when scoring requests.",
+    headers: { sku: "SKU", product: "Product", intent: "Mapped intent", inventory: "Inventory", eligible: "Match-eligible" },
+    eligibleBadge: "eligible",
+    excludedBadge: "excluded",
+    inStock: "in stock",
+    lowStock: "low stock",
+    manyToManyNote:
+      "Intent ↔ SKU mapping is many-to-many: one SKU can carry several intents and one intent can be matched by several SKUs. Low stock is surfaced to catch search-vs-inventory conflicts early.",
+  },
+
+  attribution: {
+    title: "Attribution — Intent Yield · Demand Gap · Channel Quality",
+    intro:
+      "How intents connect to traffic and orders — without rebuilding the single-metric analytics your existing tools already cover. Measured anchors come from the Shopify order ledger; demand is an estimate and is labeled as one.",
+    yield: {
+      title: "Intent Yield — orders × intents",
+      desc: "Which intents bring how many orders, over the measured window. Sales figures come from the Shopify order ledger (measured); refunds offset gross rather than hiding it.",
+      headers: { intent: "Intent", orders: "Orders", gross: "Gross sales", refunded: "Refunded", net: "Net sales", share: "Share of attributed orders" },
+      empty: { title: "No attributed orders yet.", hint: "Intent Yield fills in as commission-ledger entries link orders to intents." },
+    },
+    demandGap: {
+      title: "Demand Gap — traffic × intents",
+      desc: "Estimated market demand against measured visibility. Demand is an estimated tier — never an invented search volume.",
+      headers: { intent: "Intent", demand: "Demand (estimated tier)", visibility: "Visibility", gap: "Gap", bucket: "Bucket" },
+      notMeasuredTier: "not measured — no tier is invented",
+      empty: { title: "No demand comparison yet.", hint: "Demand Gap appears once intents carry visibility measurements." },
+    },
+    channelQuality: {
+      title: "Channel Quality — traffic × orders",
+      desc: "Where traffic converts to orders, and which channels carry high-intent sessions.",
+      headers: { channel: "Channel", sessions: "Sessions", orders: "Orders", cvr: "CVR", net: "Net sales" },
+      sessionsUnknown: "not instrumented in this data",
+      cvrUnknown: "— (sessions unknown)",
+      empty: { title: "No channel data yet.", hint: "Channel Quality appears once orders carry a channel attribution basis." },
+    },
+    funnel: {
+      title: "D → T → O funnel per intent",
+      desc: "Demand → Traffic → Orders per intent. Numeric coverage needs a numeric demand estimate, which this product deliberately does not invent — the withheld state is shown instead.",
+      headers: { intent: "Intent", demand: "D (estimated demand tier)", traffic: "T (measured sessions)", orders: "O (attributed orders)", coverage: "Coverage" },
+      estimatedTier: (tier: string) => `${tier} (estimated)`,
+      empty: { title: "No funnel rows yet.", hint: "The funnel appears once intents carry demand and traffic data." },
+    },
+    opportunity: {
+      title: "Opportunity Score ranking",
+      allEstimated: "every score on this table is estimated",
+      desc: "Expected incremental revenue per intent, used for prioritization. Estimates, not ledger facts.",
+      headers: { intent: "Intent", score: "Opportunity Score", derived: "How it is derived" },
+      withheld: "withheld — not measurable for this unit",
+      empty: { title: "No opportunity scores yet.", hint: "Opportunity Scores rank intents once demand gaps and attributed commission exist." },
+    },
+    buckets: {
+      revenue_expansion: "Revenue Expansion (gap ≥ 50%)",
+      market_expansion: "Market Expansion (gap 30–49%)",
+      healthy: "Healthy",
+      not_measured: "Not measured",
+    },
+  },
+
+  audit: {
+    title: "Landing Page Audit",
+    intro:
+      "Where your intent system stands and what to fix next — every recommendation names the intent unit it concerns, and readiness is a heuristic, never a performance guarantee.",
+    readiness: {
+      title: "Landing Page Audit",
+      headers: { intent: "Intent", score: "Score", status: "Status", uplift: "Readability uplift", action: "Action" },
+      viewDetails: "View details",
+      states: { ready: "Deployed", needs_measurement: "Needs measurement", pending_review: "Pending review" },
+      empty: {
+        title: "No audited intents yet.",
+        hint: "Landing page audits run per active intent and score how ready the page is to carry it.",
+        why: "An audit row appears once an intent unit is active and its landing page has been crawled. Draft or pending intents are not audited yet.",
+      },
+    },
+    recommendations: {
+      title: "What to fix, specifically",
+      empty: {
+        title: "No open recommendations.",
+        hint: "Every intent unit is reviewed and measured.",
+        why: "Recommendations are rule-triggered per intent unit. None are open right now — not that the audit failed to run.",
+      },
+    },
+    billing: {
+      title: "Performance billing",
+      intro:
+        "Free install, pay only for performance. Track A bills per attributed order in the locked 5–20% band; Track B bills only after verified baselines exist.",
+      headers: { track: "Track", model: "Model", rate: "Rate", gross: "Gross", refunds: "Refund offsets", net: "Net" },
+      trackA: "Track A — order-attribution commission",
+      trackB: "Track B — ad-optimization effect fee",
+      tiered: "tiered",
+      detailNote: "Billing detail per effect lives in Settings ▸ Billing and Intent Match ▸ Commission.",
+      stubReason:
+        "Track B (ad-optimization performance fees) bills only after verified baselines exist; it is a Phase II stub and carries no entries.",
+    },
+  },
+
+  match: {
+    title: "Intent → Page",
+    intro:
+      "How a buyer's AI-engine question becomes a product page: scenario and signals through the hard filter to a match score, with the product card backed by the intent library's evidence chain.",
+    headers: { scenario: "Scenario (buyer's AI question)", signals: "Signals", filter: "Hard filter", score: "match_score", card: "Product card preview" },
+    excludedBeforeScoring: "excluded before scoring",
+    empty: {
+      title: "No matching replays yet.",
+      hint: "Replays appear once the matching worker processes AI-engine requests.",
+      why: "The replay trace requires the matching worker's request log, which is not wired in Phase I — rows shown are a labeled demo fixture.",
+    },
+  },
+
+  channels: {
+    title: "Channels",
+    intro:
+      "Which Intent Match channels may send traffic to your intent pages: Play and Ads channels, the partner whitelist, and the market/category scope.",
+    switches: { title: "Channel switches", stateNote: "Channel state is shown read-only in Phase I — enabling and disabling channels ships with the channels writer.", headers: { channel: "Channel", state: "State", partner: "Partner" }, enabled: "enabled" },
+    whitelist: {
+      title: "Partner whitelist & scope",
+      body: "Partners may only be added to the whitelist per channel, and market/category scope constrains which requests can match. Disclosure copy is force-previewed before any partner goes live.",
+    },
+    byChannel: "Visits & orders by channel",
+    byPartner: "Visits & orders by partner",
+    emptyWindow: "No affiliate traffic recorded in this window.",
+    headers: { visits: "Visits", orders: "Orders" },
+  },
+
+  affiliateVisit: {
+    title: "Intent Affiliate Visit",
+    howItWorks:
+      "How it works: Intent Match channels and partners send external traffic to your intent pages. This page shows how many visits arrived, where they came from, which intent pages they landed on, and how each visit joins to an order.",
+    sessionsNote: "Sessions come from affiliate-side tracking joined with UTM / click-id / referrer parameters.",
+    visits: {
+      title: "Affiliate visits by channel / partner / intent",
+      empty: "No affiliate visits yet — visits land here when Intent Match channels send external traffic to your intent pages.",
+      headers: { visit: "Visit", channel: "Channel", partner: "Partner", tracking: "Tracking code", landed: "Landed intent", order: "Order", landedAt: "Landed at" },
+      noIntentPage: "no intent page",
+      noOrderYet: "no order yet — diagnose",
+      joinNote: "Visit → order → commission: every visit row joins to the Commission page through the tracking code.",
+      joinLink: "Open the commission ledger",
+    },
+    settlement: {
+      withheldTitle: "Settlement — withheld",
+      withheldBody: (reason: string) => `Settlement is not shown for this data: ${reason}`,
+      withheldNote:
+        "Settlement computes only over provider-measured data — numbers derived from simulated sessions would be fiction. The Commission page still shows the ledger with its data mode labeled.",
+      title: "Settlement per tracking code",
+      headers: { code: "Tracking code", gross: "Gross", refunds: "Refunds", net: "Net" },
+    },
+  },
+
+  commission: {
+    title: "Commission — orders & commission",
+    promise: "Every commission traces to a specific order number and reconciles against Shopify.",
+    promiseNote:
+      "Billing basis is net sales (order value minus refunds), at the tiered 5–20% rate — free install, performance-only billing.",
+    billingSummaryTitle: "Billing summary",
+    statAllOrders: "all attributed orders",
+    statChannels: (channels: string) => `channels (${channels})`,
+    statNet: "net billed commission",
+    statRefunds: "refund offsets (auto-credited)",
+    ledgerTitle: "Per-order commission ledger",
+    filter: {
+      searchLabel: "Search order number",
+      searchPlaceholder: "Order number…",
+      dateRangeLabel: "Order date range",
+      sinceCommissionStarted: "Order date: Since commission started",
+      statusLabel: "Status",
+      all: "Status: all",
+      attributionLabel: "Attribution channel",
+      allChannels: "Attribution: all channels",
+      export: "Export CSV",
+    },
+    headers: {
+      order: "Order",
+      orderDate: "Order date",
+      billedPeriod: "Billed period",
+      attribution: "Attribution",
+      orderTotal: "Order total",
+      rate: "Rate",
+      billedCommission: "Billed commission (USD)",
+      status: "Status",
+      details: "Details",
+    },
+    noIntent: "no intent",
+    noTracking: "no tracking code",
+    grossOffsets: (gross: string, offsets: string) => `(gross ${gross} − offsets ${offsets})`,
+    empty: {
+      title: "No attributed orders yet — nothing is billed.",
+      hint: "Commission appears per order only after an order is attributed through the ledger.",
+      why: "Billing rows come from ledger entries joined to attributed orders. If affiliate traffic is arriving but orders are not, Attribution ▸ Channel Quality diagnoses the drop-off; unattributed orders are deliberately never billed.",
+    },
+    noMatch: {
+      title: "No orders match these filters.",
+      hint: "Loosen the search, status, or channel filters to see the rest of the ledger.",
+      why: "The ledger contains orders outside the current filter combination — clear a filter to widen the view.",
+    },
+    statusNote: (unbilled: number) =>
+      `Status machine: pending → confirmed → refunded. Refunds credit back per order — the ledger is never destructively edited. ${unbilled} unattributed order(s) are never billed.`,
+    entries: "Entries",
+  },
+
+  settings: {
+    title: "Settings",
+    intro: "Language, connections, billing, and uninstall — the plugin's global configuration.",
+    language: {
+      title: "Language",
+      body: "The entire plugin UI renders in the selected language. English is the default; the choice persists on this device and on your store's settings.",
+      en: "English",
+      zh: "中文",
+      pickerLabel: "Plugin language",
+    },
+    links: {
+      integrations: "Connection states for Shopify, Nango, and treg.to — what each connection is allowed to see.",
+      billing: "Rates, reconciliation windows, and the billing plan summary.",
+      uninstall: "The uninstall-and-data-deletion promise, and what is removed when.",
+    },
+    openCta: "Open",
+    permissions: {
+      title: "Installed permissions",
+      body: "The plugin requests read-only scopes by default and never asks for theme write access or customer data. Every permission is explained at install and listed here.",
+    },
+  },
+
+  integrations: {
+    title: "Integrations",
+    intro:
+      "What IntentVisible is connected to, and what each connection is allowed to see. Private merchant data moves through authorized connectors only; public intelligence is a separate, paid-per-call channel.",
+    shopify: {
+      title: "Shopify",
+      connected: "connected",
+      body: "Your Shopify store connection supplies the order ledger — the system's measured anchor — plus the Web Pixel event stream. Scopes are read-only first; every permission is explained at install.",
+    },
+    nango: {
+      title: "Nango — private analytics & ads connections",
+      badge: "Phase II stub",
+      body: "GA4, Meta, Google, and TikTok Ads authorizations will route through Nango (nango.proxy()): your private merchant data and any authorized actions flow there, encrypted and tenant-scoped. Not connectable yet — no live OAuth in Phase I.",
+    },
+    treg: {
+      title: "treg.to — public market intelligence",
+      badge: "developer key · pay-per-call",
+      body: "Public market intelligence calls are billed per call on our developer key — you pay nothing for them and no private data of yours ever routes through treg.to. Not enabled in Phase I.",
+    },
+  },
+
+  intentDetail: {
+    title: "Buyer Intent detail",
+    evidenceChain: "Evidence chain",
+    fields: { persona: "Persona", stage: "Stage", category: "Category", confidence: "Confidence" },
+  },
+  billing: {
+    title: "Billing",
+    intro: "Free install, pay only for performance. Rates and reconciliation windows are always visible here — nothing about billing is a black box.",
+    planTitle: "Plan",
+    planName: "Phase I — free install",
+    planNote: "no base fee, no subscription",
+    planSummary:
+      "Track A (order-attribution commission) bills per attributed order in the locked 5–20% band once partner channels are live — see Commission for the per-order ledger. Track B stays a Phase II gray release; it bills only verified, baseline-validated improvements.",
+    trackA: {
+      title: "Track A — order-attribution commission",
+      band: (min: string, max: string) => `${min}–${max}% (tiered by category / partner level)`,
+      headers: { band: "Rate band", gross: "Gross commission", refunds: "Refund offsets", net: "Net billed" },
+      basisNote:
+        "Billing basis: net sales, never gross. The per-order ledger — with the order-traceability promise — lives in Intent Match ▸ Commission.",
+    },
+    trackB: {
+      title: "Track B — ad-optimization effect fee",
+      badge: "Phase II stub",
+      body: "Effect fees bill only after a verified baseline exists (pre-period window, or a holdout comparison where the merchant accepts it). The baseline method will be published here before the first effect fee is ever charged.",
+    },
+  },
+
+  uninstall: {
+    title: "Uninstall & data deletion",
+    promiseTitle: "Uninstalling leaves no residual code or data.",
+    promiseBody:
+      "This is a standing product commitment: no theme edits, no injected scripts, no canonical rewrites, no \"recoverable\" copies weeks later.",
+    deletedTitle: "What is deleted, and when",
+    deleted: [
+      { heading: "Immediately on uninstall:", body: "the plugin stops responding; the structured layer and llms.txt publication are disabled for your store." },
+      { heading: "Within 30 days:", body: "Web Pixel event data, identity-stitching records, and derived reports are deleted from our systems." },
+      { heading: "Never left behind:", body: "no code in your theme — the structured layer lives on the same URLs your store already serves, so there is nothing to scrub from templates." },
+    ],
+    neverHadTitle: "What we never had",
+    neverHadBody:
+      "Customer contact data, store-owner credentials, theme write access, and order export archives — the plugin's read-only Phase I permissions never collected them, so uninstall cannot fail to delete them.",
+  },
+
+  adOptimization: {
+    title: "Ad Optimization",
+    intro:
+      "Ad diagnosis, Conversions API feedback, and one-click budget actions arrive in Phase II, once merchant-authorized ad accounts connect through Nango (nango.proxy()). Nothing here is enabled yet — and nothing pretends to be.",
+    roas: {
+      title: "Channel ROAS alignment",
+      badge: "Phase II — needs ad spend via Nango",
+      body: "Platform-reported ROAS vs true multi-touch ROAS vs GA4-calibrated coverage — computed once real ad spend flows through authorized connectors. Platform self-reported numbers will always be shown against the Shopify ledger, never trusted directly.",
+    },
+    capi: {
+      title: "CAPI server-side feedback",
+      badge: "Phase II",
+      body: "First-party intent events (add-to-cart, checkout started, high-value orders) with their click IDs feed back to Meta / Google / TikTok through the Conversions API — after a policy and legal review.",
+    },
+    execution: {
+      title: "One-click execution",
+      badge: "Phase II — separate write permission",
+      body: "Pause-a-campaign and budget-± actions per campaign row, executed through Nango within the authorization the merchant granted — a distinct permission, explained at connect time.",
+    },
+  },
+
+  aiInsights: {
+    title: "AI Insights",
+    intro:
+      "Three plain-language diagnoses per week — a revenue leak, an intent drop-off, or a search gap — each with its data window and, in Phase II, an executable action behind it.",
+    weekly: {
+      title: "This week's diagnoses",
+      badge: "Phase II — ai_insights not populated yet",
+      body: "Weekly diagnostics start once the diagnosis job runs over measured attribution data. When they arrive, each insight carries its generation time, data window, and the exact campaign payload the action button would apply.",
+    },
+  },
+
+  simLabels: {
+    pipeline: "research pipeline (fixture)",
+    platformDistribution: "platform distribution",
+    trend: "trend",
+    demoDates: "demo dates",
+    demoTotals: "demo totals",
+    cadence: "cadence state",
+    mapNodes: "map nodes (fixture)",
+    skuMappings: "SKU mappings (fixture)",
+    channelState: "channel state",
+    matchTrace: "matching trace (fixture)",
+    demoUplift: "demo uplift",
+    reauditDelta: "re-audit delta",
+    loadingIntents: "buyer intents",
+    loadingChannelSplits: "channel splits",
+    loadingAffiliateVisits: "affiliate visits",
+    loadingAudit: "the intent audit",
+    loadingIntent: "the intent",
+    loadingAttribution: "the attribution model",
+  },
+
+  blindSpots: {
+    library: [
+      "Card metrics and trends on this page are demo fixtures — live intent counts render on each sub-page.",
+      "The correlation model reads install-scoped data only; no pre-install history exists.",
+    ],
+    settings: [
+      "Connection states other than Shopify are Phase II stubs — no live OAuth flows run in Phase I.",
+    ],
+    overview: [
+      "Web Pixel events are recorded from the install date onward — there is no pre-install behavior history.",
+      "Dark-social / word-of-mouth traffic without UTM or click IDs, and organic search keywords, are invisible in Phase I.",
+      "Ad spend is a Phase II connection — ROAS figures wait until the merchant authorizes ad accounts.",
+    ],
+    audit: [
+      "Readiness scores are heuristic — they are labeled as such, never presented as conversion predictions.",
+      "Real ad spend and platform-reported metrics arrive in Phase II via authorized connectors.",
+    ],
+    attribution: [
+      "Web Pixel records from install day onward — there is no pre-install behavioral history.",
+      "Demand estimates are estimated tiers, not measured search volumes.",
+    ],
+    commission: [
+      "Commission totals cover attributed orders only — orders without an attribution basis are never billed.",
+      "Order dates and order totals are demo values labeled simulated; only billed commission amounts are measured.",
+    ],
+    intents: [
+      "Visibility is measured only for intents with active monitoring — a unit shows not_measured until its monitoring runs.",
+      "Search volumes are never invented; demand appears as an estimated tier only on the Attribution page.",
+    ],
+    match: [
+      "The matching replay is a demo fixture — the live matching worker has not persisted request traces yet.",
+      "Product-card copy is drawn from the intent library's evidence chain, not from ad claims.",
+    ],
+    channels: [
+      "Channel splits cover affiliate-tagged traffic only — dark-social and organic referrals are invisible in Phase I.",
+      "Channel enable/disable is read-only here until the channels writer ships.",
+    ],
+    affiliateVisit: [
+      "Affiliate visits are recorded from partner-side tracking — dark-social traffic without tracking parameters is invisible.",
+      "Crawler-level coverage is a Phase II concern; Phase I counts source sessions only.",
+    ],
+    siteResearch: [
+      "The step pipeline above is a labeled fixture — the live researcher's job status is not exposed yet.",
+      "Research reads public pages and install-scoped data only; it never reads customer data.",
+    ],
+    marketingMap: [
+      "Map nodes shown are a labeled fixture — the live derivation graph renders in the pipeline map page.",
+      "Assumptions are marked rather than presented as measured demand.",
+    ],
+    products: [
+      "The mapping rows are a labeled fixture — the live catalog sync renders in the dashboard's Shopify pages.",
+      "Eligibility toggles are read-only here until the mapping writer ships.",
+    ],
+    integrations: [
+      "Connection states reflect Phase I only — the Nango and treg.to cards activate in Phase II.",
+      "Scope lists show what each connection can read; nothing is read beyond the install-scoped permissions.",
+    ],
+    billing: [
+      "Phase I billing totals cover attributed orders only — unattributed orders are never billed.",
+      "Tier assignments per category / partner level are not finalized (design open question #4).",
+    ],
+    uninstall: [
+      "Deletion timelines reflect the Phase I data inventory (pixel events, ledger joins, reports).",
+      "Data deletion requests beyond uninstall follow the privacy paths in the plugin's privacy pages.",
+    ],
+    adOptimization: [
+      "No ad-spend data exists in Phase I — all three blocks stay explicitly disabled rather than simulated.",
+      "The upgrade card lives on the Attribution page; connecting is optional, never forced.",
+    ],
+    aiInsights: [
+      "No LLM diagnostics exist yet in Phase I — this page shows the honest empty state instead of canned advice.",
+      "Insight generation never fabricates measurements; every insight cites its data window and source labels.",
+    ],
+  },
+};
+
+/** Widened shape of the en dictionary — zh must satisfy the same shape. */
+export type Dictionary = typeof en;
+
+export const zh: Dictionary = {
+  common: {
+    loading: (what: string) => `正在加载${what}…`,
+    errorTitle: "数据加载失败。",
+    dataModeTitle: "数据模式",
+    dataModeSimulated:
+      "模拟——数字来自 LLM 模拟运行（轻量档）。它们描述的是模拟本身：平台人格近似、而非复刻真实平台行为。",
+    dataModeMeasured: "实测——数字来自真实服务商运行（高级档）。",
+    simulatedChip: (what: string) => `模拟 · ${what}`,
+    simulatedTitle: (what: string) => `${what}——演示固定数据，非实测`,
+    blindSpotsTitle: "数据盲区",
+    whyTitle: "为什么看不到这个数据？",
+    notMeasured: "未实测",
+    statusPending: "待确认",
+    statusConfirmed: "已确认",
+    statusRefunded: "已退款",
+    entryTypeCommission: "佣金",
+    entryTypeRefundOffset: "退款冲抵",
+    heuristicBadge: "启发式分——非转化或收入预测",
+    heuristicShort: "启发式分，非转化预测",
+    estimated: "估计",
+    singleDaySnapshot: "单日快照",
+    rolling: "滚动窗口",
+    enginesNotRecorded: "引擎未记录",
+  },
+
+  sourceLabel: {
+    measured: "实测",
+    attributionModel: "归因模型",
+    platformReported: "平台自报",
+  },
+
+  nav: {
+    overview: "概览",
+    library: "意图库",
+    audit: "意图审计",
+    match: "意图匹配",
+    settings: "设置",
+    appSuffix: "Shopify 插件",
+  },
+
+  subnav: {
+    overview: "概览",
+    siteResearch: "站点研究",
+    marketingMap: "营销地图",
+    buyerIntents: "买家意图",
+    productsSkus: "商品与 SKU",
+    attribution: "意图归因",
+    landingPageAudit: "落地页审计",
+    adOptimization: "广告优化",
+    aiInsights: "AI 洞察",
+    intentToPage: "意图 → 页面",
+    channels: "渠道",
+    affiliateVisit: "联盟访问",
+    commission: "订单与佣金",
+    settingsHome: "设置",
+    integrations: "集成连接",
+    billing: "账单",
+    uninstall: "卸载与数据删除",
+  },
+
+  overview: {
+    title: "概览",
+    subtitle: "店铺的 agentic 状态一览：今天要处理什么、AI 引擎如何看你的店、意图系统是否健康。",
+    alert: {
+      title: "今日提醒",
+      calmTitle: "一切正常",
+      calmBody: "今天没有需要处理的事项：无待审核、无测量缺口、无账单异常。",
+      alertTitle: "需要关注",
+      dropOffTitle: "意图流失预警",
+      dropOffBody: (sessions: number, orders: number) =>
+        `联盟侧带来 ${sessions} 次访问、却只有 ${orders} 笔订单。落地页说服力不足，或价格 / 运费门槛拦住了结账。`,
+      dropOffCta: "打开渠道质量诊断",
+      milestoneBadge: "里程碑",
+      countdown: (intent: string) => `72 小时自动通过倒计时——提交后 72 小时内自动生效（提交为 ${intent}）。`,
+      reasonKind: {
+        first_intent_attributed_order: "里程碑——首笔意图归因成交",
+        intent_pending_review: "审核队列",
+        refund_offset_recorded: "账单完整性",
+        single_day_snapshot: "测量质量",
+        visibility_not_measured: "测量缺口",
+      },
+      reasonBody: {
+        first_intent_attributed_order: (order: string) => `首笔意图归因订单 ${order} 已落地。`,
+        intent_pending_review: (intent: string) => `意图 ${intent} 正在待审核状态，尚未生效。`,
+        refund_offset_recorded: (order: string) => `订单 ${order} 发生退款：佣金已冲抵，账本保持对账一致。`,
+        single_day_snapshot: (intent: string) => `意图 ${intent} 的可见率是单日快照——仅作参考，不代表稳态。`,
+        visibility_not_measured: (intent: string) => `意图 ${intent} 尚无可见率测量——按未实测展示，绝不编造数值。`,
+      },
+      milestoneNote: "首笔意图归因成交里程碑：在账本记录到第一笔意图关联销售当天推送。",
+    },
+    summary: {
+      title: "店铺 Agentic 摘要",
+      summary: (intents: number, personas: number, sessions: number) =>
+        `${intents} 个生效意图，覆盖 ${personas} 类人群画像；近 7 天 ${sessions} 次 AI 推荐会话。`,
+      statPersonas: "人群画像（地图规模）",
+      statIntents: "生效意图",
+      statSessions: "AI / 联盟会话（7 天）",
+      statLlms: "llms.txt 已发布于 /llms.txt（结构化层 v1）",
+      liveStatus: "实时",
+      provenance: (by: string, start: string, end: string) => `生成方 ${by} · 数据窗口 ${start} → ${end}`,
+      cta: "查看 AI 表现",
+      platformCloudTitle: "正在读取你店铺的 AI 引擎",
+    },
+    health: {
+      title: "意图健康分",
+      expand: "展开分项",
+      diagnosisCta: "运行诊断",
+      note: "基于覆盖分项的启发式分——非转化或收入预测。",
+      subs: {
+        coverage: { label: "意图覆盖", detail: "生效意图占地图推导意图集的比例。" },
+        readiness: { label: "页面承接", detail: "已审计意图的平均就绪分。" },
+        dataHealth: { label: "数据健康", detail: "Pixel 事件覆盖率、UTM 归因占比与折扣码锚定率。" },
+      },
+      readinessMissing: "落地页审计尚未给任何意图打分。",
+    },
+    modules: {
+      title: "三大模块",
+      library: {
+        desc: "研究站点、建立意图库，并把意图与流量、订单关联起来。",
+        metricLabel: "生效意图",
+        trendLabel: "生效意图，近 8 周",
+        open: "进入意图库",
+      },
+      audit: {
+        desc: "按意图审计落地页，给出 P0/P1/P2 修复清单与效果计费。",
+        metricLabel: "平均就绪分",
+        open: "进入意图审计",
+      },
+      match: {
+        desc: "把 AI 引擎需求路由到商品页，追踪联盟访问，并逐单计提佣金。",
+        metric: (orders: number, amount: string) => `${orders} 笔归因订单 · 已计提 ${amount}`,
+        open: "进入意图匹配",
+      },
+    },
+  },
+
+  library: {
+    title: "意图库",
+    intro:
+      "理解买家的全部入口：研究公开站点、推导营销地图，并维护驱动归因与匹配的买家意图库。",
+    cards: {
+      siteResearch: {
+        title: "站点研究",
+        desc: "对公开页面的证据优先爬取、来源核验与地图推导——发布前均需你的审核。",
+      },
+      marketingMap: {
+        title: "营销地图",
+        desc: "谁在买（画像）、在什么场景、对标哪个竞品——每个节点都带证据或显式的假设标记。",
+      },
+      buyerIntents: {
+        title: "买家意图",
+        desc: "AI 引擎视角的意图库：画像、阶段、痛点、prompts，以及每个意图的可见率溯源。",
+      },
+      products: {
+        title: "商品与 SKU",
+        desc: "哪些 SKU 可匹配哪些意图，以及库存如何参与匹配。",
+      },
+      attribution: {
+        title: "意图归因",
+        desc: "意图关联模型：Intent Yield（订单 × 意图）、Demand Gap（流量 × 意图）、Channel Quality（流量 × 订单）。",
+      },
+    },
+    openCta: "打开",
+    healthTitle: "意图归因关联模型",
+    healthDesc: "Intent Yield、Demand Gap、Channel Quality——流量、订单与意图之上的关联层。",
+    healthCta: "打开归因",
+  },
+
+  siteResearch: {
+    title: "站点研究",
+    intro: "在写下任何意图之前，插件如何研究你的公开店铺：证据优先的公开页爬取、来源核验与地图推导。",
+    pipelineDone: "研究完成——地图与意图等待审核",
+    sourcesTitle: "爬取来源",
+    sources: [
+      "Shopify App ping——安装本身已可见的商品与系列",
+      "脚本 ping——无需商家凭证即可访问的公开页面模板",
+      "URL 兜底——需要补充覆盖的商家提供 URL",
+    ],
+    cadenceTitle: "研究节奏",
+    cadenceBody: "第一阶段默认每月研究；周更开关随节奏写入器上线。重跑研究绝不自动发布——新意图一律进入审核。",
+  },
+
+  marketingMap: {
+    title: "营销地图",
+    intro: "意图库背后的市场结构推导——每个节点都带证据句或显式的假设标记。",
+    headers: { persona: "人群画像", scenario: "场景", competitor: "竞品", evidence: "证据", status: "状态" },
+    assumptionBadge: "假设——待审核",
+    evidenceBadge: "证据支持",
+    gateNote: "假设节点在审核人确认之前（Gate 1）绝不参与意图生成。",
+  },
+
+  buyerIntents: {
+    title: "买家意图",
+    intro: "AI 引擎视角的买家意图：谁在问、处于哪个阶段、想解决什么，以及每个意图当前的可见率。",
+    unitCount: (n: number) => `${n} 个意图`,
+    promptsTitle: "买家 prompts（AI 引擎看到的问题）：",
+    primaryTag: "主 prompt",
+    detailTitle: "买家意图详情",
+    evidenceTitle: "证据链：",
+    meta: (persona: string, stage: string, category: string, confidence: string) =>
+      `画像：${persona} · 阶段：${stage} · 类目：${category} · 置信度：${confidence}`,
+    empty: {
+      title: "还没有买家意图。",
+      hint: "站点研究从你自己的页面推导出意图后，这里就会出现意图条目。",
+      why: "意图来自证据而非编造：必须先完成研究。在此之前，意图库如实为空。",
+    },
+  },
+
+  products: {
+    title: "商品与 SKU",
+    intro: "哪些 SKU 可匹配哪些意图，库存如何参与匹配——Intent Match 评分请求时查询的是同一份资格数据。",
+    headers: { sku: "SKU", product: "商品", intent: "映射意图", inventory: "库存", eligible: "匹配资格" },
+    eligibleBadge: "可匹配",
+    excludedBadge: "已排除",
+    inStock: "有货",
+    lowStock: "库存偏低",
+    manyToManyNote: "意图 ↔ SKU 是多对多映射：一个 SKU 可承载多个意图，一个意图也可由多个 SKU 匹配。库存偏低会提前暴露，避免搜索与库存冲突。",
+  },
+
+  attribution: {
+    title: "意图归因——Intent Yield · Demand Gap · Channel Quality",
+    intro:
+      "意图如何连接流量与订单——不重建现有工具（GA4、Shopify 报表）已覆盖的单指标分析。实测锚点来自 Shopify 订单账本；需求是估计值，并按估计标注。",
+    yield: {
+      title: "Intent Yield——订单 × 意图",
+      desc: "测量窗口内哪些意图带来多少订单。销售额来自 Shopify 订单账本（实测）；退款冲抵毛额而非隐藏它。",
+      headers: { intent: "意图", orders: "订单数", gross: "毛销售额", refunded: "退款", net: "净销售额", share: "占归因订单比" },
+      empty: { title: "还没有归因订单。", hint: "佣金账本条目把订单与意图关联后，Intent Yield 就会填充。" },
+    },
+    demandGap: {
+      title: "Demand Gap——流量 × 意图",
+      desc: "估计的市场需求对比实测可见率。需求只是估计档位——绝不编造搜索量。",
+      headers: { intent: "意图", demand: "需求（估计档位）", visibility: "可见率", gap: "缺口", bucket: "缺口分型" },
+      notMeasuredTier: "未实测——不编造档位",
+      empty: { title: "还没有需求对比。", hint: "意图带上可见率测量后，Demand Gap 就会出现。" },
+    },
+    channelQuality: {
+      title: "Channel Quality——流量 × 订单",
+      desc: "流量在哪里变成订单，哪些渠道承载高意图会话。",
+      headers: { channel: "渠道", sessions: "会话", orders: "订单数", cvr: "转化率", net: "净销售额" },
+      sessionsUnknown: "该数据未埋点",
+      cvrUnknown: "——（会话未知）",
+      empty: { title: "还没有渠道数据。", hint: "订单带上渠道归因依据后，Channel Quality 就会出现。" },
+    },
+    funnel: {
+      title: "每意图 D → T → O 漏斗",
+      desc: "每意图的需求 → 流量 → 订单。数值化覆盖需要数值化需求估计，本产品刻意不编造——如实展示保留状态。",
+      headers: { intent: "意图", demand: "D（估计需求档位）", traffic: "T（实测会话）", orders: "O（归因订单）", coverage: "覆盖" },
+      estimatedTier: (tier: string) => `${tier}（估计）`,
+      empty: { title: "还没有漏斗行。", hint: "意图带上需求与流量数据后，漏斗就会出现。" },
+    },
+    opportunity: {
+      title: "Opportunity Score 排序",
+      allEstimated: "本表每个分数都是估计值",
+      desc: "每意图的预期增量收入，用于排优先级。是估计值，不是账本事实。",
+      headers: { intent: "意图", score: "Opportunity Score", derived: "推导方式" },
+      withheld: "已保留——该意图不可测",
+      empty: { title: "还没有机会分。", hint: "需求缺口与归因佣金存在后，Opportunity Score 就会对意图排序。" },
+    },
+    buckets: {
+      revenue_expansion: "收入扩张（缺口 ≥ 50%）",
+      market_expansion: "市场扩张（缺口 30–49%）",
+      healthy: "健康",
+      not_measured: "未实测",
+    },
+  },
+
+  audit: {
+    title: "落地页审计",
+    intro: "意图系统的现状与下一步要修什么——每条建议都指名意图条目；就绪分是启发式，绝非效果保证。",
+    readiness: {
+      title: "落地页审计",
+      headers: { intent: "意图", score: "分数", status: "状态", uplift: "可读性提升", action: "操作" },
+      viewDetails: "查看详情",
+      states: { ready: "已部署", needs_measurement: "待测量", pending_review: "待审核" },
+      empty: {
+        title: "还没有已审计意图。",
+        hint: "落地页审计按生效意图运行，为每个页面能否承接该意图打分。",
+        why: "意图条目生效且落地页被爬取后才会出现审计行。草稿与待审核意图暂不审计。",
+      },
+    },
+    recommendations: {
+      title: "具体要修什么",
+      empty: {
+        title: "没有待处理建议。",
+        hint: "每个意图条目都已完成审核与测量。",
+        why: "建议按意图条目规则触发。当前没有触发的规则——不是审计没有运行。",
+      },
+    },
+    billing: {
+      title: "效果计费",
+      intro: "免费安装，只为效果付费。Track A 按归因订单计提、费率锁定在 5–20% 区间；Track B 仅在基线验证后计提。",
+      headers: { track: "计费轨", model: "模式", rate: "费率", gross: "毛额", refunds: "退款冲抵", net: "净额" },
+      trackA: "Track A——订单归因佣金",
+      trackB: "Track B——广告优化效果费",
+      tiered: "分层",
+      detailNote: "逐笔计费明细在 设置 ▸ 账单 与 意图匹配 ▸ 订单与佣金。",
+      stubReason: "Track B（广告优化效果费）仅在基线验证后计提；目前是第二阶段占位，没有任何账单条目。",
+    },
+  },
+
+  match: {
+    title: "意图 → 页面",
+    intro: "买家的 AI 提问如何变成商品页：场景与信号经硬过滤到匹配分，商品卡卖点来自意图库的证据链。",
+    headers: { scenario: "场景（买家的 AI 提问）", signals: "信号", filter: "硬过滤", score: "match_score", card: "商品卡预览" },
+    excludedBeforeScoring: "评分前已被排除",
+    empty: {
+      title: "还没有匹配回放。",
+      hint: "匹配 worker 处理 AI 引擎请求后，回放会出现在这里。",
+      why: "回放链路依赖匹配 worker 的请求日志，第一阶段尚未接入——当前行是带标记的演示固定数据。",
+    },
+  },
+
+  channels: {
+    title: "渠道",
+    intro: "哪些意图匹配渠道可以向你的意图页导流：Play 与 Ads 渠道、伙伴白名单、市场/类目范围。",
+    switches: { title: "渠道开关", stateNote: "第一阶段渠道状态只读展示——渠道启停随渠道写入器上线。", headers: { channel: "渠道", state: "状态", partner: "伙伴" }, enabled: "已启用" },
+    whitelist: {
+      title: "伙伴白名单与范围",
+      body: "伙伴只能按渠道加入白名单，市场/类目范围约束可匹配的请求。任何伙伴上线前，披露文案强制预览。",
+    },
+    byChannel: "按渠道的访问与订单",
+    byPartner: "按伙伴的访问与订单",
+    emptyWindow: "该窗口内没有联盟流量记录。",
+    headers: { visits: "访问", orders: "订单" },
+  },
+
+  affiliateVisit: {
+    title: "联盟访问",
+    howItWorks:
+      "工作方式：意图匹配的渠道与伙伴向你的意图页导流。本页展示到访了多少次、来自哪里、落在哪些意图页、以及每次访问如何关联订单。",
+    sessionsNote: "会话来自联盟侧追踪，与 UTM / click-id / referrer 参数拼接。",
+    visits: {
+      title: "按渠道 / 伙伴 / 意图的联盟访问",
+      empty: "还没有联盟访问——意图匹配渠道向意图页导流后，访问会落到这里。",
+      headers: { visit: "访问", channel: "渠道", partner: "伙伴", tracking: "追踪号", landed: "落地意图", order: "订单", landedAt: "落地时间" },
+      noIntentPage: "无意图页",
+      noOrderYet: "尚无订单——去诊断",
+      joinNote: "访问 → 订单 → 佣金：每行访问都通过追踪号与佣金页关联。",
+      joinLink: "打开佣金账本",
+    },
+    settlement: {
+      withheldTitle: "结算——已保留",
+      withheldBody: (reason: string) => `该数据不展示结算：${reason}`,
+      withheldNote: "结算只对服务商实测数据计算——用模拟会话算出的数字是虚构。佣金页仍展示账本并标注数据模式。",
+      title: "按追踪号结算",
+      headers: { code: "追踪号", gross: "毛额", refunds: "退款", net: "净额" },
+    },
+  },
+
+  commission: {
+    title: "订单与佣金",
+    promise: "每笔佣金都可对应到具体订单号，并与 Shopify 核对。",
+    promiseNote: "计费基数为净销售额（订单金额减退款），费率分层 5–20%——免费安装，只为效果付费。",
+    billingSummaryTitle: "账单汇总",
+    statAllOrders: "全部归属订单",
+    statChannels: (channels: string) => `渠道（${channels}）`,
+    statNet: "已计提佣金净额",
+    statRefunds: "退款冲抵（自动抵扣）",
+    ledgerTitle: "逐单佣金账本",
+    filter: {
+      searchLabel: "搜索订单号",
+      searchPlaceholder: "订单号…",
+      dateRangeLabel: "订单日期范围",
+      sinceCommissionStarted: "订单日期：自计佣开始",
+      statusLabel: "状态",
+      all: "状态：全部",
+      attributionLabel: "归因渠道",
+      allChannels: "归因：全部渠道",
+      export: "导出 CSV",
+    },
+    headers: {
+      order: "订单",
+      orderDate: "订单日期",
+      billedPeriod: "计费周期",
+      attribution: "归因",
+      orderTotal: "订单金额",
+      rate: "费率",
+      billedCommission: "计提佣金（USD）",
+      status: "状态",
+      details: "明细",
+    },
+    noIntent: "无意图",
+    noTracking: "无追踪号",
+    grossOffsets: (gross: string, offsets: string) => `（毛额 ${gross} − 冲抵 ${offsets}）`,
+    empty: {
+      title: "还没有归属订单——不会产生任何计费。",
+      hint: "订单经账本归属后，才会逐单出现佣金。",
+      why: "计费行来自账本条目与归属订单的关联。若联盟流量在来但订单没有，意图归因 ▸ 渠道质量会诊断流失；未归属订单绝不计费。",
+    },
+    noMatch: {
+      title: "没有符合筛选条件的订单。",
+      hint: "放宽搜索、状态或渠道筛选即可看到其余账本。",
+      why: "账本中存在当前筛选组合之外的订单——清除一个筛选即可扩大视图。",
+    },
+    statusNote: (unbilled: number) =>
+      `状态机：待确认 → 已确认 → 已退款。退款逐单冲回——账本绝不破坏性修改。${unbilled} 笔未归属订单绝不计费。`,
+    entries: "明细",
+  },
+
+  settings: {
+    title: "设置",
+    intro: "语言、连接、账单与卸载——插件的全局配置。",
+    language: {
+      title: "语言",
+      body: "整个插件界面以所选语言渲染。默认英文；选择会保存在本设备与店铺设置中。",
+      en: "English",
+      zh: "中文",
+      pickerLabel: "插件语言",
+    },
+    links: {
+      integrations: "Shopify、Nango 与 treg.to 的连接状态——每个连接各能看到什么。",
+      billing: "费率、对账窗口与账单计划汇总。",
+      uninstall: "卸载与数据删除承诺，以及各项数据何时删除。",
+    },
+    openCta: "打开",
+    permissions: {
+      title: "已安装权限",
+      body: "插件默认只申请只读权限，从不申请主题写入或客户数据。每项权限都在安装时逐条说明，并在此处列出。",
+    },
+  },
+
+  integrations: {
+    title: "集成连接",
+    intro: "IntentVisible 连接了什么、每个连接各被允许看到什么。商家私有数据只走授权连接器；公共情报是独立的按次付费通道。",
+    shopify: {
+      title: "Shopify",
+      connected: "已连接",
+      body: "Shopify 店铺连接提供订单账本——全系统的实测锚点——以及 Web Pixel 事件流。权限以只读起步，每一项都在安装时说明。",
+    },
+    nango: {
+      title: "Nango——私有分析与广告连接",
+      badge: "第二阶段占位",
+      body: "GA4、Meta、Google、TikTok Ads 的授权将经 Nango（nango.proxy()）路由：你的私有数据与授权范围内的操作在那里加密、按租户隔离地流转。第一阶段尚不可连接——没有线上 OAuth。",
+    },
+    treg: {
+      title: "treg.to——公共市场情报",
+      badge: "开发者密钥 · 按次计费",
+      body: "公共市场情报调用按次计入我们的开发者密钥——你无需为此付费，你的任何私有数据也绝不经过 treg.to。第一阶段未启用。",
+    },
+  },
+
+  intentDetail: {
+    title: "购买意图详情",
+    evidenceChain: "证据链",
+    fields: { persona: "人群", stage: "阶段", category: "类目", confidence: "置信度" },
+  },
+  billing: {
+    title: "账单",
+    intro: "免费安装，只为效果付费。费率与对账窗口在这里常驻可见——账单没有任何黑箱。",
+    planTitle: "计划",
+    planName: "第一阶段——免费安装",
+    planNote: "无固定费、无订阅",
+    planSummary:
+      "Track A（订单归因佣金）在伙伴渠道上线后，按归因订单以锁定的 5–20% 区间计提——逐单账本见订单与佣金页。Track B 保持第二阶段灰度；只对经基线验证的效果计费。",
+    trackA: {
+      title: "Track A——订单归因佣金",
+      band: (min: string, max: string) => `${min}–${max}%（按类目 / 伙伴等级分层）`,
+      headers: { band: "费率区间", gross: "佣金毛额", refunds: "退款冲抵", net: "计提净额" },
+      basisNote: "计费基数：净销售额，绝不按整单毛额。逐单账本——带订单可追溯承诺——在 意图匹配 ▸ 订单与佣金。",
+    },
+    trackB: {
+      title: "Track B——广告优化效果费",
+      badge: "第二阶段占位",
+      body: "效果费只在存在已验证基线后计提（pre-period 窗口，或商家接受的 holdout 对照）。首个效果费产生之前，基线方法会公布在这里。",
+    },
+  },
+
+  uninstall: {
+    title: "卸载与数据删除",
+    promiseTitle: "卸载不留残余代码或数据。",
+    promiseBody: "这是一项长期产品承诺：不改主题、不注入脚本、不改写 canonical、几周后也没有\"可恢复\"副本。",
+    deletedTitle: "删除什么、何时删除",
+    deleted: [
+      { heading: "卸载立即生效：", body: "插件停止响应；你店铺的结构化层与 llms.txt 发布一并停用。" },
+      { heading: "30 天内：", body: "Web Pixel 事件数据、身份缝合记录与衍生报告从我们的系统删除。" },
+      { heading: "绝不残留：", body: "主题里没有我们的代码——结构化层就在你店铺已有的 URL 上，模板里没有任何需要清理的东西。" },
+    ],
+    neverHadTitle: "我们从未拿过的数据",
+    neverHadBody: "客户联系方式、店主凭证、主题写权限、订单导出存档——第一阶段只读权限从未收集过这些，卸载也就不存在删不掉的问题。",
+  },
+
+  adOptimization: {
+    title: "广告优化",
+    intro: "广告诊断、Conversions API 回传与一键预算操作将在第二阶段、商家授权的广告账户经 Nango（nango.proxy()）连通后到来。这里没有任何已启用的东西——也没有任何东西假装已启用。",
+    roas: {
+      title: "渠道 ROAS 对齐",
+      badge: "第二阶段——需经 Nango 的广告花费",
+      body: "平台自报 ROAS vs 真实多触点 ROAS vs GA4 校准覆盖率——待真实广告花费经授权连接器流入后计算。平台自报数字永远与 Shopify 账本对照展示，绝不直接采信。",
+    },
+    capi: {
+      title: "CAPI 服务端回传",
+      badge: "第二阶段",
+      body: "第一方意图事件（加购、发起结账、高客单价订单）连同点击 ID，经 Conversions API 回传 Meta / Google / TikTok——先过政策与法务走查。",
+    },
+    execution: {
+      title: "一键执行",
+      badge: "第二阶段——单独写权限",
+      body: "每个 campaign 行旁的\"暂停 / 预算 ±\"操作，经 Nango 在商家授权范围内执行——这是单独一项权限，连接时说明。",
+    },
+  },
+
+  aiInsights: {
+    title: "AI 洞察",
+    intro: "每周三条白话诊断——收入漏点、意图流失或搜索缺口——各带数据窗口，第二阶段起每条背后有可执行动作。",
+    weekly: {
+      title: "本周诊断",
+      badge: "第二阶段——ai_insights 尚未生成",
+      body: "诊断任务在实测归因数据上运行后，每周诊断开始生成。届时每条洞察都带生成时间、数据窗口，以及执行按钮将应用的确切 campaign 参数。",
+    },
+  },
+
+  simLabels: {
+    pipeline: "研究流水线（固定数据）",
+    platformDistribution: "平台分布",
+    trend: "趋势",
+    demoDates: "演示日期",
+    demoTotals: "演示金额",
+    cadence: "节奏状态",
+    mapNodes: "地图节点（固定数据）",
+    skuMappings: "SKU 映射（固定数据）",
+    channelState: "通道状态",
+    matchTrace: "匹配回放（固定数据）",
+    demoUplift: "演示提升值",
+    reauditDelta: "复检差值",
+    loadingIntents: "买家意图",
+    loadingChannelSplits: "通道拆分",
+    loadingAffiliateVisits: "联盟访问",
+    loadingAudit: "意图审计",
+    loadingIntent: "该意图",
+    loadingAttribution: "归因模型",
+  },
+
+  blindSpots: {
+    library: [
+      "本页卡片上的指标与趋势图为演示数据——实时意图计数在各子页面渲染。",
+      "关联模型只读取安装范围内数据，不存在安装前历史。",
+    ],
+    settings: [
+      "除 Shopify 外的连接状态均为第二阶段占位——第一阶段没有线上 OAuth 流程。",
+    ],
+    overview: [
+      "Web Pixel 事件自安装日起记录——没有安装前的行为历史。",
+      "无 UTM / 点击 ID 的暗社交与口碑流量、以及自然搜索关键词，第一阶段不可见。",
+      "广告花费是第二阶段连接——商家授权广告账户前没有 ROAS 数字。",
+    ],
+    audit: [
+      "就绪分是启发式——按此标注呈现，绝不作为转化预测。",
+      "真实广告花费与平台自报指标在第二阶段经授权连接器到来。",
+    ],
+    attribution: [
+      "Web Pixel 自安装日起记录——没有安装前的行为历史。",
+      "需求估计是估计档位，不是实测搜索量。",
+    ],
+    commission: [
+      "佣金总额只覆盖归属订单——没有归因依据的订单绝不计费。",
+      "订单日期与金额是带模拟标记的演示值；只有计提佣金金额是实测。",
+    ],
+    intents: [
+      "可见率只对已开启监控的意图测量——条目在其监控运行前按 not_measured 展示。",
+      "绝不编造搜索量；需求只以估计档位出现在意图归因页。",
+    ],
+    match: [
+      "匹配回放是演示固定数据——线上匹配 worker 尚未持久化请求链路。",
+      "商品卡文案来自意图库证据链，不来自广告话术。",
+    ],
+    channels: [
+      "渠道拆分只覆盖带联盟标记的流量——暗社交与自然推荐第一阶段不可见。",
+      "渠道启停在此只读，待渠道写入器上线。",
+    ],
+    affiliateVisit: [
+      "联盟访问来自伙伴侧追踪——无追踪参数的暗社交流量不可见。",
+      "爬虫级覆盖是第二阶段课题；第一阶段只统计来源会话。",
+    ],
+    siteResearch: [
+      "上方步骤流水线是带标记的固定数据——线上研究任务状态尚未暴露。",
+      "研究只读取公开页面与安装范围内数据；绝不读取客户数据。",
+    ],
+    marketingMap: [
+      "展示的地图节点是带标记的固定数据——线上推导图谱在 pipeline 地图页渲染。",
+      "假设一律打标记呈现，绝不冒充实测需求。",
+    ],
+    products: [
+      "映射行是带标记的固定数据——线上目录同步在仪表盘 Shopify 页渲染。",
+      "资格开关在此只读，待映射写入器上线。",
+    ],
+    integrations: [
+      "连接状态仅反映第一阶段——Nango 与 treg.to 卡片在第二阶段激活。",
+      "权限清单展示每个连接能读什么；安装范围之外的任何读取都不会发生。",
+    ],
+    billing: [
+      "第一阶段账单总额只覆盖归属订单——未归属订单绝不计费。",
+      "按类目 / 伙伴等级的分层归属尚未定稿（设计待确认 #4）。",
+    ],
+    uninstall: [
+      "删除时间线反映第一阶段数据清单（pixel 事件、账本关联、报告）。",
+      "卸载之外的数据删除请求走插件隐私页中的隐私路径。",
+    ],
+    adOptimization: [
+      "第一阶段没有广告花费数据——三个版块都显式停用而非模拟。",
+      "升级卡片在意图归因页内；连接可选，绝不强制。",
+    ],
+    aiInsights: [
+      "第一阶段还没有 LLM 诊断——本页展示诚实的空态而非套话建议。",
+      "洞察生成绝不编造测量；每条洞察都引用其数据窗口与来源标签。",
+    ],
+  },
+};
+
+export const DICTIONARIES: Record<Locale, Dictionary> = { en, zh };
+
+export function dictionaryFor(locale: Locale): Dictionary {
+  return DICTIONARIES[locale];
+}

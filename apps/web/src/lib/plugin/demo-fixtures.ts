@@ -131,6 +131,27 @@ export interface BillingPlanState {
   track_a_totals: { gross: number; refunds: number; net: number };
 }
 
+/**
+ * §2.2 Overview module-card fixtures (v1.5 rebuild): the Intent Library
+ * card's mini trend and the hero card's AI platform cloud. Chart data is
+ * simulated — the blocks render it under a SimulatedLabel.
+ */
+
+/** Active-intent count trend (8 weeks) for the Library module card. */
+export const INTENT_TREND_FIXTURE: number[] = [4, 5, 5, 7, 9, 10, 12, 14];
+
+/** AI platforms shown in the hero card's icon cloud (DeepLumen §8.1 pattern). */
+export const AI_PLATFORMS: string[] = ["ChatGPT", "Gemini", "Perplexity", "Claude", "AI Overviews"];
+
+/** Platform distribution of AI referral sessions for the hero donut. */
+export const AI_PLATFORM_DISTRIBUTION_FIXTURE: { label: string; value: number }[] = [
+  { label: "ChatGPT", value: 42 },
+  { label: "Claude", value: 31 },
+  { label: "Gemini", value: 15 },
+  { label: "Perplexity", value: 8 },
+  { label: "AI Overviews", value: 4 },
+];
+
 export const BILLING_PLAN: BillingPlanState = {
   plan: "Phase I — free install",
   note: "no base fee, no subscription",

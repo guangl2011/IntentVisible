@@ -1,3 +1,5 @@
+"use client";
+
 import type {
   AttributionPayload,
   ChannelQualityRow,
@@ -7,6 +9,8 @@ import type {
   OpportunityScoreRow,
 } from "../../../../lib/plugin/types";
 import { SourceLabel } from "./red-lines";
+
+import { useT } from "../../../../lib/plugin/i18n/locale";
 
 import { EstimatedBadge, VisibilityProvenanceBadge, bucketLabel, usd } from "./badges";
 
@@ -59,6 +63,7 @@ export function IntentYieldTable({ rows }: { rows: IntentYieldRow[] }) {
 }
 
 export function DemandGapTable({ rows }: { rows: DemandGapRow[] }) {
+  const t = useT();
   if (rows.length === 0) {
     return (
       <div className="card empty-card">
@@ -112,7 +117,7 @@ export function DemandGapTable({ rows }: { rows: DemandGapRow[] }) {
               )}
             </td>
             <td>{row.gap_pct === null ? <span className="muted">—</span> : `${row.gap_pct}%`}</td>
-            <td>{bucketLabel(row.bucket)}</td>
+            <td>{bucketLabel(row.bucket, t)}</td>
           </tr>
         ))}
       </tbody>

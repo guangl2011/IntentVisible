@@ -6,7 +6,8 @@ import { EstimatedBadge, HeuristicBadge, SeverityBadge, VisibilityProvenanceBadg
 import { AttributionPanels, DemandGapTable, FunnelTable } from "../src/app/(plugin)/plugin/components/attribution-panels";
 import { IntentGroupTable, groupByPersonaStage } from "../src/app/(plugin)/plugin/components/buyer-intents-panels";
 import { CommissionPanels } from "../src/app/(plugin)/plugin/components/commission-panels";
-import { NAV_GROUPS } from "../src/app/(plugin)/plugin/components/plugin-frame";
+import { NAV_MODULES, subnavForPath } from "../src/app/(plugin)/plugin/components/plugin-top-nav";
+import { dictionaryFor } from "../src/lib/plugin/i18n/dictionary";
 import { AffiliateVisitsPanel, SettlementPanel } from "../src/app/(plugin)/plugin/components/match-visit-panels";
 import { TodaysAlertBlock, StoreSummaryBlock, HealthScoreBlock, healthSubScores } from "../src/app/(plugin)/plugin/components/overview-panels";
 import {
@@ -31,26 +32,20 @@ import {
  * The red-line assertions live here on purpose: provenance on every
  * measured number, not_measured as its own state, estimated/heuristic
  * labels present, single-day snapshots labeled, and settlement withheld
- * for simulated data. The §2.1 IA grouping is asserted on NAV_GROUPS.
+ * for simulated data. The §0.6 IA is asserted on NAV_MODULES.
  */
 
-describe("NAV_GROUPS — the §2.1 IA grouping", () => {
-  it("groups the plugin surfaces into Build / Optimize / Monetize / Settings", () => {
-    const titles = NAV_GROUPS.map((group) => group.title);
-    expect(titles).toEqual([
-      "Overview",
-      "Intent Library · Build",
-      "Intent Audit · Optimize",
-      "Intent Match · Monetize",
-      "Settings",
-    ]);
+describe("NAV_MODULES — the §0.6 top-navigation IA", () => {
+  it("carries the four modules plus a Settings entry outside the module list", () => {
+    const hrefs = NAV_MODULES.map((module) => module.href);
+    expect(hrefs).toEqual(["/plugin", "/plugin/library", "/plugin/audit", "/plugin/match"]);
   });
 
-  it("carries every designed surface as a nav entry", () => {
-    const entries = NAV_GROUPS.flatMap((group) => group.items);
-    const hrefs = entries.map((item) => item.href);
+  it("carries every designed surface as a top-nav or subnav entry", () => {
+    const entries = NAV_MODULES.flatMap((module) => [module.href, ...module.subnav.map((item) => item.href)]);
     for (const href of [
       "/plugin",
+      "/plugin/library",
       "/plugin/site-research",
       "/plugin/marketing-map",
       "/plugin/intents",
@@ -63,16 +58,20 @@ describe("NAV_GROUPS — the §2.1 IA grouping", () => {
       "/plugin/channels",
       "/plugin/affiliate-visit",
       "/plugin/commission",
-      "/plugin/integrations",
-      "/plugin/billing",
-      "/plugin/uninstall",
     ]) {
-      expect(hrefs, href).toContain(href);
+      expect(entries, href).toContain(href);
     }
     // The old dashboard navigation must not leak into the plugin frame.
     for (const legacy of ["/queue", "/research", "/agents", "/history"]) {
-      expect(hrefs, legacy).not.toContain(legacy);
+      expect(entries, legacy).not.toContain(legacy);
     }
+  });
+
+  it("resolves a sub-page path to its owning module for the contextual subnav row", () => {
+    expect(subnavForPath("/plugin/attribution")?.href).toBe("/plugin/library");
+    expect(subnavForPath("/plugin/commission")?.href).toBe("/plugin/match");
+    expect(subnavForPath("/plugin/audit")?.href).toBe("/plugin/audit");
+    expect(subnavForPath("/plugin/settings")).toBeNull();
   });
 });
 
@@ -141,9 +140,9 @@ describe("Overview §2.2 — alerts, summary provenance, heuristic gauge", () =>
     expect(html).toContain("Intent Drop-off");
   });
 
-  it("renders an explaining empty state when there are no alerts", () => {
+  it("renders the calm all-clear card when there are no alerts", () => {
     const html = renderToStaticMarkup(<TodaysAlertBlock alerts={[]} dropOff={null} />);
-    expect(html).toContain("No alerts today");
+    expect(html).toContain("All clear");
   });
 
   it("carries the provenance footer on the Agentic Store Summary", () => {
@@ -156,22 +155,18 @@ describe("Overview §2.2 — alerts, summary provenance, heuristic gauge", () =>
   it("renders the gauge with the three §2.2 sub-scores and the heuristic label", () => {
     const subScores = healthSubScores(OVERVIEW, null);
     const html = renderToStaticMarkup(
-      <HealthScoreBlock score={OVERVIEW.intent_health_score} subScores={subScores} />,
+      <HealthScoreBlock score={OVERVIEW.intent_health_score} subScores={subScores} readinessMeasured={false} />,
     );
     expect(html).toContain("not a conversion or revenue forecast");
     expect(html).toContain("58.33");
-    expect(html).toContain("意图覆盖");
-    expect(html).toContain("页面承接");
-    expect(html).toContain("数据健康");
+    expect(html).toContain("Intent coverage");
+    expect(html).toContain("Page readiness");
+    expect(html).toContain("Data health");
   });
 
   it("computes the three sub-scores from the overview payload", () => {
     const subScores = healthSubScores(OVERVIEW, 82);
-    expect(subScores.map((s) => s.label)).toEqual([
-      "意图覆盖 · Intent coverage",
-      "页面承接 · Page readiness",
-      "数据健康 · Data health",
-    ]);
+    expect(subScores.map((s) => s.key)).toEqual(["coverage", "readiness", "dataHealth"]);
     expect(subScores[1]?.score).toBe(82);
   });
 });
@@ -192,7 +187,7 @@ describe("Attribution — estimated labels and withheld fabrications", () => {
 
   it("buckets demand gaps with the locked thresholds", () => {
     const html = renderToStaticMarkup(<DemandGapTable rows={ATTRIBUTION.demand_gap} />);
-    expect(html).toContain(bucketLabel("revenue_expansion"));
+    expect(html).toContain(bucketLabel("revenue_expansion", dictionaryFor("en")));
     expect(html).toContain("Not measured");
     expect(html).toContain("llm_estimated");
   });

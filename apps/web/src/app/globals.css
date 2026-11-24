@@ -1285,3 +1285,675 @@ button.danger:disabled {
   font-size: 0.8rem;
 }
 
+
+/* ============================================================
+   IntentVisible plugin design system (design v1.5 §0.6/§2.7).
+   Full-width embedded frame, horizontal top navigation, restrained
+   Polaris-faithful palette, 4px spacing scale. Product colors are
+   module identity only (Library/Audit/Match); text stays neutral —
+   no blue text outside links (§2.7).
+   ============================================================ */
+:root {
+  --iv-brand: #5b4bc4;
+  --iv-brand-soft: rgba(91, 75, 196, 0.12);
+  --iv-green: #1f7a4d;
+  --iv-amber: #b7791f;
+  --iv-red: #c0392b;
+  --iv-surface: #ffffff;
+  --iv-surface-sunk: #eef0f3;
+  --iv-border: #e3e6ea;
+  --iv-text: #1a202c;
+  --iv-text-subdued: #64748b;
+  --iv-series-1: #5b4bc4;
+  --iv-series-2: #2c6ecb;
+  --iv-series-3: #1f7a4d;
+  --iv-series-4: #d9822b;
+  --iv-series-5: #8a5ab5;
+  --iv-radius: 10px;
+  --iv-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --iv-space-1: 0.25rem;
+  --iv-space-2: 0.5rem;
+  --iv-space-3: 0.75rem;
+  --iv-space-4: 1rem;
+  --iv-space-5: 1.5rem;
+  --iv-space-6: 2rem;
+}
+
+/* --- Frame: full width, no left rail --- */
+.iv-frame {
+  min-height: 100vh;
+  background: var(--iv-surface-sunk);
+  color: var(--iv-text);
+}
+
+.iv-content {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--iv-space-5) var(--iv-space-5) var(--iv-space-6);
+}
+
+/* --- Top navigation --- */
+.iv-topnav {
+  background: var(--iv-surface);
+  border-bottom: 1px solid var(--iv-border);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.iv-topnav-main {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--iv-space-5);
+  padding: var(--iv-space-3) var(--iv-space-5);
+}
+
+.iv-topnav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--iv-space-2);
+  color: var(--iv-text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.iv-topnav-brand:hover {
+  text-decoration: none;
+}
+
+.iv-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--iv-space-2);
+}
+
+.iv-logo-word {
+  font-weight: 700;
+  color: var(--iv-text);
+}
+
+.iv-logo-ring {
+  stroke: var(--iv-brand);
+}
+
+.iv-logo-dot {
+  fill: var(--iv-brand);
+}
+
+.iv-topnav-suffix {
+  color: var(--iv-text-subdued);
+  font-weight: 400;
+  font-size: 0.85rem;
+}
+
+.iv-topnav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--iv-space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+}
+
+.iv-topnav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--iv-space-2);
+  padding: var(--iv-space-2) var(--iv-space-3);
+  border-radius: 8px;
+  color: var(--iv-text-subdued);
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.iv-topnav-link svg {
+  flex: none;
+}
+
+.iv-topnav-link:hover {
+  color: var(--iv-text);
+  background: var(--iv-surface-sunk);
+  text-decoration: none;
+}
+
+.iv-topnav-link.is-active {
+  color: var(--iv-brand);
+  background: var(--iv-brand-soft);
+}
+
+.iv-topnav-settings {
+  margin-left: auto;
+}
+
+.iv-topnav-sub {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--iv-space-2);
+  list-style: none;
+  padding: 0 var(--iv-space-5) var(--iv-space-3);
+  font-size: 0.85rem;
+}
+
+.iv-topnav-sublink {
+  color: var(--iv-text-subdued);
+  padding: var(--iv-space-1) var(--iv-space-3);
+  border-radius: 999px;
+}
+
+.iv-topnav-sublink:hover {
+  color: var(--iv-text);
+  background: var(--iv-surface-sunk);
+  text-decoration: none;
+}
+
+.iv-topnav-sublink.is-active {
+  color: var(--iv-text);
+  background: var(--iv-surface-sunk);
+  font-weight: 600;
+}
+
+/* --- Page + section headers --- */
+.iv-page-header {
+  margin-bottom: var(--iv-space-5);
+}
+
+.iv-page-header h1 {
+  margin: 0 0 var(--iv-space-2);
+  font-size: 1.5rem;
+}
+
+.iv-page-header p {
+  margin: 0;
+  color: var(--iv-text-subdued);
+}
+
+.iv-section-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--iv-space-3);
+  margin: var(--iv-space-5) 0 var(--iv-space-3);
+}
+
+.iv-section-heading h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.iv-section-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--iv-brand-soft);
+  color: var(--iv-brand);
+  flex: none;
+}
+
+.iv-section-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.overview-block {
+  margin-bottom: var(--iv-space-5);
+}
+
+/* --- Cards --- */
+.iv-card {
+  background: var(--iv-surface);
+  border: 1px solid var(--iv-border);
+  border-radius: var(--iv-radius);
+  box-shadow: var(--iv-shadow);
+  padding: var(--iv-space-4) var(--iv-space-5);
+}
+
+.iv-loading {
+  padding: var(--iv-space-5) 0;
+  color: var(--iv-text-subdued);
+}
+
+.iv-error {
+  background: #fdf1f0;
+  border: 1px solid #f3c2bc;
+  border-radius: var(--iv-radius);
+  padding: var(--iv-space-4) var(--iv-space-5);
+}
+
+.iv-error strong {
+  color: var(--iv-red);
+}
+
+/* --- Today's Alert --- */
+.iv-alert-card strong {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--iv-space-2);
+}
+
+.iv-alert-card.is-calm {
+  border-color: #c8e6d4;
+  background: #f2faf5;
+}
+
+.iv-alert-card.is-alert {
+  border-color: #f3d3b8;
+}
+
+.iv-alert-card .btn {
+  margin-top: var(--iv-space-2);
+}
+
+.alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--iv-space-3);
+}
+
+.countdown {
+  color: var(--iv-amber);
+  font-size: 0.85rem;
+  margin: var(--iv-space-2) 0 0;
+}
+
+/* --- Hero: Agentic Store Summary --- */
+.iv-hero-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--iv-space-5);
+  padding: var(--iv-space-5);
+}
+
+.iv-hero-statement {
+  margin: 0 0 var(--iv-space-4);
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.iv-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--iv-space-3);
+  margin-bottom: var(--iv-space-4);
+}
+
+.iv-stat {
+  background: var(--iv-surface-sunk);
+  border-radius: 8px;
+  padding: var(--iv-space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--iv-space-1);
+  font-size: 0.85rem;
+}
+
+.iv-stat-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.iv-stat-value.iv-stat-live {
+  color: var(--iv-green);
+}
+
+.iv-hero-side {
+  border-left: 1px solid var(--iv-border);
+  padding-left: var(--iv-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--iv-space-3);
+}
+
+.iv-hero-side-title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.iv-platform-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--iv-space-2);
+}
+
+.iv-platform-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--iv-space-1);
+  padding: var(--iv-space-1) var(--iv-space-3);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border: 1px solid var(--iv-border);
+  background: var(--iv-surface);
+  color: var(--iv-text);
+}
+
+.iv-platform-1 { border-color: #d5cff2; background: #f4f2fc; }
+.iv-platform-2 { border-color: #c3d8f5; background: #f0f6fd; }
+.iv-platform-3 { border-color: #c2e2d2; background: #eefaf4; }
+.iv-platform-4 { border-color: #f0d4b2; background: #fdf5ea; }
+.iv-platform-5 { border-color: #ddcdf0; background: #f7f1fc; }
+
+/* --- Buttons (Polaris-faithful) --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--iv-space-2);
+  padding: var(--iv-space-2) var(--iv-space-4);
+  border-radius: 8px;
+  border: 1px solid var(--iv-border);
+  background: var(--iv-surface);
+  color: var(--iv-text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--iv-surface-sunk);
+  text-decoration: none;
+}
+
+.iv-hero-cta {
+  align-self: flex-start;
+  border-color: transparent;
+  background: var(--iv-brand);
+  color: #ffffff;
+}
+
+.iv-hero-cta:hover {
+  background: #4a3bad;
+  color: #ffffff;
+}
+
+/* --- Three parallel module cards --- */
+.iv-module-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--iv-space-4);
+}
+
+.iv-module-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--iv-space-3);
+}
+
+.iv-link-card {
+  color: var(--iv-text);
+}
+
+.iv-link-card:hover {
+  text-decoration: none;
+  border-color: var(--iv-brand);
+}
+
+.iv-module-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex: none;
+}
+
+.iv-module-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.iv-module-library {
+  background: #f4f2fc;
+  color: #5b4bc4;
+}
+
+.iv-module-audit {
+  background: #fdf5ea;
+  color: #b7791f;
+}
+
+.iv-module-match {
+  background: #eefaf4;
+  color: #1f7a4d;
+}
+
+.iv-module-metric {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.iv-module-metric .muted {
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.iv-module-ring {
+  display: flex;
+  align-items: center;
+  gap: var(--iv-space-3);
+}
+
+.iv-module-desc {
+  margin: 0;
+  color: var(--iv-text-subdued);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  flex: 1;
+}
+
+.iv-card-cta {
+  color: var(--iv-brand);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* --- Charts --- */
+.iv-minitrend {
+  display: block;
+  max-width: 100%;
+}
+
+.iv-donut {
+  display: flex;
+  align-items: center;
+  gap: var(--iv-space-3);
+}
+
+.iv-donut-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--iv-space-1);
+  font-size: 0.8rem;
+  color: var(--iv-text-subdued);
+}
+
+.iv-donut-legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--iv-space-2);
+}
+
+.iv-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: none;
+}
+
+.iv-score-ring-text {
+  fill: var(--iv-text);
+  font-weight: 600;
+}
+
+/* --- Provenance chips (§2.7 tri-color + simulated) --- */
+.iv-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--iv-space-2);
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.iv-chip-measured {
+  color: var(--iv-green);
+  background: #eefaf4;
+  border: 1px solid #c2e2d2;
+}
+
+.iv-chip-heuristic {
+  color: var(--iv-amber);
+  background: #fdf5ea;
+  border: 1px solid #f0d4b2;
+}
+
+.iv-chip-estimated {
+  color: #8a5ab5;
+  background: #f7f1fc;
+  border: 1px solid #ddcdf0;
+}
+
+.iv-chip-notmeasured {
+  color: var(--iv-text-subdued);
+  background: var(--iv-surface-sunk);
+  border: 1px solid var(--iv-border);
+}
+
+.iv-chip-dm-provider_measured {
+  color: var(--iv-green);
+  background: #eefaf4;
+  border: 1px solid #c2e2d2;
+}
+
+.iv-chip-dm-llm_simulated {
+  color: var(--iv-amber);
+  background: #fdf5ea;
+  border: 1px solid #f0d4b2;
+}
+
+/* --- Source labels (tri-color) + blind-spot footer --- */
+.source-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--iv-space-2);
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.source-measured {
+  color: var(--iv-green);
+  background: #eefaf4;
+  border: 1px solid #c2e2d2;
+}
+
+.source-attributionModel {
+  color: #2c6ecb;
+  background: #f0f6fd;
+  border: 1px solid #c3d8f5;
+}
+
+.source-platformReported {
+  color: var(--iv-amber);
+  background: #fdf5ea;
+  border: 1px solid #f0d4b2;
+}
+
+.source-simulated {
+  color: var(--iv-text-subdued);
+  background: var(--iv-surface-sunk);
+  border: 1px solid var(--iv-border);
+}
+
+.blind-spot-footer {
+  margin-top: var(--iv-space-5);
+  padding: var(--iv-space-3) var(--iv-space-4);
+  border: 1px dashed var(--iv-border);
+  border-radius: var(--iv-radius);
+  color: var(--iv-text-subdued);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.blind-spot-footer ul {
+  margin: var(--iv-space-2) 0 0;
+  padding-left: 1.1rem;
+}
+
+/* --- Settings language picker --- */
+.language-options {
+  display: flex;
+  gap: var(--iv-space-3);
+  margin: var(--iv-space-3) 0;
+}
+
+.language-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--iv-space-2);
+  padding: var(--iv-space-2) var(--iv-space-4);
+  border: 1px solid var(--iv-border);
+  border-radius: 8px;
+  background: var(--iv-surface);
+  cursor: pointer;
+  font: inherit;
+}
+
+.language-option.is-active {
+  border-color: var(--iv-brand);
+  background: var(--iv-brand-soft);
+  color: var(--iv-brand);
+  font-weight: 600;
+}
+
+/* --- Responsive: module grid and hero collapse --- */
+@media (max-width: 900px) {
+  .iv-module-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .iv-hero-card {
+    grid-template-columns: 1fr;
+  }
+
+  .iv-hero-side {
+    border-left: none;
+    border-top: 1px solid var(--iv-border);
+    padding-left: 0;
+    padding-top: var(--iv-space-4);
+  }
+
+  .iv-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .iv-topnav-main {
+    flex-wrap: wrap;
+    gap: var(--iv-space-3);
+  }
+
+  .iv-topnav-links {
+    order: 3;
+    flex-basis: 100%;
+    overflow-x: auto;
+  }
+}
