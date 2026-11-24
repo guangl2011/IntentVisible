@@ -3,14 +3,15 @@ import { expect, test } from "@playwright/test";
 import { E2E_PASSCODE } from "./config-url";
 
 /**
- * Plugin Phase I flow against design v1.4 §2 (the approved interface):
- * login → the plugin frame's IA grouping, the Overview's four blocks in
- * order, the §2.7 red lines (source labels, blind-spot footers, empty
- * states), the §2.9 DeepLumen patterns, and the §2.5 Commission page —
- * served against the deterministic demo seed that the API fixture
- * server mounts (playwright.config.ts boots it as the second
- * webServer). Numbers are asserted against the seed's exact values so
- * seed drift fails here, not silently in front of a merchant.
+ * Plugin Phase I flow against design v1.5 §0.6 (the approved interface):
+ * login → the full-width frame's horizontal top navigation, the
+ * Overview's four blocks in order, the §2.7 red lines (source labels,
+ * blind-spot footers, empty states), the §2.9 DeepLumen patterns, the
+ * §2.5 Commission page, and the en/zh language switch — served against
+ * the deterministic demo seed that the API fixture server mounts
+ * (playwright.config.ts boots it as the second webServer). Numbers are
+ * asserted against the seed's exact values so seed drift fails here,
+ * not silently in front of a merchant.
  */
 
 async function login(page: Page): Promise<void> {
@@ -21,33 +22,35 @@ async function login(page: Page): Promise<void> {
 }
 
 /**
- * §2.1 red line: the old dashboard navigation (Queue / Research /
- * Marketing Map / Plugin / Intent Match / History / Agents) must never
- * render on a plugin surface, and the plugin frame's nav must be the
- * design's IA grouping.
+ * §0.6 red line: the plugin renders a horizontal top navigation —
+ * Overview / Intent Library / Intent Audit / Intent Match plus a
+ * Settings entry, no left rail — and the old dashboard navigation
+ * (Queue / Research / Marketing Map / History / Agents) must never
+ * render on a plugin surface.
  */
 async function assertPluginChrome(page: Page): Promise<void> {
   const nav = page.locator('[data-testid="plugin-frame"] nav');
   await expect(nav).toBeVisible();
-  for (const group of [
-    "Intent Library · Build",
-    "Intent Audit · Optimize",
-    "Intent Match · Monetize",
-    "Settings",
-  ]) {
-    await expect(nav.getByText(group, { exact: true })).toBeVisible();
+  for (const link of ["Overview", "Intent Library", "Intent Audit", "Intent Match", "Settings"]) {
+    await expect(nav.getByRole("link", { name: link, exact: false })).toBeVisible();
   }
   for (const legacy of ["Queue", "History", "Agents"]) {
     await expect(nav.getByRole("link", { name: legacy, exact: true })).toHaveCount(0);
   }
-  // The old dashboard topbar cannot leak in either.
+  // The old dashboard topbar cannot leak in either; no left rail exists.
   await expect(page.locator(".pipeline-nav")).toHaveCount(0);
+  await expect(page.locator(".iv-sidebar")).toHaveCount(0);
 }
 
-test("IA: plugin frame groups nav per §2.1, old dashboard nav absent", async ({ page }) => {
+test("IA: full-width frame with horizontal top nav, old dashboard nav absent", async ({ page }) => {
   await login(page);
   await page.goto("/plugin");
   await assertPluginChrome(page);
+
+  // The contextual subnav row shows the active module's sub-pages.
+  await page.goto("/plugin/attribution");
+  await expect(page.getByTestId("subnav")).toBeVisible();
+  await expect(page.getByTestId("subnav").getByText("Attribution", { exact: true })).toBeVisible();
 });
 
 test("overview: exactly four §2.2 blocks in order", async ({ page }) => {
@@ -55,19 +58,22 @@ test("overview: exactly four §2.2 blocks in order", async ({ page }) => {
   await page.goto("/plugin");
   await assertPluginChrome(page);
 
-  // Simulated data mode is declared on the surface, not hidden.
-  await expect(page.getByText("Simulated — numbers come from LLM-simulated runs")).toBeVisible();
+  // Simulated data mode is declared on the surface, not hidden: the chip
+  // shows the short label with the full disclosure in its tooltip.
+  const modeChip = page.locator(".iv-chip-dm");
+  await expect(modeChip).toBeVisible();
+  await expect(modeChip).toHaveAttribute("title", /Simulated — numbers come from LLM-simulated runs/);
 
   const blocks = page.locator("section.overview-block");
   await expect(blocks).toHaveCount(4);
   await expect(blocks.nth(0)).toHaveAttribute("data-block", "todays-alert");
   await expect(blocks.nth(1)).toHaveAttribute("data-block", "agentic-summary");
   await expect(blocks.nth(2)).toHaveAttribute("data-block", "health-score");
-  await expect(blocks.nth(3)).toHaveAttribute("data-block", "attribution-shortcuts");
+  await expect(blocks.nth(3)).toHaveAttribute("data-block", "module-cards");
 
   // Block 1 — rule-triggered alerts with typed reasons, the 72h
   // auto-approve countdown on the review card.
-  const alerts = page.locator(".alert-card");
+  const alerts = page.locator(".iv-alert-card");
   await expect(alerts.first()).toBeVisible();
   for (const reason of ["Review queue", "Measurement gap", "Measurement quality", "Billing integrity"]) {
     await expect(page.getByText(reason)).toBeVisible();
@@ -78,22 +84,22 @@ test("overview: exactly four §2.2 blocks in order", async ({ page }) => {
   await expect(page.getByText("5 AI-referral sessions in the last 7 days")).toBeVisible();
   await expect(page.getByText(/Generated by .* · data window/)).toBeVisible();
 
-  // Block 3 — the gauge card, labeled 启发式分，非转化预测.
+  // Block 3 — the gauge card with the heuristic label and the three
+  // sub-scores, all in English (§0.6 rule 2: one language per render).
   const gauge = page.getByTestId("health-gauge");
   await expect(gauge).toBeVisible();
-  await expect(gauge).toContainText("启发式分，非转化预测");
-  await expect(gauge).toContainText("75");
-  await expect(gauge).toContainText("意图覆盖");
-  await expect(gauge).toContainText("页面承接");
-  await expect(gauge).toContainText("数据健康");
+  await expect(gauge).toContainText("not a conversion or revenue forecast");
+  await expect(gauge).toContainText("Intent coverage");
+  await expect(gauge).toContainText("Page readiness");
+  await expect(gauge).toContainText("Data health");
 
-  // Block 4 — three view shortcuts + the affiliate-visit card + top-3
-  // opportunity scores.
-  await expect(page.getByText("Intent Yield")).toBeVisible();
-  await expect(page.getByText("Demand Gap")).toBeVisible();
-  await expect(page.getByText("Channel Quality")).toBeVisible();
-  await expect(page.getByText("Intent Affiliate Visit")).toBeVisible();
-  await expect(page.locator(".opportunity-top-list li")).toHaveCount(3);
+  // Block 4 — three parallel module cards, each with icon, metric, and
+  // a link into its module page.
+  const moduleCards = page.locator(".iv-module-grid .iv-module-card");
+  await expect(moduleCards).toHaveCount(3);
+  await expect(moduleCards.nth(0)).toContainText("Intent Library");
+  await expect(moduleCards.nth(1)).toContainText("Intent Audit");
+  await expect(moduleCards.nth(2)).toContainText("Intent Match");
 });
 
 test("§2.7 red lines: source labels and blind-spot footers on every plugin page", async ({ page }) => {
@@ -120,20 +126,20 @@ test("§2.7 red lines: source labels and blind-spot footers on every plugin page
     "/plugin/uninstall",
   ]) {
     await page.goto(route);
-    // Every page carries the data-blind-spot footer with its "why" list.
+    // Every page carries the data-blind-spot footer with its "why" list,
+    // rendered in the active locale (English by default, §0.6 rule 2).
     await expect(page.getByTestId("blind-spot-footer")).toBeVisible();
-    await expect(page.getByText("数据盲区")).toBeVisible();
+    await expect(page.getByText("Data blind spots")).toBeVisible();
   }
 
-  // Source labels render tri-color text (实测 / 归因模型) on data pages.
-  // Source labels render tri-color text (实测 / 归因模型) on data pages:
-  // the order-ledger anchor on Commission is measured, attribution
-  // allocation on the Attribution page is the model kind.
+  // Source labels render tri-color text on data pages: the order-ledger
+  // anchor on Commission is measured, attribution allocation on the
+  // Attribution page is the model kind.
   await page.goto("/plugin/commission");
-  await expect(page.getByText("实测").first()).toBeVisible();
+  await expect(page.getByText("measured", { exact: true }).first()).toBeVisible();
   await page.goto("/plugin/attribution");
   await expect(page.locator(".source-label").first()).toBeVisible();
-  await expect(page.getByText("归因模型").first()).toBeVisible();
+  await expect(page.getByText("attribution model").first()).toBeVisible();
 });
 
 test("§2.9: site research renders the terminal-style step pipeline", async ({ page }) => {
@@ -254,9 +260,10 @@ test("commission: §2.5 filter bar, four stat cards, order table, pinned promise
   await login(page);
   await page.goto("/plugin/commission");
 
-  // The pinned promise line.
+  // The pinned promise line — every commission traces to an order and
+  // reconciles against Shopify (§2.5, DeepLumen lesson).
   await expect(page.getByTestId("commission-promise")).toContainText(
-    "每笔佣金都可对应到具体订单号并与 Shopify 核对",
+    "Every commission traces to a specific order number and reconciles against Shopify.",
   );
 
   // Filter bar with export.
@@ -309,4 +316,49 @@ test("integrations: Shopify connected, Nango and treg.to are honest stubs", asyn
   await expect(page.getByText("Phase II stub")).toBeVisible();
   await expect(page.getByText("developer key · pay-per-call")).toBeVisible();
   await expect(page.getByText("no private data of yours ever routes through treg.to")).toBeVisible();
+});
+
+test("i18n: switch to 中文, Overview and two module pages render Chinese-only, switch back", async ({
+  page,
+}) => {
+  await login(page);
+
+  // Switch in Settings: the choice persists (cookie + settings record)
+  // and the whole plugin tree re-renders on every route.
+  await page.goto("/plugin/settings");
+  await page.getByTestId("language-zh").check();
+  await expect(page.getByTestId("language-zh")).toBeChecked();
+
+  // Overview in Chinese — nav, four block headings, module cards; no
+  // English UI chrome may leak (native language names excepted).
+  await page.goto("/plugin");
+  await expect(page.locator("h1")).toHaveText("概览");
+  const zhNav = page.locator('[data-testid="plugin-frame"] nav');
+  await expect(zhNav.getByRole("link", { name: "意图库" })).toBeVisible();
+  for (const english of ["Today's Alert", "Agentic Store Summary", "Intent Health Score", "Intent Library"]) {
+    await expect(page.getByText(english, { exact: true })).toHaveCount(0);
+  }
+
+  // Two module pages in Chinese: the Intent Library hub and Settings.
+  await page.goto("/plugin/library");
+  await expect(page.locator("h1")).toHaveText("意图库");
+  // The subnav link and the hub card share the label — assert the first.
+  await expect(page.getByText("站点研究").first()).toBeVisible();
+  for (const english of ["Site Research", "Marketing Map", "Open"]) {
+    await expect(page.getByText(english, { exact: true })).toHaveCount(0);
+  }
+
+  await page.goto("/plugin/settings");
+  await expect(page.locator("h1")).toHaveText("设置");
+  await expect(page.getByText("插件语言")).toBeVisible();
+  for (const english of ["Installed permissions", "Plugin language"]) {
+    await expect(page.getByText(english, { exact: true })).toHaveCount(0);
+  }
+
+  // Switch back — English renders again on every route.
+  await page.getByTestId("language-en").check();
+  await page.goto("/plugin");
+  await expect(page.locator("h1")).toHaveText("Overview");
+  await page.goto("/plugin/library");
+  await expect(page.locator("h1")).toHaveText("Intent Library");
 });

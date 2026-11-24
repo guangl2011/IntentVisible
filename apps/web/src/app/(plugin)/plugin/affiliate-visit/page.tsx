@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import { DataModeHeader } from "../../../(dashboard)/pipeline/components/data-mode-header";
 import { ErrorPanel, LoadingPanel } from "../../../(dashboard)/components/panels";
 import { getPluginClient } from "../../../../lib/plugin/endpoint";
+import { useT } from "../../../../lib/plugin/i18n/locale";
 import { loadPlugin } from "../../../../lib/plugin/load";
 import { AffiliateVisitsPanel, SettlementPanel } from "../components/match-visit-panels";
 import { BlindSpotFooter } from "../components/red-lines";
@@ -22,24 +23,19 @@ function loadMatch(shopId: string) {
 }
 
 export default function AffiliateVisitPage() {
+  const t = useT();
   const loader = useCallback((shopId: string) => loadMatch(shopId), []);
   const { binding, result } = usePluginPage(loader);
 
   return (
     <>
-      <h1>Intent Affiliate Visit</h1>
-      <div className="card how-it-works">
-        How it works: Intent Match channels and partners send external traffic to your intent pages. This
-        page shows how many visits arrived, where they came from, which intent pages they landed on, and how
-        each visit joins to an order — the same tracking-code system the Commission page bills on.
-      </div>
-      <p className="muted">
-        Sessions come from affiliate-side tracking joined with UTM / click-id / referrer parameters.
-      </p>
+      <h1>{t.affiliateVisit.title}</h1>
+      <div className="card how-it-works">{t.affiliateVisit.howItWorks}</div>
+      <p className="muted">{t.affiliateVisit.sessionsNote}</p>
       {result?.ok ? <DataModeHeader dataMode={result.data.dataMode} /> : null}
 
       {binding === null || result === null ? (
-        <LoadingPanel label="affiliate visits" />
+        <LoadingPanel label={t.simLabels.loadingAffiliateVisits} />
       ) : !result.ok ? (
         <ErrorPanel message={result.error.message} />
       ) : (
@@ -49,12 +45,7 @@ export default function AffiliateVisitPage() {
         </>
       )}
 
-      <BlindSpotFooter
-        items={[
-          "Affiliate visits are recorded from partner-side tracking — dark-social traffic without tracking parameters is invisible.",
-          "Crawler-level coverage is a Phase II concern; Phase I counts source sessions only.",
-        ]}
-      />
+      <BlindSpotFooter items={t.blindSpots.affiliateVisit} />
     </>
   );
 }

@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 
 import type { BuyerIntentPayload } from "../../../../lib/plugin/types";
+import { useT } from "../../../../lib/plugin/i18n/locale";
 import { VisibilityProvenanceBadge } from "./badges";
 
 /**
@@ -8,7 +11,8 @@ import { VisibilityProvenanceBadge } from "./badges";
  * persona × stage, each prompt card carrying full visibility provenance
  * — source engines and measurement window on every measured value, an
  * explicit not-measured state on the rest, and single-day snapshots
- * labeled as such.
+ * labeled as such. All copy renders through the dictionary (design
+ * v1.5 §0.6 rule 2).
  */
 
 /** Groups intent units by persona → buyer stage for the list page. */
@@ -28,14 +32,12 @@ export function groupByPersonaStage(units: BuyerIntentPayload[]): { persona: str
 }
 
 export function IntentGroupTable({ units }: { units: BuyerIntentPayload[] }) {
+  const t = useT();
   if (units.length === 0) {
     return (
       <div className="card empty-card">
-        <strong>No buyer intents yet.</strong>
-        <p className="muted">
-          Intent units appear here once site research derives them from your own pages — grouped by the
-          persona asking, the stage they are in, and the pain point they are trying to solve.
-        </p>
+        <strong>{t.buyerIntents.empty.title}</strong>
+        <p className="muted">{t.buyerIntents.empty.hint}</p>
       </div>
     );
   }
@@ -49,7 +51,7 @@ export function IntentGroupTable({ units }: { units: BuyerIntentPayload[] }) {
                 <h3>
                   {group.persona} · {stageGroup.stage}
                 </h3>
-                <span className="muted">{stageGroup.units.length} intent(s)</span>
+                <span className="muted">{t.buyerIntents.unitCount(stageGroup.units.length)}</span>
               </div>
               {stageGroup.units.map((unit) => (
                 <IntentUnitCard key={unit.intent_id} unit={unit} />
@@ -63,6 +65,7 @@ export function IntentGroupTable({ units }: { units: BuyerIntentPayload[] }) {
 }
 
 export function IntentUnitCard({ unit }: { unit: BuyerIntentPayload }) {
+  const t = useT();
   return (
     <div className="intent-unit">
       <div className="intent-head">
@@ -75,12 +78,12 @@ export function IntentUnitCard({ unit }: { unit: BuyerIntentPayload }) {
       </div>
       <p className="muted">{unit.pain_point}</p>
       <div className="intent-prompts">
-        <strong className="muted">Buyer prompts (the questions AI engines see):</strong>
+        <strong className="muted">{t.buyerIntents.promptsTitle}</strong>
         <ul>
           {unit.prompts.map((prompt) => (
             <li key={prompt.prompt_text} className={prompt.is_primary ? "primary-prompt" : undefined}>
               {prompt.prompt_text}
-              {prompt.is_primary ? <span className="muted"> · primary</span> : null}
+              {prompt.is_primary ? <span className="muted"> · {t.buyerIntents.primaryTag}</span> : null}
             </li>
           ))}
         </ul>

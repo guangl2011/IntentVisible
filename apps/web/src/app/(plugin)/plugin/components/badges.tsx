@@ -1,11 +1,15 @@
+"use client";
+
 import type { AlertSeverity, VisibilityProvenance } from "../../../../lib/plugin/types";
+import { useT } from "../../../../lib/plugin/i18n/locale";
+import type { Dictionary } from "../../../../lib/plugin/i18n/dictionary";
 
 /**
  * The provenance vocabulary every plugin page renders next to its numbers
- * (design v1.4 §2.7): measured-vs-simulated separation, estimated and
+ * (design v1.5 §2.7): measured-vs-simulated separation, estimated and
  * heuristic labels, and the not_measured state rendered as its own state —
  * never a fabricated value, never a single-day snapshot presented as
- * steady state.
+ * steady state. All text comes from the active locale's dictionary.
  */
 
 /** Severity chip for alerts and audit recommendations. */
@@ -15,25 +19,27 @@ export function SeverityBadge({ severity }: { severity: AlertSeverity }) {
 
 /** Marks a derivation as estimated — required on every Opportunity Score. */
 export function EstimatedBadge() {
-  return <span className="badge badge-estimated">estimated</span>;
+  const t = useT();
+  return <span className="badge badge-estimated">{t.common.estimated}</span>;
 }
 
 /** Marks a score as heuristic — required on Readiness and Intent Health Score. */
 export function HeuristicBadge() {
-  return <span className="badge badge-heuristic">heuristic — not a conversion or revenue forecast</span>;
+  const t = useT();
+  return <span className="badge badge-heuristic">{t.common.heuristicBadge}</span>;
 }
 
-/** Human label for a demand-gap bucket. */
-export function bucketLabel(bucket: string): string {
+/** Human label for a demand-gap bucket (localized; pure in the bucket value). */
+export function bucketLabel(bucket: string, t: Dictionary): string {
   switch (bucket) {
     case "revenue_expansion":
-      return "Revenue Expansion (gap ≥ 50%)";
+      return t.attribution.buckets.revenue_expansion;
     case "market_expansion":
-      return "Market Expansion (gap 30–49%)";
+      return t.attribution.buckets.market_expansion;
     case "healthy":
-      return "Healthy";
+      return t.attribution.buckets.healthy;
     case "not_measured":
-      return "Not measured";
+      return t.attribution.buckets.not_measured;
     default:
       return bucket;
   }
@@ -46,27 +52,24 @@ export function bucketLabel(bucket: string): string {
  * measurement that does not exist.
  */
 export function VisibilityProvenanceBadge({ visibility }: { visibility: VisibilityProvenance }) {
+  const t = useT();
   if (visibility.measurement_status === "not_measured" || visibility.visibility_pct === null) {
     return (
-      <span className="badge badge-not-measured" title="No visibility measurement exists for this unit — nothing is invented to fill the gap.">
-        not measured
+      <span className="badge badge-not-measured" title={t.common.enginesNotRecorded}>
+        {t.common.notMeasured}
       </span>
     );
   }
-  const engines = (visibility.source_engines ?? []).join(", ") || "engines not recorded";
+  const engines = (visibility.source_engines ?? []).join(", ") || t.common.enginesNotRecorded;
   const singleDay = visibility.measurement_kind === "single_day";
   return (
     <span
       className={`badge ${singleDay ? "badge-single-day" : "badge-measured"}`}
-      title={
-        singleDay
-          ? "Single-day snapshot: do not treat this as steady state."
-          : "Rolling-window measurement across the recorded engine set."
-      }
+      title={singleDay ? t.common.singleDaySnapshot : t.common.rolling}
     >
       {visibility.visibility_pct}% · {engines} · {visibility.measurement_window_start} →{" "}
       {visibility.measurement_window_end}
-      {singleDay ? " · single-day snapshot" : " · rolling"}
+      {singleDay ? ` · ${t.common.singleDaySnapshot}` : ` · ${t.common.rolling}`}
     </span>
   );
 }
