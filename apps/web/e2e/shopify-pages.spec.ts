@@ -34,7 +34,7 @@ async function login(page: Page): Promise<void> {
   await page.goto("/login");
   await page.getByLabel("Passcode").fill(E2E_PASSCODE);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForURL("/queue");
+  await page.waitForURL("/plugin");
 }
 
 test("merchant walks connect → catalog sync → intents → approve", async ({ page }) => {

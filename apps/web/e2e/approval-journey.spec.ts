@@ -26,7 +26,7 @@ async function login(page: Page): Promise<void> {
   await page.goto("/login");
   await page.getByLabel("Passcode").fill(PASSCODE);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForURL("/queue");
+  await page.waitForURL("/plugin");
 }
 
 /** Backdoor agent fixture for the non-UI tests: raw key is known by design. */
