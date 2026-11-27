@@ -6,10 +6,32 @@ import { EstimatedBadge, HeuristicBadge, SeverityBadge, VisibilityProvenanceBadg
 import { AttributionPanels, DemandGapTable, FunnelTable } from "../src/app/(plugin)/plugin/components/attribution-panels";
 import { IntentGroupTable, groupByPersonaStage } from "../src/app/(plugin)/plugin/components/buyer-intents-panels";
 import { CommissionPanels } from "../src/app/(plugin)/plugin/components/commission-panels";
-import { NAV_MODULES, subnavForPath } from "../src/app/(plugin)/plugin/components/plugin-top-nav";
+import { PluginSideNav, SIDEBAR_ITEMS } from "../src/app/(plugin)/plugin/components/plugin-side-nav";
 import { dictionaryFor } from "../src/lib/plugin/i18n/dictionary";
 import { AffiliateVisitsPanel, SettlementPanel } from "../src/app/(plugin)/plugin/components/match-visit-panels";
-import { TodaysAlertBlock, StoreSummaryBlock, HealthScoreBlock, healthSubScores } from "../src/app/(plugin)/plugin/components/overview-panels";
+import {
+  CrawlCoverageCard,
+  TopPagesCard,
+  TrafficTrendCard,
+  VisitsByTypeCard,
+  trendMax,
+} from "../src/app/(plugin)/plugin/components/ai-traffic-panels";
+import {
+  IntentMapBlock,
+  IntentPerformanceBlock,
+  LandingPagesMonitoredCard,
+  StoreSummaryBlock,
+  TodaysAlertBlock,
+  aiVisitTrendTotals,
+  healthSubScores,
+} from "../src/app/(plugin)/plugin/components/overview-panels";
+import {
+  PlanGrowthBand,
+  PlanRatesSection,
+  PlanSummaryCard,
+  currentBillingCycle,
+  exampleChartPoints,
+} from "../src/app/(plugin)/plugin/plan/page";
 import {
   ATTRIBUTION,
   AUDIT,
@@ -32,46 +54,33 @@ import {
  * The red-line assertions live here on purpose: provenance on every
  * measured number, not_measured as its own state, estimated/heuristic
  * labels present, single-day snapshots labeled, and settlement withheld
- * for simulated data. The §0.6 IA is asserted on NAV_MODULES.
+ * for simulated data. The embedded-app IA is asserted on SIDEBAR_ITEMS.
  */
 
-describe("NAV_MODULES — the §0.6 top-navigation IA", () => {
-  it("carries the four modules plus a Settings entry outside the module list", () => {
-    const hrefs = NAV_MODULES.map((module) => module.href);
-    expect(hrefs).toEqual(["/plugin", "/plugin/library", "/plugin/audit", "/plugin/match"]);
-  });
-
-  it("carries every designed surface as a top-nav or subnav entry", () => {
-    const entries = NAV_MODULES.flatMap((module) => [module.href, ...module.subnav.map((item) => item.href)]);
-    for (const href of [
-      "/plugin",
+describe("SIDEBAR_ITEMS — the 7-item embedded sidebar IA", () => {
+  it("carries exactly the seven menu items in the mandated order", () => {
+    const hrefs = SIDEBAR_ITEMS.map((item) => item.href);
+    expect(hrefs).toEqual([
       "/plugin/library",
-      "/plugin/site-research",
-      "/plugin/marketing-map",
-      "/plugin/intents",
-      "/plugin/products",
-      "/plugin/attribution",
       "/plugin/audit",
-      "/plugin/ad-optimization",
-      "/plugin/ai-insights",
       "/plugin/match",
-      "/plugin/channels",
-      "/plugin/affiliate-visit",
+      "/plugin/ai-traffic",
       "/plugin/commission",
-    ]) {
-      expect(entries, href).toContain(href);
-    }
-    // The old dashboard navigation must not leak into the plugin frame.
-    for (const legacy of ["/queue", "/research", "/agents", "/history"]) {
-      expect(entries, legacy).not.toContain(legacy);
-    }
+      "/plugin/plan",
+      "/plugin/settings",
+    ]);
   });
 
-  it("resolves a sub-page path to its owning module for the contextual subnav row", () => {
-    expect(subnavForPath("/plugin/attribution")?.href).toBe("/plugin/library");
-    expect(subnavForPath("/plugin/commission")?.href).toBe("/plugin/match");
-    expect(subnavForPath("/plugin/audit")?.href).toBe("/plugin/audit");
-    expect(subnavForPath("/plugin/settings")).toBeNull();
+  it("excludes the Overview home from the menu — it stays reachable via the brand link", () => {
+    const hrefs = SIDEBAR_ITEMS.map((item) => item.href);
+    expect(hrefs, "/plugin").not.toContain("/plugin");
+  });
+
+  it("never leaks the old dashboard navigation into the sidebar", () => {
+    const hrefs = SIDEBAR_ITEMS.map((item) => item.href);
+    for (const legacy of ["/queue", "/research", "/agents", "/history"]) {
+      expect(hrefs, legacy).not.toContain(legacy);
+    }
   });
 });
 
@@ -155,7 +164,7 @@ describe("Overview §2.2 — alerts, summary provenance, heuristic gauge", () =>
   it("renders the gauge with the three §2.2 sub-scores and the heuristic label", () => {
     const subScores = healthSubScores(OVERVIEW, null);
     const html = renderToStaticMarkup(
-      <HealthScoreBlock score={OVERVIEW.intent_health_score} subScores={subScores} readinessMeasured={false} />,
+      <IntentMapBlock score={OVERVIEW.intent_health_score} subScores={subScores} readinessMeasured={false} />,
     );
     expect(html).toContain("not a conversion or revenue forecast");
     expect(html).toContain("58.33");
@@ -164,10 +173,126 @@ describe("Overview §2.2 — alerts, summary provenance, heuristic gauge", () =>
     expect(html).toContain("Data health");
   });
 
+  it("renders the Intent Map heading with the gauge and monitored-pages cards side by side", () => {
+    const subScores = healthSubScores(OVERVIEW, null);
+    const html = renderToStaticMarkup(
+      <IntentMapBlock score={OVERVIEW.intent_health_score} subScores={subScores} readinessMeasured={false} />,
+    );
+    expect(html).toContain("data-block=\"intent-map\"");
+    expect(html).toContain("Intent Map");
+    expect(html).toContain("data-testid=\"intent-map-health\"");
+    expect(html).toContain("data-testid=\"landing-pages-monitored\"");
+  });
+
+  it("labels the monitored-pages card simulated and keeps its per-type breakdown", () => {
+    const html = renderToStaticMarkup(<LandingPagesMonitoredCard />);
+    expect(html).toContain("simulated ·");
+    expect(html).toContain("Products");
+    expect(html).toContain("Collections");
+  });
+});
+
+describe("Intent Performance — traffic, insights, affiliate orders", () => {
+  it("renders the three Track columns with a simulated traffic label and measured orders", () => {
+    const html = renderToStaticMarkup(<IntentPerformanceBlock data={{ attributedOrders: 3 }} />);
+    expect(html).toContain("data-testid=\"performance-traffic\"");
+    expect(html).toContain("data-testid=\"performance-insights\"");
+    expect(html).toContain("data-testid=\"performance-affiliate\"");
+    expect(html).toContain("simulated ·");
+    expect(html).toContain("measured");
+  });
+
+  it("shows the no-live-data state for the AI insights track, never a made-up number", () => {
+    const html = renderToStaticMarkup(<IntentPerformanceBlock data={{ attributedOrders: 3 }} />);
+    expect(html).toContain("data-testid=\"performance-insights\"");
+    expect(html).not.toContain("badge-measured");
+  });
+
+  it("totals the per-day AI-visit series for the trend spark", () => {
+    expect(aiVisitTrendTotals([{ day: "2026-11-20", series: { claude: 2, chatgpt: 3 } }])).toEqual([5]);
+  });
+
   it("computes the three sub-scores from the overview payload", () => {
     const subScores = healthSubScores(OVERVIEW, 82);
     expect(subScores.map((s) => s.key)).toEqual(["coverage", "readiness", "dataHealth"]);
     expect(subScores[1]?.score).toBe(82);
+  });
+});
+
+describe("Intent Traffic — coverage, by-type, trend, top pages", () => {
+  it("renders the coverage donut with the collected/total share and per-type rows", () => {
+    const html = renderToStaticMarkup(<CrawlCoverageCard />);
+    expect(html).toContain("%");
+    expect(html).toContain("simulated ·");
+    expect(html).toContain("Products");
+  });
+
+  it("renders the by-page-type bar chart with counts and share of total", () => {
+    const html = renderToStaticMarkup(<VisitsByTypeCard />);
+    expect(html).toContain("%");
+    expect(html).toContain("simulated ·");
+  });
+
+  it("renders the trend with the platform legend and toggle labels", () => {
+    const html = renderToStaticMarkup(<TrafficTrendCard />);
+    expect(html).toContain("Claude");
+    expect(html).toContain("ChatGPT");
+    expect(html).toContain("Perplexity");
+    expect(html).toContain("data-testid=\"trend-by-platform\"");
+    expect(html).toContain("data-testid=\"trend-by-category\"");
+  });
+
+  it("renders the top-pages table with visit shares only", () => {
+    const html = renderToStaticMarkup(<TopPagesCard />);
+    expect(html).toContain("data-testid=\"ai-top-pages\"");
+    expect(html).toContain("simulated ·");
+  });
+
+  it("shares one scale across both trend views so the toggle never rescales", () => {
+    const flat = [
+      { day: "d1", series: { claude: 4 } },
+      { day: "d2", series: { claude: 8 } },
+    ];
+    expect(trendMax(flat, flat)).toBe(8);
+  });
+});
+
+describe("Plan — performance-billing model card", () => {
+  it("shows $0 monthly fee, the measured billing cycle, and the checklist", () => {
+    const cycle = currentBillingCycle(COMMISSION);
+    expect(cycle).not.toBeNull();
+    const html = renderToStaticMarkup(<PlanSummaryCard cycle={cycle} />);
+    expect(html).toContain("$0");
+    expect(html).toContain("measured");
+    expect(html).toContain("data-testid=\"plan-checklist\"");
+  });
+
+  it("claims no first-N-orders-free waiver the engine does not configure", () => {
+    const html = renderToStaticMarkup(<PlanSummaryCard cycle={null} />);
+    expect(html).toContain("5–20%");
+    expect(html).not.toContain("first 50");
+  });
+
+  it("shows a dash for the billing cycle when the ledger is empty", () => {
+    const html = renderToStaticMarkup(<PlanSummaryCard cycle={null} />);
+    expect(html).not.toContain("measured");
+  });
+
+  it("expands the per-category rates within the locked 5–20% band", () => {
+    const html = renderToStaticMarkup(<PlanRatesSection />);
+    expect(html).toContain("5–20%");
+  });
+
+  it("marks the growth-band chart EXAMPLE — an illustration, not data", () => {
+    const html = renderToStaticMarkup(<PlanGrowthBand />);
+    expect(html).toContain("EXAMPLE");
+    expect(html).toContain("simulated ·");
+  });
+
+  it("computes layered example-chart polylines", () => {
+    const points = exampleChartPoints([[0, 10], [5, 5]], 100, 100);
+    expect(points).toHaveLength(2);
+    expect(points[0]).toBe("0.0,100.0 100.0,6.0");
   });
 });
 
