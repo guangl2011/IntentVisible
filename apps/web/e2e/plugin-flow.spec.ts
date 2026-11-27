@@ -58,7 +58,7 @@ test("IA: embedded frame with 7-item left sidebar, old dashboard nav absent", as
   await expect(page).toHaveURL("/plugin");
 });
 
-test("overview: exactly four §2.2 blocks in order", async ({ page }) => {
+test("overview: five §2.2 blocks in order", async ({ page }) => {
   await login(page);
   await page.goto("/plugin");
   await assertPluginChrome(page);
@@ -70,11 +70,12 @@ test("overview: exactly four §2.2 blocks in order", async ({ page }) => {
   await expect(modeChip).toHaveAttribute("title", /Simulated — numbers come from LLM-simulated runs/);
 
   const blocks = page.locator("section.overview-block");
-  await expect(blocks).toHaveCount(4);
+  await expect(blocks).toHaveCount(5);
   await expect(blocks.nth(0)).toHaveAttribute("data-block", "todays-alert");
   await expect(blocks.nth(1)).toHaveAttribute("data-block", "agentic-summary");
   await expect(blocks.nth(2)).toHaveAttribute("data-block", "intent-map");
-  await expect(blocks.nth(3)).toHaveAttribute("data-block", "intent-performance");
+  await expect(blocks.nth(3)).toHaveAttribute("data-block", "module-cards");
+  await expect(blocks.nth(4)).toHaveAttribute("data-block", "intent-performance");
 
   // Block 1 — rule-triggered alerts with typed reasons, the 72h
   // auto-approve countdown on the review card.
@@ -102,7 +103,15 @@ test("overview: exactly four §2.2 blocks in order", async ({ page }) => {
   await expect(monitored).toBeVisible();
   await expect(monitored).toContainText("simulated ·");
 
-  // Block 4 — Intent Performance: traffic (simulated spark), AI insights
+  // Block 4 — three parallel module cards, each with icon, metric, and
+  // its own page link (the v1.5 design's module row, restored).
+  const moduleCards = page.locator("[data-block='module-cards'] .iv-module-card");
+  await expect(moduleCards).toHaveCount(3);
+  await expect(moduleCards.nth(0)).toContainText("Open Intent Library");
+  await expect(moduleCards.nth(1)).toContainText("Open Intent Audit");
+  await expect(moduleCards.nth(2)).toContainText("Open Intent Match");
+
+  // Block 5 — Intent Performance: traffic (simulated spark), AI insights
   // (no live Track A data yet), affiliate orders (measured).
   await expect(page.getByTestId("performance-traffic")).toBeVisible();
   await expect(page.getByTestId("performance-insights")).toBeVisible();

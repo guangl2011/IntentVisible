@@ -20,6 +20,7 @@ import {
   IntentMapBlock,
   IntentPerformanceBlock,
   LandingPagesMonitoredCard,
+  ModuleCardsBlock,
   StoreSummaryBlock,
   TodaysAlertBlock,
   aiVisitTrendTotals,
@@ -189,6 +190,33 @@ describe("Overview §2.2 — alerts, summary provenance, heuristic gauge", () =>
     expect(html).toContain("simulated ·");
     expect(html).toContain("Products");
     expect(html).toContain("Collections");
+  });
+});
+
+describe("Module Cards — the three parallel module cards", () => {
+  it("renders the three module cards with icons, metrics, descriptions, and page links", () => {
+    const html = renderToStaticMarkup(
+      <ModuleCardsBlock
+        data={{ activeIntentCount: 7, avgReadiness: 72, attributedOrders: 3, billedNet: 41 }}
+      />,
+    );
+    expect(html).toContain("data-block=\"module-cards\"");
+    expect(html).toContain("iv-module-grid");
+    expect(html).toContain("iv-module-library");
+    expect(html).toContain("iv-module-audit");
+    expect(html).toContain("iv-module-match");
+    expect(html).toContain("Open Intent Library");
+    expect(html).toContain("Open Intent Audit");
+    expect(html).toContain("Open Intent Match");
+  });
+
+  it("shows the readiness-missing state, never a fabricated average", () => {
+    const html = renderToStaticMarkup(
+      <ModuleCardsBlock
+        data={{ activeIntentCount: 7, avgReadiness: null, attributedOrders: 0, billedNet: 0 }}
+      />,
+    );
+    expect(html).toContain("Landing page audit has not scored any intent yet.");
   });
 });
 

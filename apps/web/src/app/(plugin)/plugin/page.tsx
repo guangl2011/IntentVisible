@@ -4,6 +4,7 @@ import { useCallback } from "react";
 
 import type {
   AuditPayload,
+  CommissionLedgerPayload,
   MatchPayload,
   OverviewPayload,
 } from "../../../lib/plugin/types";
@@ -13,6 +14,7 @@ import { loadPlugin } from "../../../lib/plugin/load";
 import {
   IntentMapBlock,
   IntentPerformanceBlock,
+  ModuleCardsBlock,
   StoreSummaryBlock,
   TodaysAlertBlock,
   averageReadiness,
@@ -26,10 +28,11 @@ import { usePluginPage } from "./use-plugin-page";
 /**
  * Overview — the plugin's default landing page (design v1.5 §0.6 rule 1,
  * §2.2): sections top-down, each with an icon — Today's Alert, Agentic
- * Store Summary, Intent Map (gauge + monitored pages), and Intent
- * Performance (traffic / AI insights / affiliate orders). Three read
- * routes feed it in parallel; each block renders its own loading/error
- * state so one failing route never blanks the page.
+ * Store Summary, Intent Map (gauge + monitored pages), the three
+ * parallel module cards, and Intent Performance (traffic / AI insights
+ * / affiliate orders). Five read routes feed it in parallel; each block
+ * renders its own loading/error state so one failing route never blanks
+ * the page.
  */
 
 function loadOverview(shopId: string) {
@@ -41,6 +44,9 @@ function loadMatch(shopId: string) {
 function loadAudit(shopId: string) {
   return loadPlugin(() => getPluginClient().audit(shopId));
 }
+function loadCommission(shopId: string) {
+  return loadPlugin(() => getPluginClient().commission(shopId));
+}
 
 export default function PluginOverviewPage() {
   const t = useT();
@@ -48,10 +54,12 @@ export default function PluginOverviewPage() {
   const overviewLoader = useCallback((shopId: string) => loadOverview(shopId), []);
   const matchLoader = useCallback((shopId: string) => loadMatch(shopId), []);
   const auditLoader = useCallback((shopId: string) => loadAudit(shopId), []);
+  const commissionLoader = useCallback((shopId: string) => loadCommission(shopId), []);
 
   const overview = usePluginPage(overviewLoader);
   const match = usePluginPage(matchLoader);
   const audit = usePluginPage(auditLoader);
+  const commission = usePluginPage(commissionLoader);
 
   // Narrowed payload/error views — each route is pending (null), failed
   // (error message), or loaded (payload). Blocks key off their own trio.
@@ -64,6 +72,9 @@ export default function PluginOverviewPage() {
   const auditPayload: AuditPayload | null = audit.result?.ok ? audit.result.data.payload : null;
   const auditError: string | null = audit.result && !audit.result.ok ? audit.result.error.message : null;
   const auditPending = audit.result === null || audit.binding === null;
+  const commissionPayload: CommissionLedgerPayload | null = commission.result?.ok
+    ? commission.result.data.payload
+    : null;
 
   const dataMode = overview.result?.ok ? overview.result.data.dataMode : undefined;
   const dropOff = matchPayload ? intentDropOffWarning(matchPayload) : null;
@@ -71,6 +82,16 @@ export default function PluginOverviewPage() {
 
   const attributedOrders =
     matchPayload?.affiliate_visits.filter((visit) => visit.order_id !== null).length ?? 0;
+
+  const moduleData = {
+    activeIntentCount: overviewPayload?.agentic_store_summary.key_numbers.active_intent_count ?? 0,
+    avgReadiness,
+    attributedOrders,
+    billedNet: commissionPayload?.totals.net ?? 0,
+  };
+
+  const modulesPending =
+    overviewPayload === null || auditPayload === null || matchPayload === null || commissionPayload === null;
 
   return (
     <>
@@ -125,7 +146,16 @@ export default function PluginOverviewPage() {
         />
       )}
 
-      {/* Block 4 — Intent Performance: traffic / AI insights / affiliate orders. */}
+      {/* Block 4 — three parallel module cards (icon + metric + description + link). */}
+      {modulesPending ? (
+        <section className="overview-block" data-block="module-cards">
+          <PluginLoading what={t.overview.modules.title} />
+        </section>
+      ) : (
+        <ModuleCardsBlock data={moduleData} />
+      )}
+
+      {/* Block 5 — Intent Performance: traffic / AI insights / affiliate orders. */}
       {match.result === null || match.binding === null ? (
         <section className="overview-block" data-block="intent-performance">
           <PluginLoading what={t.overview.performance.title} />

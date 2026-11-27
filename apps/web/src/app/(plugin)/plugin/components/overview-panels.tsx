@@ -3,28 +3,30 @@
 import Link from "next/link";
 
 import type { MatchPayload, OverviewPayload, PluginAlert } from "../../../../lib/plugin/types";
-import type { AiTrafficTrend } from "../../../../lib/plugin/demo-fixtures";
 import {
   AI_PLATFORMS,
   AI_PLATFORM_DISTRIBUTION_FIXTURE,
   AI_TRAFFIC_TREND_BY_PLATFORM,
   AI_VISITS_BY_TYPE_FIXTURE,
+  INTENT_TREND_FIXTURE,
   MONITORED_LANDING_PAGES_FIXTURE,
   totalAiVisits,
 } from "../../../../lib/plugin/demo-fixtures";
+import type { AiTrafficTrend } from "../../../../lib/plugin/demo-fixtures";
 import { useT } from "../../../../lib/plugin/i18n/locale";
-import { SeverityBadge } from "./badges";
+import { SeverityBadge, usd } from "./badges";
 import { SimulatedLabel, SourceLabel } from "./red-lines";
-import { GaugeWithSubScores } from "./visual-patterns";
+import { GaugeWithSubScores, ScoreRing } from "./visual-patterns";
 import type { GaugeSubScore, HealthSubKey } from "./visual-patterns";
 import { DonutChart, MiniTrendLine, PlatformCloud } from "./primitives";
-import { IconAlert, IconGauge, IconStore, IconTraffic } from "./icons";
+import { IconAlert, IconAudit, IconGauge, IconLibrary, IconMatch, IconStore, IconTraffic } from "./icons";
 
 /**
  * Overview page blocks (design v1.5 §0.6 rule 1, §2.2): sections render
- * top-down — Today's Alert, Agentic Store Summary, Intent Health Score,
- * and the three parallel module cards. Every string comes from the
- * dictionary in the active locale; every number carries its provenance.
+ * top-down — Today's Alert, Agentic Store Summary, Intent Map (health
+ * gauge + monitored pages), the three parallel module cards, and Intent
+ * Performance. Every string comes from the dictionary in the active
+ * locale; every number carries its provenance.
  */
 
 /** Pure helper: the Intent Drop-off rule — affiliate traffic is arriving but orders are not. */
@@ -260,6 +262,71 @@ export function IntentMapBlock({
           readinessMeasured={readinessMeasured}
         />
         <LandingPagesMonitoredCard />
+      </div>
+    </section>
+  );
+}
+
+interface ModuleCardData {
+  activeIntentCount: number;
+  avgReadiness: number | null;
+  attributedOrders: number;
+  billedNet: number;
+}
+
+/** Block 4 — three parallel module cards (icon + metric + mini chart + description + link). */
+export function ModuleCardsBlock({ data }: { data: ModuleCardData }) {
+  const t = useT();
+  return (
+    <section className="overview-block" data-block="module-cards">
+      <div className="iv-section-heading">
+        <span className="iv-section-icon" aria-hidden="true"><IconLibrary /></span>
+        <h2>{t.overview.modules.title}</h2>
+      </div>
+      <div className="iv-module-grid">
+        <div className="iv-card iv-module-card">
+          <div className="intent-head">
+            <span className="iv-module-icon iv-module-library" aria-hidden="true"><IconLibrary /></span>
+            <h3>{t.nav.library}</h3>
+          </div>
+          <p className="iv-module-metric">
+            {data.activeIntentCount} <span className="muted">{t.overview.modules.library.metricLabel}</span>
+          </p>
+          <MiniTrendLine points={INTENT_TREND_FIXTURE} title={t.common.simulatedTitle(t.overview.modules.library.trendLabel)} />
+          <p className="muted">{t.overview.modules.library.trendLabel} <SimulatedLabel what={t.simLabels.trend} /></p>
+          <p className="iv-module-desc">{t.overview.modules.library.desc}</p>
+          <Link className="btn" href="/plugin/library">{t.overview.modules.library.open}</Link>
+        </div>
+
+        <div className="iv-card iv-module-card">
+          <div className="intent-head">
+            <span className="iv-module-icon iv-module-audit" aria-hidden="true"><IconAudit /></span>
+            <h3>{t.nav.audit}</h3>
+          </div>
+          {data.avgReadiness === null ? (
+            <p className="iv-module-metric muted">{t.overview.health.readinessMissing}</p>
+          ) : (
+            <div className="iv-module-ring">
+              <ScoreRing score={data.avgReadiness} label={t.overview.modules.audit.metricLabel} />
+              <span className="muted">{t.overview.modules.audit.metricLabel}</span>
+            </div>
+          )}
+          <p className="iv-module-desc">{t.overview.modules.audit.desc}</p>
+          <Link className="btn" href="/plugin/audit">{t.overview.modules.audit.open}</Link>
+        </div>
+
+        <div className="iv-card iv-module-card">
+          <div className="intent-head">
+            <span className="iv-module-icon iv-module-match" aria-hidden="true"><IconMatch /></span>
+            <h3>{t.nav.match}</h3>
+          </div>
+          <p className="iv-module-metric">
+            {t.overview.modules.match.metric(data.attributedOrders, usd(data.billedNet))}
+          </p>
+          <p className="muted">{t.overview.summary.statSessions} <SourceLabel kind="measured" /></p>
+          <p className="iv-module-desc">{t.overview.modules.match.desc}</p>
+          <Link className="btn" href="/plugin/match">{t.overview.modules.match.open}</Link>
+        </div>
       </div>
     </section>
   );
