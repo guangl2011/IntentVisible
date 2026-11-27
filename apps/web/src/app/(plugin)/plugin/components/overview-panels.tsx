@@ -13,7 +13,7 @@ import {
   totalAiVisits,
 } from "../../../../lib/plugin/demo-fixtures";
 import { useT } from "../../../../lib/plugin/i18n/locale";
-import { HeuristicBadge, SeverityBadge } from "./badges";
+import { SeverityBadge } from "./badges";
 import { SimulatedLabel, SourceLabel } from "./red-lines";
 import { GaugeWithSubScores } from "./visual-patterns";
 import type { GaugeSubScore, HealthSubKey } from "./visual-patterns";
@@ -254,17 +254,11 @@ export function IntentMapBlock({
         <h2>{t.overview.intentMap.title}</h2>
       </div>
       <div className="iv-intent-map-grid">
-        <div className="iv-card" data-testid="intent-map-health">
-          <div className="intent-head">
-            <h3>{t.overview.intentMap.healthCardTitle}</h3>
-            <HeuristicBadge />
-          </div>
-          <GaugeWithSubScores
-            score={score.score}
-            subScores={subScores}
-            readinessMeasured={readinessMeasured}
-          />
-        </div>
+        <GaugeWithSubScores
+          score={score.score}
+          subScores={subScores}
+          readinessMeasured={readinessMeasured}
+        />
         <LandingPagesMonitoredCard />
       </div>
     </section>

@@ -6,7 +6,7 @@ import { EstimatedBadge, HeuristicBadge, SeverityBadge, VisibilityProvenanceBadg
 import { AttributionPanels, DemandGapTable, FunnelTable } from "../src/app/(plugin)/plugin/components/attribution-panels";
 import { IntentGroupTable, groupByPersonaStage } from "../src/app/(plugin)/plugin/components/buyer-intents-panels";
 import { CommissionPanels } from "../src/app/(plugin)/plugin/components/commission-panels";
-import { PluginSideNav, SIDEBAR_ITEMS } from "../src/app/(plugin)/plugin/components/plugin-side-nav";
+import { SIDEBAR_ITEMS } from "../src/app/(plugin)/plugin/components/plugin-side-nav";
 import { dictionaryFor } from "../src/lib/plugin/i18n/dictionary";
 import { AffiliateVisitsPanel, SettlementPanel } from "../src/app/(plugin)/plugin/components/match-visit-panels";
 import {
@@ -180,7 +180,7 @@ describe("Overview §2.2 — alerts, summary provenance, heuristic gauge", () =>
     );
     expect(html).toContain("data-block=\"intent-map\"");
     expect(html).toContain("Intent Map");
-    expect(html).toContain("data-testid=\"intent-map-health\"");
+    expect(html).toContain("data-testid=\"health-gauge\"");
     expect(html).toContain("data-testid=\"landing-pages-monitored\"");
   });
 

@@ -92,7 +92,7 @@ test("overview: exactly four §2.2 blocks in order", async ({ page }) => {
   // Block 3 — Intent Map: the gauge card (with the heuristic label and
   // the three sub-scores) beside the monitored-pages card, all in English
   // (§0.6 rule 2: one language per render).
-  const gauge = page.getByTestId("intent-map-health");
+  const gauge = page.getByTestId("health-gauge");
   await expect(gauge).toBeVisible();
   await expect(gauge).toContainText("not a conversion or revenue forecast");
   await expect(gauge).toContainText("Intent coverage");

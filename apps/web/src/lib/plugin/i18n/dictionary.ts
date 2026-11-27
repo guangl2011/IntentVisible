@@ -116,7 +116,6 @@ const en = {
     },
     intentMap: {
       title: "Intent Map",
-      healthCardTitle: "Intent Health Score",
       landingPagesTitle: "Landing Pages Monitored",
       landingPagesTotal: (n: number) => `${n} landing pages monitored`,
       landingPagesNote: "by page type",
@@ -820,7 +819,6 @@ export const zh: Dictionary = {
     },
     intentMap: {
       title: "意图地图",
-      healthCardTitle: "意图健康分",
       landingPagesTitle: "监控中的落地页",
       landingPagesTotal: (n: number) => `监控中的落地页 ${n} 个`,
       landingPagesNote: "按页面类型",
