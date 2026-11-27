@@ -49,28 +49,11 @@ const en = {
     library: "Intent Library",
     audit: "Intent Audit",
     match: "Intent Match",
+    intentTraffic: "Intent Traffic",
+    commission: "Commission",
+    plan: "Plan",
     settings: "Settings",
     appSuffix: "Shopify plugin",
-  },
-
-  subnav: {
-    overview: "Overview",
-    siteResearch: "Site Research",
-    marketingMap: "Marketing Map",
-    buyerIntents: "Buyer Intents",
-    productsSkus: "Products & SKUs",
-    attribution: "Attribution",
-    landingPageAudit: "Landing Page Audit",
-    adOptimization: "Ad Optimization",
-    aiInsights: "AI Insights",
-    intentToPage: "Intent → Page",
-    channels: "Channels",
-    affiliateVisit: "Affiliate Visit",
-    commission: "Commission",
-    settingsHome: "Settings",
-    integrations: "Integrations",
-    billing: "Billing",
-    uninstall: "Uninstall & data deletion",
   },
 
   overview: {
@@ -131,24 +114,34 @@ const en = {
       },
       readinessMissing: "Landing page audit has not scored any intent yet.",
     },
-    modules: {
-      title: "The three modules",
-      library: {
-        desc: "Research the store, build the intent library, and correlate intents with traffic and orders.",
-        metricLabel: "active intents",
-        trendLabel: "active intents, last 8 weeks",
-        open: "Open Intent Library",
+    intentMap: {
+      title: "Intent Map",
+      healthCardTitle: "Intent Health Score",
+      landingPagesTitle: "Landing Pages Monitored",
+      landingPagesTotal: (n: number) => `${n} landing pages monitored`,
+      landingPagesNote: "by page type",
+      pageTypes: {
+        products: "Products",
+        collections: "Collections",
+        blog: "Blog",
+        home: "Home",
       },
-      audit: {
-        desc: "Audit landing pages per intent, get P0/P1/P2 fixes, and see performance billing.",
-        metricLabel: "avg readiness",
-        open: "Open Intent Audit",
-      },
-      match: {
-        desc: "Route AI-engine demand to product pages, track affiliate visits, and bill commission per order.",
-        metric: (orders: number, amount: string) => `${orders} attributed orders · ${amount} billed`,
-        open: "Open Intent Match",
-      },
+    },
+    performance: {
+      title: "Intent Performance",
+      trafficTitle: "Intent Traffic",
+      trafficMetric: (n: number) => `${n} AI visits`,
+      trafficWindow: "last 14 days — visit shares only, not conversions",
+      trafficOpen: "Open Intent Traffic",
+      insightsTitle: "AI insights",
+      insightsTrackLabel: "Track A — performance improvement",
+      insightsEmpty: "No measured performance improvement yet.",
+      insightsEmptyHint:
+        "Ad-optimization effects appear here once a baseline-verified measurement exists — never before.",
+      affiliateTitle: "Affiliate Orders",
+      affiliateTrackLabel: "Track B — orders via Intent Match affiliate links",
+      affiliateMetric: (n: number) => `${n} attributed orders`,
+      affiliateOpen: "Open Commission",
     },
   },
 
@@ -429,6 +422,71 @@ const en = {
     entries: "Entries",
   },
 
+  pageTypes: {
+    products: "Products",
+    collections: "Collections",
+    blog: "Blog",
+    home: "Home",
+  },
+
+  aiTraffic: {
+    title: "Intent Traffic",
+    intro:
+      "How AI engines move through your store: crawl coverage, visits by page type, and the trend by platform or page category. Phase I renders simulated crawler data — live crawler visits are not wired yet, and every block is labeled as such.",
+    guardrail: "Visit shares only — never a conversion or revenue forecast.",
+    coverageTitle: "AI crawl coverage",
+    coverageHeadline: (collected: number, total: number) => `AI has collected ${collected} / ${total} pages`,
+    coverageByTypeTitle: "Collected / total — by page type",
+    coverageRow: (collected: number, total: number) => `${collected}/${total}`,
+    byTypeTitle: "AI Traffic by Page Type",
+    visitsLabel: "AI visits",
+    shareLabel: (pct: number) => `${pct}%`,
+    trendTitle: "AI Traffic Trend",
+    byPlatform: "By Platform",
+    byCategory: "By Category",
+    platforms: {
+      claude: "Claude",
+      chatgpt: "ChatGPT",
+      perplexity: "Perplexity",
+      others: "Others",
+    },
+    topPagesTitle: "Top 10 pages by AI visits",
+    topPagesHeaders: { page: "Page", type: "Page type", visits: "AI visits", share: "Share of AI visits" },
+  },
+
+  plan: {
+    title: "Plan",
+    intro: "What you pay, how it is calculated, and where to check every charge.",
+    headline: "Intent Page Commission",
+    payWhen: "You only pay when an attributed order actually comes through",
+    monthlyFeeLabel: "monthly fee",
+    billingCycleTitle: "Current billing cycle",
+    billingCycle: (start: string, end: string) => `${start} – ${end}`,
+    manageButton: "Manage plan in Shopify",
+    rulesLink: "View commission rules details",
+    checklist: {
+      noMonthlyFee: "No monthly fee",
+      rateBand: "5–20% of attributed order value, by product category (locked band)",
+      refundsCredited: "Refunded orders auto-credited",
+    },
+    ratesTitle: "See commission rates by product category",
+    ratesExpand: "Rate details",
+    rateBandRow: "Locked band: 5–20% of attributed order value, per product category — never outside the band.",
+    rateBaseRow: "Billing base: net sales per order (gross minus refunds), reconciled against Shopify.",
+    ratesNote:
+      "Per-category rates are assigned inside the locked band as partner channels go live. The billing engine has no first-N-orders-free waiver configured yet — if one is added, this page states the actual value here.",
+    growthKicker: "From AI discovery to checkout",
+    growthHeadline: "Turn AI discovery into more orders",
+    growthBandTitle: "What IntentVisible does for your growth",
+    growthSteps: [
+      "AI discovers your products",
+      "Shoppers visit your store",
+      "Attributed orders are recorded",
+    ],
+    exampleChartTitle: "Intent Page attributed orders",
+    exampleBadge: "EXAMPLE",
+  },
+
   settings: {
     title: "Settings",
     intro: "Language, connections, billing, and uninstall — the plugin's global configuration.",
@@ -566,6 +624,12 @@ const en = {
     loadingAudit: "the intent audit",
     loadingIntent: "the intent",
     loadingAttribution: "the attribution model",
+    crawlCoverage: "crawl coverage (fixture)",
+    visitsByType: "visits by page type (fixture)",
+    visitTrend: "visit trend (fixture)",
+    topPages: "top pages (fixture)",
+    monitoredPages: "monitored landing pages (fixture)",
+    exampleChart: "example chart — not your data",
   },
 
   blindSpots: {
@@ -641,6 +705,14 @@ const en = {
       "No LLM diagnostics exist yet in Phase I — this page shows the honest empty state instead of canned advice.",
       "Insight generation never fabricates measurements; every insight cites its data window and source labels.",
     ],
+    aiTraffic: [
+      "Crawler-visit data is not live in Phase I — every block on this page renders a labeled fixture, never a measurement.",
+      "AI visits are visit shares only: nothing on this page predicts conversions or revenue.",
+    ],
+    plan: [
+      "The example attributed-orders chart is an illustration, marked EXAMPLE — not your store's data.",
+      "The billing engine's locked 5–20% band is the only rate commitment; per-category assignments are not finalized.",
+    ],
   },
 };
 
@@ -684,28 +756,11 @@ export const zh: Dictionary = {
     library: "意图库",
     audit: "意图审计",
     match: "意图匹配",
+    intentTraffic: "意图流量",
+    commission: "佣金",
+    plan: "方案",
     settings: "设置",
     appSuffix: "Shopify 插件",
-  },
-
-  subnav: {
-    overview: "概览",
-    siteResearch: "站点研究",
-    marketingMap: "营销地图",
-    buyerIntents: "买家意图",
-    productsSkus: "商品与 SKU",
-    attribution: "意图归因",
-    landingPageAudit: "落地页审计",
-    adOptimization: "广告优化",
-    aiInsights: "AI 洞察",
-    intentToPage: "意图 → 页面",
-    channels: "渠道",
-    affiliateVisit: "联盟访问",
-    commission: "订单与佣金",
-    settingsHome: "设置",
-    integrations: "集成连接",
-    billing: "账单",
-    uninstall: "卸载与数据删除",
   },
 
   overview: {
@@ -763,24 +818,33 @@ export const zh: Dictionary = {
       },
       readinessMissing: "落地页审计尚未给任何意图打分。",
     },
-    modules: {
-      title: "三大模块",
-      library: {
-        desc: "研究站点、建立意图库，并把意图与流量、订单关联起来。",
-        metricLabel: "生效意图",
-        trendLabel: "生效意图，近 8 周",
-        open: "进入意图库",
+    intentMap: {
+      title: "意图地图",
+      healthCardTitle: "意图健康分",
+      landingPagesTitle: "监控中的落地页",
+      landingPagesTotal: (n: number) => `监控中的落地页 ${n} 个`,
+      landingPagesNote: "按页面类型",
+      pageTypes: {
+        products: "商品页",
+        collections: "系列页",
+        blog: "博客页",
+        home: "首页",
       },
-      audit: {
-        desc: "按意图审计落地页，给出 P0/P1/P2 修复清单与效果计费。",
-        metricLabel: "平均就绪分",
-        open: "进入意图审计",
-      },
-      match: {
-        desc: "把 AI 引擎需求路由到商品页，追踪联盟访问，并逐单计提佣金。",
-        metric: (orders: number, amount: string) => `${orders} 笔归因订单 · 已计提 ${amount}`,
-        open: "进入意图匹配",
-      },
+    },
+    performance: {
+      title: "意图表现",
+      trafficTitle: "意图流量",
+      trafficMetric: (n: number) => `${n} 次 AI 访问`,
+      trafficWindow: "近 14 天——仅访问份额，非转化",
+      trafficOpen: "进入意图流量",
+      insightsTitle: "AI 洞察",
+      insightsTrackLabel: "A 轨——效果提升",
+      insightsEmpty: "暂无已实测的效果提升。",
+      insightsEmptyHint: "广告优化效果在基线验证的测量出现后才会显示——绝不提前。",
+      affiliateTitle: "联盟订单",
+      affiliateTrackLabel: "B 轨——经意图匹配联盟链接归因的订单",
+      affiliateMetric: (n: number) => `${n} 笔归因订单`,
+      affiliateOpen: "进入佣金",
     },
   },
 
@@ -1048,6 +1112,71 @@ export const zh: Dictionary = {
     entries: "明细",
   },
 
+  pageTypes: {
+    products: "商品页",
+    collections: "系列页",
+    blog: "博客页",
+    home: "首页",
+  },
+
+  aiTraffic: {
+    title: "意图流量",
+    intro:
+      "AI 引擎如何在你店内移动：爬取覆盖、按页面类型的访问，以及按平台或页面分类的趋势。第一阶段渲染模拟爬虫数据——实时爬虫访问尚未接入，每个版块均明确标注。",
+    guardrail: "仅访问份额——绝不是转化或收入预测。",
+    coverageTitle: "AI 爬取覆盖",
+    coverageHeadline: (collected: number, total: number) => `AI 已收集 ${collected} / ${total} 个页面`,
+    coverageByTypeTitle: "已收集 / 总数——按页面类型",
+    coverageRow: (collected: number, total: number) => `${collected}/${total}`,
+    byTypeTitle: "按页面类型的 AI 流量",
+    visitsLabel: "AI 访问",
+    shareLabel: (pct: number) => `${pct}%`,
+    trendTitle: "AI 流量趋势",
+    byPlatform: "按平台",
+    byCategory: "按分类",
+    platforms: {
+      claude: "Claude",
+      chatgpt: "ChatGPT",
+      perplexity: "Perplexity",
+      others: "其他",
+    },
+    topPagesTitle: "AI 访问前 10 页面",
+    topPagesHeaders: { page: "页面", type: "页面类型", visits: "AI 访问", share: "访问份额" },
+  },
+
+  plan: {
+    title: "方案",
+    intro: "你付什么、如何计算，以及到哪里核对每一笔费用。",
+    headline: "意图页面佣金",
+    payWhen: "只有当归属订单真正落地时你才付费",
+    monthlyFeeLabel: "月费",
+    billingCycleTitle: "当前计费周期",
+    billingCycle: (start: string, end: string) => `${start} – ${end}`,
+    manageButton: "在 Shopify 中管理方案",
+    rulesLink: "查看佣金规则详情",
+    checklist: {
+      noMonthlyFee: "无月费",
+      rateBand: "归属订单价值的 5–20%，按商品分类（锁定区间）",
+      refundsCredited: "退款订单自动冲抵",
+    },
+    ratesTitle: "按商品分类查看佣金费率",
+    ratesExpand: "费率详情",
+    rateBandRow: "锁定区间：归属订单价值的 5–20%，按商品分类——绝不出区间。",
+    rateBaseRow: "计费基数：每单净销售额（毛额减退款），与 Shopify 对账。",
+    ratesNote:
+      "分类费率随合作渠道上线在锁定区间内分配。计费引擎尚未配置“前 N 单免费”减免——若将来配置，本页会在此给出实际数值。",
+    growthKicker: "从 AI 发现到结账",
+    growthHeadline: "把 AI 发现变成更多订单",
+    growthBandTitle: "IntentVisible 为你的增长做什么",
+    growthSteps: [
+      "AI 发现你的商品",
+      "购物者访问你的店铺",
+      "归属订单被记录",
+    ],
+    exampleChartTitle: "意图页面归因订单",
+    exampleBadge: "示例",
+  },
+
   settings: {
     title: "设置",
     intro: "语言、连接、账单与卸载——插件的全局配置。",
@@ -1179,6 +1308,12 @@ export const zh: Dictionary = {
     loadingAudit: "意图审计",
     loadingIntent: "该意图",
     loadingAttribution: "归因模型",
+    crawlCoverage: "爬取覆盖（固定数据）",
+    visitsByType: "按页面类型访问（固定数据）",
+    visitTrend: "访问趋势（固定数据）",
+    topPages: "热门页面（固定数据）",
+    monitoredPages: "监控落地页（固定数据）",
+    exampleChart: "示例图表——非你的数据",
   },
 
   blindSpots: {
@@ -1253,6 +1388,14 @@ export const zh: Dictionary = {
     aiInsights: [
       "第一阶段还没有 LLM 诊断——本页展示诚实的空态而非套话建议。",
       "洞察生成绝不编造测量；每条洞察都引用其数据窗口与来源标签。",
+    ],
+    aiTraffic: [
+      "第一阶段爬虫访问数据尚未上线——本页每个版块渲染的是带标注的固定数据，绝非实测。",
+      "AI 访问仅为访问份额：本页任何内容都不预测转化或收入。",
+    ],
+    plan: [
+      "示例归因订单图表仅为示意，已标注“示例”——不是你店铺的数据。",
+      "计费引擎锁定的 5–20% 区间是唯一费率承诺；分类费率分配尚未最终确定。",
     ],
   },
 };
