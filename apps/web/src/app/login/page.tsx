@@ -11,8 +11,8 @@ import { signIn } from "./actions";
  * After a successful sign-in the server action sets the session cookie and
  * returns (no redirect): reverse proxies that follow redirect responses can
  * drop the Set-Cookie header, which would leave the browser unauthenticated
- * on /queue. Instead the page renders this signed-in handoff (HTTP 200, so
- * Set-Cookie survives the proxy) and forwards to /queue via meta refresh.
+ * on /plugin. Instead the page renders this signed-in handoff (HTTP 200, so
+ * Set-Cookie survives the proxy) and forwards to /plugin via meta refresh.
  */
 export default async function LoginPage({
   searchParams,
@@ -31,10 +31,10 @@ export default async function LoginPage({
       <main className="auth-page">
         <div className="card auth-card">
           <h1>IntentVisible</h1>
-          <p className="muted">Signed in. Taking you to the dashboard…</p>
-          <meta httpEquiv="refresh" content="0;url=/queue" />
-          <a href="/queue" className="button-like">
-            Continue to the dashboard
+          <p className="muted">Signed in. Taking you to the plugin…</p>
+          <meta httpEquiv="refresh" content="0;url=/plugin" />
+          <a href="/plugin" className="button-like">
+            Continue to the plugin
           </a>
         </div>
       </main>

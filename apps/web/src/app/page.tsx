@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
  * rewrites `/` to /login (single hop, so the login Server Action works
  * behind the redirect-following hosted proxy); this server-side redirect
  * only runs for requests that bypass the middleware. The login page itself
- * forwards already-authenticated sessions to /queue.
+ * forwards already-authenticated sessions to /plugin.
  */
 export default function Home() {
   redirect("/login");

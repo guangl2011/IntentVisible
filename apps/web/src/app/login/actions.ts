@@ -34,7 +34,7 @@ export async function signIn(formData: FormData): Promise<void> {
   });
   // No redirect here: proxies that follow redirect responses may drop the
   // Set-Cookie header, leaving the browser unauthenticated. The login page
-  // re-renders (HTTP 200, cookie intact) and forwards to /queue itself.
+  // re-renders (HTTP 200, cookie intact) and forwards to /plugin itself.
   revalidatePath("/login");
 }
 
