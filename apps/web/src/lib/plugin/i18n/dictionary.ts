@@ -142,6 +142,25 @@ const en = {
       affiliateMetric: (n: number) => `${n} attributed orders`,
       affiliateOpen: "Open Commission",
     },
+    modules: {
+      title: "The three modules",
+      library: {
+        desc: "Research the store, build the intent library, and correlate intents with traffic and orders.",
+        metricLabel: "active intents",
+        trendLabel: "active intents, last 8 weeks",
+        open: "Open Intent Library",
+      },
+      audit: {
+        desc: "Audit landing pages per intent, get P0/P1/P2 fixes, and see performance billing.",
+        metricLabel: "avg readiness",
+        open: "Open Intent Audit",
+      },
+      match: {
+        desc: "Route AI-engine demand to product pages, track affiliate visits, and bill commission per order.",
+        metric: (orders: number, amount: string) => `${orders} attributed orders · ${amount} billed`,
+        open: "Open Intent Match",
+      },
+    },
   },
 
   library: {
@@ -843,6 +862,25 @@ export const zh: Dictionary = {
       affiliateTrackLabel: "B 轨——经意图匹配联盟链接归因的订单",
       affiliateMetric: (n: number) => `${n} 笔归因订单`,
       affiliateOpen: "进入佣金",
+    },
+    modules: {
+      title: "三大模块",
+      library: {
+        desc: "研究站点、建立意图库，并把意图与流量、订单关联起来。",
+        metricLabel: "生效意图",
+        trendLabel: "生效意图，近 8 周",
+        open: "进入意图库",
+      },
+      audit: {
+        desc: "按意图审计落地页，给出 P0/P1/P2 修复清单与效果计费。",
+        metricLabel: "平均就绪分",
+        open: "进入意图审计",
+      },
+      match: {
+        desc: "把 AI 引擎需求路由到商品页，追踪联盟访问，并逐单计提佣金。",
+        metric: (orders: number, amount: string) => `${orders} 笔归因订单 · 已计提 ${amount}`,
+        open: "进入意图匹配",
+      },
     },
   },
 

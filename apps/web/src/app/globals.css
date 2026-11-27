@@ -1726,6 +1726,46 @@ button.danger:disabled {
   flex: 1;
 }
 
+/* --- Overview grids: Intent Map (gauge + monitored pages) and Intent
+   Performance (traffic / insights / orders). Single column by default —
+   the embedded Shopify sidebar can be narrow — side-by-side from
+   1024px (design v1.5 §2.2). --- */
+.iv-intent-map-grid,
+.iv-performance-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--iv-space-4);
+  align-items: start;
+}
+
+.iv-monitored-rows {
+  margin: var(--iv-space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.iv-monitored-rows li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--iv-space-2) 0;
+  border-bottom: 1px solid var(--iv-border);
+}
+
+.iv-monitored-rows li:last-child {
+  border-bottom: none;
+}
+
+@media (min-width: 1024px) {
+  .iv-intent-map-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .iv-performance-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .iv-card-cta {
   color: var(--iv-brand);
   font-weight: 600;
