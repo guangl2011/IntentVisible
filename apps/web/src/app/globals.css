@@ -1319,48 +1319,47 @@ button.danger:disabled {
   --iv-space-6: 2rem;
 }
 
-/* --- Frame: full width, no left rail --- */
+/* --- Frame: sidebar rail + full-width content --- */
+
+
+/* --- Left sidebar menu (embedded app frame) --- */
 .iv-frame {
+  display: flex;
   min-height: 100vh;
   background: var(--iv-surface-sunk);
   color: var(--iv-text);
 }
 
-.iv-content {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: var(--iv-space-5) var(--iv-space-5) var(--iv-space-6);
-}
-
-/* --- Top navigation --- */
-.iv-topnav {
-  background: var(--iv-surface);
-  border-bottom: 1px solid var(--iv-border);
+.iv-sidebar {
+  flex: none;
+  width: 232px;
   position: sticky;
   top: 0;
-  z-index: 20;
-}
-
-.iv-topnav-main {
-  max-width: 1180px;
-  margin: 0 auto;
+  align-self: flex-start;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--iv-surface);
+  border-right: 1px solid var(--iv-border);
+  padding: var(--iv-space-4) var(--iv-space-3);
   display: flex;
-  align-items: center;
-  gap: var(--iv-space-5);
-  padding: var(--iv-space-3) var(--iv-space-5);
+  flex-direction: column;
+  gap: var(--iv-space-4);
 }
 
-.iv-topnav-brand {
+.iv-sidebar-brand {
   display: inline-flex;
   align-items: center;
   gap: var(--iv-space-2);
   color: var(--iv-text);
   font-weight: 600;
   white-space: nowrap;
+  padding: var(--iv-space-1) var(--iv-space-2);
+  border-radius: 8px;
 }
 
-.iv-topnav-brand:hover {
+.iv-sidebar-brand:hover {
   text-decoration: none;
+  background: var(--iv-surface-sunk);
 }
 
 .iv-logo {
@@ -1382,24 +1381,23 @@ button.danger:disabled {
   fill: var(--iv-brand);
 }
 
-.iv-topnav-suffix {
+.iv-sidebar-suffix {
   color: var(--iv-text-subdued);
   font-weight: 400;
   font-size: 0.85rem;
 }
 
-.iv-topnav-links {
+.iv-sidebar-items {
   display: flex;
-  align-items: center;
-  gap: var(--iv-space-2);
+  flex-direction: column;
+  gap: var(--iv-space-1);
   list-style: none;
   margin: 0;
   padding: 0;
-  flex: 1;
 }
 
-.iv-topnav-link {
-  display: inline-flex;
+.iv-sidebar-link {
+  display: flex;
   align-items: center;
   gap: var(--iv-space-2);
   padding: var(--iv-space-2) var(--iv-space-3);
@@ -1410,52 +1408,26 @@ button.danger:disabled {
   white-space: nowrap;
 }
 
-.iv-topnav-link svg {
+.iv-sidebar-link svg {
   flex: none;
 }
 
-.iv-topnav-link:hover {
+.iv-sidebar-link:hover {
   color: var(--iv-text);
   background: var(--iv-surface-sunk);
   text-decoration: none;
 }
 
-.iv-topnav-link.is-active {
+.iv-sidebar-link.is-active {
   color: var(--iv-brand);
   background: var(--iv-brand-soft);
 }
 
-.iv-topnav-settings {
-  margin-left: auto;
-}
-
-.iv-topnav-sub {
+.iv-content {
+  flex: 1;
+  min-width: 0;
   max-width: 1180px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: var(--iv-space-2);
-  list-style: none;
-  padding: 0 var(--iv-space-5) var(--iv-space-3);
-  font-size: 0.85rem;
-}
-
-.iv-topnav-sublink {
-  color: var(--iv-text-subdued);
-  padding: var(--iv-space-1) var(--iv-space-3);
-  border-radius: 999px;
-}
-
-.iv-topnav-sublink:hover {
-  color: var(--iv-text);
-  background: var(--iv-surface-sunk);
-  text-decoration: none;
-}
-
-.iv-topnav-sublink.is-active {
-  color: var(--iv-text);
-  background: var(--iv-surface-sunk);
-  font-weight: 600;
+  padding: var(--iv-space-5) var(--iv-space-5) var(--iv-space-6);
 }
 
 /* --- Page + section headers --- */
@@ -1946,14 +1918,15 @@ button.danger:disabled {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .iv-topnav-main {
-    flex-wrap: wrap;
-    gap: var(--iv-space-3);
+  .iv-sidebar {
+    width: 64px;
   }
 
-  .iv-topnav-links {
-    order: 3;
-    flex-basis: 100%;
-    overflow-x: auto;
+  .iv-sidebar-suffix {
+    display: none;
+  }
+
+  .iv-sidebar-link span {
+    display: none;
   }
 }

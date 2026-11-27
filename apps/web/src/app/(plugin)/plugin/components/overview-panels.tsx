@@ -3,18 +3,22 @@
 import Link from "next/link";
 
 import type { MatchPayload, OverviewPayload, PluginAlert } from "../../../../lib/plugin/types";
+import type { AiTrafficTrend } from "../../../../lib/plugin/demo-fixtures";
 import {
   AI_PLATFORMS,
   AI_PLATFORM_DISTRIBUTION_FIXTURE,
-  INTENT_TREND_FIXTURE,
+  AI_TRAFFIC_TREND_BY_PLATFORM,
+  AI_VISITS_BY_TYPE_FIXTURE,
+  MONITORED_LANDING_PAGES_FIXTURE,
+  totalAiVisits,
 } from "../../../../lib/plugin/demo-fixtures";
 import { useT } from "../../../../lib/plugin/i18n/locale";
-import { SeverityBadge, usd } from "./badges";
+import { SeverityBadge } from "./badges";
 import { SimulatedLabel, SourceLabel } from "./red-lines";
-import { GaugeWithSubScores, ScoreRing } from "./visual-patterns";
+import { GaugeWithSubScores } from "./visual-patterns";
 import type { GaugeSubScore, HealthSubKey } from "./visual-patterns";
 import { DonutChart, MiniTrendLine, PlatformCloud } from "./primitives";
-import { IconAlert, IconAudit, IconGauge, IconLibrary, IconMatch, IconStore } from "./icons";
+import { IconAlert, IconGauge, IconStore, IconTraffic } from "./icons";
 
 /**
  * Overview page blocks (design v1.5 §0.6 rule 1, §2.2): sections render
@@ -206,8 +210,34 @@ export function averageReadiness(
   return Math.round(perIntent.reduce((sum, row) => sum + row.score, 0) / perIntent.length);
 }
 
-/** Block 3 — Intent Health Score: gauge + expandable, linked sub-scores + diagnosis entry. */
-export function HealthScoreBlock({
+/** Block 3 — Intent Map: the health gauge (col 1) + Landing Pages Monitored (col 2). */
+export function LandingPagesMonitoredCard() {
+  const t = useT();
+  const total = MONITORED_LANDING_PAGES_FIXTURE.reduce((sum, row) => sum + row.count, 0);
+  return (
+    <div className="iv-card" data-testid="landing-pages-monitored">
+      <div className="intent-head">
+        <h3>{t.overview.intentMap.landingPagesTitle}</h3>
+        <SimulatedLabel what={t.simLabels.monitoredPages} />
+      </div>
+      <p className="iv-module-metric">
+        {t.overview.intentMap.landingPagesTotal(total)}
+      </p>
+      <p className="muted">{t.overview.intentMap.landingPagesNote}</p>
+      <ul className="iv-monitored-rows">
+        {MONITORED_LANDING_PAGES_FIXTURE.map((row) => (
+          <li key={row.pageType}>
+            <span>{t.overview.intentMap.pageTypes[row.pageType]}</span>
+            <strong>{row.count}</strong>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Block 3 — Intent Map: 2-column grid — gauge card + monitored-pages card. */
+export function IntentMapBlock({
   score,
   subScores,
   readinessMeasured,
@@ -218,79 +248,69 @@ export function HealthScoreBlock({
 }) {
   const t = useT();
   return (
-    <section className="overview-block" data-block="health-score">
+    <section className="overview-block" data-block="intent-map">
       <div className="iv-section-heading">
         <span className="iv-section-icon" aria-hidden="true"><IconGauge /></span>
-        <h2>{t.overview.health.title}</h2>
+        <h2>{t.overview.intentMap.title}</h2>
       </div>
-      <GaugeWithSubScores
-        score={score.score}
-        subScores={subScores}
-        readinessMeasured={readinessMeasured}
-      />
+      <div className="iv-intent-map-grid">
+        <GaugeWithSubScores
+          score={score.score}
+          subScores={subScores}
+          readinessMeasured={readinessMeasured}
+        />
+        <LandingPagesMonitoredCard />
+      </div>
     </section>
   );
 }
 
-interface ModuleCardData {
-  activeIntentCount: number;
-  avgReadiness: number | null;
-  attributedOrders: number;
-  billedNet: number;
+/** Pure helper: per-day AI-visit totals for the Intent Performance spark. */
+export function aiVisitTrendTotals(trend: AiTrafficTrend[]): number[] {
+  return trend.map((row) => Object.values(row.series).reduce((sum, value) => sum + value, 0));
 }
 
-/** Block 4 — three parallel module cards (icon + metric + mini chart + description + link). */
-export function ModuleCardsBlock({ data }: { data: ModuleCardData }) {
+interface PerformanceData {
+  attributedOrders: number;
+}
+
+/** Block 4 — Intent Performance: traffic / AI insights / affiliate orders, 3 columns. */
+export function IntentPerformanceBlock({ data }: { data: PerformanceData }) {
   const t = useT();
+  const visits = totalAiVisits(AI_VISITS_BY_TYPE_FIXTURE);
   return (
-    <section className="overview-block" data-block="module-cards">
+    <section className="overview-block" data-block="intent-performance">
       <div className="iv-section-heading">
-        <span className="iv-section-icon" aria-hidden="true"><IconLibrary /></span>
-        <h2>{t.overview.modules.title}</h2>
+        <span className="iv-section-icon" aria-hidden="true"><IconTraffic /></span>
+        <h2>{t.overview.performance.title}</h2>
       </div>
-      <div className="iv-module-grid">
-        <div className="iv-card iv-module-card">
+      <div className="iv-performance-grid">
+        <div className="iv-card iv-module-card" data-testid="performance-traffic">
           <div className="intent-head">
-            <span className="iv-module-icon iv-module-library" aria-hidden="true"><IconLibrary /></span>
-            <h3>{t.nav.library}</h3>
+            <h3>{t.overview.performance.trafficTitle}</h3>
+            <SimulatedLabel what={t.simLabels.visitsByType} />
           </div>
-          <p className="iv-module-metric">
-            {data.activeIntentCount} <span className="muted">{t.overview.modules.library.metricLabel}</span>
-          </p>
-          <MiniTrendLine points={INTENT_TREND_FIXTURE} title={t.common.simulatedTitle(t.overview.modules.library.trendLabel)} />
-          <p className="muted">{t.overview.modules.library.trendLabel} <SimulatedLabel what={t.simLabels.trend} /></p>
-          <p className="iv-module-desc">{t.overview.modules.library.desc}</p>
-          <Link className="btn" href="/plugin/library">{t.overview.modules.library.open}</Link>
+          <p className="iv-module-metric">{t.overview.performance.trafficMetric(visits)}</p>
+          <p className="muted">{t.overview.performance.trafficWindow}</p>
+          <MiniTrendLine points={aiVisitTrendTotals(AI_TRAFFIC_TREND_BY_PLATFORM)} title={t.common.simulatedTitle(t.simLabels.visitTrend)} />
+          <Link className="btn" href="/plugin/ai-traffic">{t.overview.performance.trafficOpen}</Link>
         </div>
-
-        <div className="iv-card iv-module-card">
+        <div className="iv-card iv-module-card" data-testid="performance-insights">
           <div className="intent-head">
-            <span className="iv-module-icon iv-module-audit" aria-hidden="true"><IconAudit /></span>
-            <h3>{t.nav.audit}</h3>
+            <h3>{t.overview.performance.insightsTitle}</h3>
           </div>
-          {data.avgReadiness === null ? (
-            <p className="iv-module-metric muted">{t.overview.health.readinessMissing}</p>
-          ) : (
-            <div className="iv-module-ring">
-              <ScoreRing score={data.avgReadiness} label={t.overview.modules.audit.metricLabel} />
-              <span className="muted">{t.overview.modules.audit.metricLabel}</span>
-            </div>
-          )}
-          <p className="iv-module-desc">{t.overview.modules.audit.desc}</p>
-          <Link className="btn" href="/plugin/audit">{t.overview.modules.audit.open}</Link>
+          <p className="muted">{t.overview.performance.insightsTrackLabel}</p>
+          <p className="iv-module-metric muted">{t.overview.performance.insightsEmpty}</p>
+          <p className="iv-module-desc">{t.overview.performance.insightsEmptyHint}</p>
         </div>
-
-        <div className="iv-card iv-module-card">
+        <div className="iv-card iv-module-card" data-testid="performance-affiliate">
           <div className="intent-head">
-            <span className="iv-module-icon iv-module-match" aria-hidden="true"><IconMatch /></span>
-            <h3>{t.nav.match}</h3>
+            <h3>{t.overview.performance.affiliateTitle}</h3>
+            <SourceLabel kind="measured" />
           </div>
-          <p className="iv-module-metric">
-            {t.overview.modules.match.metric(data.attributedOrders, usd(data.billedNet))}
-          </p>
-          <p className="muted">{t.overview.summary.statSessions} <SourceLabel kind="measured" /></p>
-          <p className="iv-module-desc">{t.overview.modules.match.desc}</p>
-          <Link className="btn" href="/plugin/match">{t.overview.modules.match.open}</Link>
+          <p className="muted">{t.overview.performance.affiliateTrackLabel}</p>
+          <p className="iv-module-metric">{t.overview.performance.affiliateMetric(data.attributedOrders)}</p>
+          <Link className="btn" href="/plugin/commission">{t.overview.performance.affiliateOpen}</Link>
         </div>
       </div>
     </section>

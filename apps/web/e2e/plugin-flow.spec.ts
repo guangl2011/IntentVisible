@@ -3,15 +3,16 @@ import { expect, test } from "@playwright/test";
 import { E2E_PASSCODE } from "./config-url";
 
 /**
- * Plugin Phase I flow against design v1.5 §0.6 (the approved interface):
- * login → the full-width frame's horizontal top navigation, the
- * Overview's four blocks in order, the §2.7 red lines (source labels,
- * blind-spot footers, empty states), the §2.9 DeepLumen patterns, the
- * §2.5 Commission page, and the en/zh language switch — served against
- * the deterministic demo seed that the API fixture server mounts
- * (playwright.config.ts boots it as the second webServer). Numbers are
- * asserted against the seed's exact values so seed drift fails here,
- * not silently in front of a merchant.
+ * Plugin Phase I flow (embedded left-sidebar IA per the Nov 26 brief
+ * that supersedes design v1.5's top-nav decision): login → the fixed
+ * left sidebar's exactly-seven menu items inside the full-width frame,
+ * the Overview's four blocks in order, the §2.7 red lines (source
+ * labels, blind-spot footers, empty states), the §2.9 DeepLumen
+ * patterns, the §2.5 Commission page, and the en/zh language switch —
+ * served against the deterministic demo seed that the API fixture
+ * server mounts (playwright.config.ts boots it as the second
+ * webServer). Numbers are asserted against the seed's exact values so
+ * seed drift fails here, not silently in front of a merchant.
  */
 
 async function login(page: Page): Promise<void> {
@@ -22,35 +23,39 @@ async function login(page: Page): Promise<void> {
 }
 
 /**
- * §0.6 red line: the plugin renders a horizontal top navigation —
- * Overview / Intent Library / Intent Audit / Intent Match plus a
- * Settings entry, no left rail — and the old dashboard navigation
+ * Embedded IA red line: the plugin renders the fixed left sidebar with
+ * exactly seven menu items — Intent Library / Intent Audit / Intent
+ * Match / Intent Traffic / Commission / Plan / Settings — plus the
+ * brand link back to the Overview home. The old dashboard navigation
  * (Queue / Research / Marketing Map / History / Agents) must never
  * render on a plugin surface.
  */
 async function assertPluginChrome(page: Page): Promise<void> {
-  const nav = page.locator('[data-testid="plugin-frame"] nav');
-  await expect(nav).toBeVisible();
-  for (const link of ["Overview", "Intent Library", "Intent Audit", "Intent Match", "Settings"]) {
-    await expect(nav.getByRole("link", { name: link, exact: false })).toBeVisible();
+  const sidebar = page.getByTestId("plugin-sidebar");
+  await expect(sidebar).toBeVisible();
+  await expect(sidebar.locator(".iv-sidebar-items > li")).toHaveCount(7);
+  for (const link of ["Intent Library", "Intent Audit", "Intent Match", "Intent Traffic", "Commission", "Plan", "Settings"]) {
+    await expect(sidebar.getByRole("link", { name: link, exact: false })).toBeVisible();
   }
+  // The Overview home is not a menu item; it is reached via the brand link.
+  await expect(sidebar.getByTestId("sidebar-home-link")).toBeVisible();
   for (const legacy of ["Queue", "History", "Agents"]) {
-    await expect(nav.getByRole("link", { name: legacy, exact: true })).toHaveCount(0);
+    await expect(sidebar.getByRole("link", { name: legacy, exact: true })).toHaveCount(0);
   }
-  // The old dashboard topbar cannot leak in either; no left rail exists.
+  // The old dashboard topbar cannot leak in either.
   await expect(page.locator(".pipeline-nav")).toHaveCount(0);
-  await expect(page.locator(".iv-sidebar")).toHaveCount(0);
 }
 
-test("IA: full-width frame with horizontal top nav, old dashboard nav absent", async ({ page }) => {
+test("IA: embedded frame with 7-item left sidebar, old dashboard nav absent", async ({ page }) => {
   await login(page);
   await page.goto("/plugin");
   await assertPluginChrome(page);
 
-  // The contextual subnav row shows the active module's sub-pages.
-  await page.goto("/plugin/attribution");
-  await expect(page.getByTestId("subnav")).toBeVisible();
-  await expect(page.getByTestId("subnav").getByText("Attribution", { exact: true })).toBeVisible();
+  // The brand link returns to the plugin home (Overview stays the
+  // post-login landing page).
+  await page.goto("/plugin/settings");
+  await page.getByTestId("sidebar-home-link").click();
+  await expect(page).toHaveURL("/plugin");
 });
 
 test("overview: exactly four §2.2 blocks in order", async ({ page }) => {
@@ -68,8 +73,8 @@ test("overview: exactly four §2.2 blocks in order", async ({ page }) => {
   await expect(blocks).toHaveCount(4);
   await expect(blocks.nth(0)).toHaveAttribute("data-block", "todays-alert");
   await expect(blocks.nth(1)).toHaveAttribute("data-block", "agentic-summary");
-  await expect(blocks.nth(2)).toHaveAttribute("data-block", "health-score");
-  await expect(blocks.nth(3)).toHaveAttribute("data-block", "module-cards");
+  await expect(blocks.nth(2)).toHaveAttribute("data-block", "intent-map");
+  await expect(blocks.nth(3)).toHaveAttribute("data-block", "intent-performance");
 
   // Block 1 — rule-triggered alerts with typed reasons, the 72h
   // auto-approve countdown on the review card.
@@ -84,26 +89,28 @@ test("overview: exactly four §2.2 blocks in order", async ({ page }) => {
   await expect(page.getByText("5 AI-referral sessions in the last 7 days")).toBeVisible();
   await expect(page.getByText(/Generated by .* · data window/)).toBeVisible();
 
-  // Block 3 — the gauge card with the heuristic label and the three
-  // sub-scores, all in English (§0.6 rule 2: one language per render).
+  // Block 3 — Intent Map: the gauge card (with the heuristic label and
+  // the three sub-scores) beside the monitored-pages card, all in English
+  // (§0.6 rule 2: one language per render).
   const gauge = page.getByTestId("health-gauge");
   await expect(gauge).toBeVisible();
   await expect(gauge).toContainText("not a conversion or revenue forecast");
   await expect(gauge).toContainText("Intent coverage");
   await expect(gauge).toContainText("Page readiness");
   await expect(gauge).toContainText("Data health");
+  const monitored = page.getByTestId("landing-pages-monitored");
+  await expect(monitored).toBeVisible();
+  await expect(monitored).toContainText("simulated ·");
 
-  // Block 4 — three parallel module cards, each with icon, metric, and
-  // a link into its module page.
-  const moduleCards = page.locator(".iv-module-grid .iv-module-card");
-  await expect(moduleCards).toHaveCount(3);
-  await expect(moduleCards.nth(0)).toContainText("Intent Library");
-  await expect(moduleCards.nth(1)).toContainText("Intent Audit");
-  await expect(moduleCards.nth(2)).toContainText("Intent Match");
+  // Block 4 — Intent Performance: traffic (simulated spark), AI insights
+  // (no live Track A data yet), affiliate orders (measured).
+  await expect(page.getByTestId("performance-traffic")).toBeVisible();
+  await expect(page.getByTestId("performance-insights")).toBeVisible();
+  await expect(page.getByTestId("performance-affiliate")).toBeVisible();
 });
 
 test("§2.7 red lines: source labels and blind-spot footers on every plugin page", async ({ page }) => {
-  // The loop visits all 16 plugin routes; the dev server compiles each on
+  // The loop visits all 18 plugin routes; the dev server compiles each on
   // first hit, so the default 30s budget is not enough.
   test.setTimeout(180_000);
   await login(page);
@@ -121,6 +128,8 @@ test("§2.7 red lines: source labels and blind-spot footers on every plugin page
     "/plugin/channels",
     "/plugin/affiliate-visit",
     "/plugin/commission",
+    "/plugin/ai-traffic",
+    "/plugin/plan",
     "/plugin/integrations",
     "/plugin/billing",
     "/plugin/uninstall",
@@ -308,6 +317,44 @@ test("commission: §2.5 filter bar, four stat cards, order table, pinned promise
   await expect(table.locator("tbody tr")).toHaveCount(1);
 });
 
+test("intent traffic: coverage, by-type, trend, top pages — simulated, visit shares only", async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto("/plugin/ai-traffic");
+
+  // All four blocks render from the labeled fixture pool (no live
+  // crawler-visit data in Phase I).
+  await expect(page.getByTestId("ai-crawl-coverage")).toBeVisible();
+  await expect(page.getByTestId("ai-visits-by-type")).toBeVisible();
+  await expect(page.getByTestId("ai-traffic-trend")).toBeVisible();
+  await expect(page.getByTestId("ai-top-pages")).toBeVisible();
+
+  // Hard guardrail: visit shares only — never a conversion or revenue
+  // promise, and every block wears its simulated label.
+  await expect(page.getByTestId("ai-traffic-guardrail")).toBeVisible();
+  await expect(page.locator(".source-label.source-simulated").first()).toBeVisible();
+
+  // The By Platform / By Category toggle re-renders the trend in place.
+  await page.getByTestId("trend-by-category").click();
+  await expect(page.getByTestId("trend-by-category")).toHaveAttribute("aria-selected", "true");
+});
+
+test("plan: $0 monthly fee, checklist, expandable rates, EXAMPLE growth chart", async ({ page }) => {
+  await login(page);
+  await page.goto("/plugin/plan");
+
+  await expect(page.getByTestId("plan-summary")).toBeVisible();
+  await expect(page.getByTestId("plan-summary")).toContainText("$0");
+  // Our locked rate band (design §1.7), not DeepLumen's 5–35%.
+  await expect(page.getByTestId("plan-checklist")).toContainText("5–20%");
+
+  await page.getByTestId("plan-rates").locator("summary").click();
+  await expect(page.getByText("Locked band: 5–20%").first()).toBeVisible();
+
+  await expect(page.getByTestId("plan-growth")).toContainText("EXAMPLE");
+});
+
 test("integrations: Shopify connected, Nango and treg.to are honest stubs", async ({ page }) => {
   await login(page);
   await page.goto("/plugin/integrations");
@@ -329,13 +376,13 @@ test("i18n: switch to 中文, Overview and two module pages render Chinese-only,
   await page.getByTestId("language-zh").check();
   await expect(page.getByTestId("language-zh")).toBeChecked();
 
-  // Overview in Chinese — nav, four block headings, module cards; no
-  // English UI chrome may leak (native language names excepted).
+  // Overview in Chinese — sidebar nav, four block headings, performance
+  // cards; no English UI chrome may leak (native language names excepted).
   await page.goto("/plugin");
   await expect(page.locator("h1")).toHaveText("概览");
-  const zhNav = page.locator('[data-testid="plugin-frame"] nav');
-  await expect(zhNav.getByRole("link", { name: "意图库" })).toBeVisible();
-  for (const english of ["Today's Alert", "Agentic Store Summary", "Intent Health Score", "Intent Library"]) {
+  const zhSidebar = page.getByTestId("plugin-sidebar");
+  await expect(zhSidebar.getByRole("link", { name: "意图库" })).toBeVisible();
+  for (const english of ["Today's Alert", "Agentic Store Summary", "Intent Map", "Intent Library"]) {
     await expect(page.getByText(english, { exact: true })).toHaveCount(0);
   }
 

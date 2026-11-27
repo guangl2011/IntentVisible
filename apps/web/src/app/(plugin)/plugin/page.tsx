@@ -4,7 +4,6 @@ import { useCallback } from "react";
 
 import type {
   AuditPayload,
-  CommissionLedgerPayload,
   MatchPayload,
   OverviewPayload,
 } from "../../../lib/plugin/types";
@@ -12,8 +11,8 @@ import { DataModeChip, PluginError, PluginLoading } from "./components/status";
 import { getPluginClient } from "../../../lib/plugin/endpoint";
 import { loadPlugin } from "../../../lib/plugin/load";
 import {
-  HealthScoreBlock,
-  ModuleCardsBlock,
+  IntentMapBlock,
+  IntentPerformanceBlock,
   StoreSummaryBlock,
   TodaysAlertBlock,
   averageReadiness,
@@ -27,9 +26,10 @@ import { usePluginPage } from "./use-plugin-page";
 /**
  * Overview — the plugin's default landing page (design v1.5 §0.6 rule 1,
  * §2.2): sections top-down, each with an icon — Today's Alert, Agentic
- * Store Summary, Intent Health Score, three parallel module cards. Four
- * read routes feed it in parallel; each block renders its own
- * loading/error state so one failing route never blanks the page.
+ * Store Summary, Intent Map (gauge + monitored pages), and Intent
+ * Performance (traffic / AI insights / affiliate orders). Three read
+ * routes feed it in parallel; each block renders its own loading/error
+ * state so one failing route never blanks the page.
  */
 
 function loadOverview(shopId: string) {
@@ -41,9 +41,6 @@ function loadMatch(shopId: string) {
 function loadAudit(shopId: string) {
   return loadPlugin(() => getPluginClient().audit(shopId));
 }
-function loadCommission(shopId: string) {
-  return loadPlugin(() => getPluginClient().commission(shopId));
-}
 
 export default function PluginOverviewPage() {
   const t = useT();
@@ -51,12 +48,10 @@ export default function PluginOverviewPage() {
   const overviewLoader = useCallback((shopId: string) => loadOverview(shopId), []);
   const matchLoader = useCallback((shopId: string) => loadMatch(shopId), []);
   const auditLoader = useCallback((shopId: string) => loadAudit(shopId), []);
-  const commissionLoader = useCallback((shopId: string) => loadCommission(shopId), []);
 
   const overview = usePluginPage(overviewLoader);
   const match = usePluginPage(matchLoader);
   const audit = usePluginPage(auditLoader);
-  const commission = usePluginPage(commissionLoader);
 
   // Narrowed payload/error views — each route is pending (null), failed
   // (error message), or loaded (payload). Blocks key off their own trio.
@@ -69,24 +64,13 @@ export default function PluginOverviewPage() {
   const auditPayload: AuditPayload | null = audit.result?.ok ? audit.result.data.payload : null;
   const auditError: string | null = audit.result && !audit.result.ok ? audit.result.error.message : null;
   const auditPending = audit.result === null || audit.binding === null;
-  const commissionPayload: CommissionLedgerPayload | null = commission.result?.ok
-    ? commission.result.data.payload
-    : null;
 
   const dataMode = overview.result?.ok ? overview.result.data.dataMode : undefined;
   const dropOff = matchPayload ? intentDropOffWarning(matchPayload) : null;
   const avgReadiness = auditPayload ? averageReadiness(auditPayload.readiness.per_intent) : null;
 
-  const moduleData = {
-    activeIntentCount: overviewPayload?.agentic_store_summary.key_numbers.active_intent_count ?? 0,
-    avgReadiness,
-    attributedOrders:
-      matchPayload?.affiliate_visits.filter((visit) => visit.order_id !== null).length ?? 0,
-    billedNet: commissionPayload?.totals.net ?? 0,
-  };
-
-  const modulesPending =
-    overviewPayload === null || auditPayload === null || matchPayload === null || commissionPayload === null;
+  const attributedOrders =
+    matchPayload?.affiliate_visits.filter((visit) => visit.order_id !== null).length ?? 0;
 
   return (
     <>
@@ -120,34 +104,34 @@ export default function PluginOverviewPage() {
         <StoreSummaryBlock summary={overviewPayload.agentic_store_summary} />
       )}
 
-      {/* Block 3 — Intent Health Score (gauge + expandable sub-scores + diagnosis). */}
+      {/* Block 3 — Intent Map: health gauge (col 1) + Landing Pages Monitored (col 2). */}
       {overviewPending || auditPending ? (
-        <section className="overview-block" data-block="health-score">
-          <PluginLoading what={t.overview.health.title} />
+        <section className="overview-block" data-block="intent-map">
+          <PluginLoading what={t.overview.intentMap.title} />
         </section>
       ) : overviewError !== null ? (
-        <section className="overview-block" data-block="health-score">
+        <section className="overview-block" data-block="intent-map">
           <PluginError message={overviewError} />
         </section>
       ) : auditError !== null ? (
-        <section className="overview-block" data-block="health-score">
+        <section className="overview-block" data-block="intent-map">
           <PluginError message={auditError} />
         </section>
       ) : overviewPayload === null ? null : (
-        <HealthScoreBlock
+        <IntentMapBlock
           score={overviewPayload.intent_health_score}
           subScores={healthSubScores(overviewPayload, avgReadiness ?? 0)}
           readinessMeasured={avgReadiness !== null}
         />
       )}
 
-      {/* Block 4 — three parallel module cards. */}
-      {modulesPending ? (
-        <section className="overview-block" data-block="module-cards">
-          <PluginLoading what={t.overview.modules.title} />
+      {/* Block 4 — Intent Performance: traffic / AI insights / affiliate orders. */}
+      {match.result === null || match.binding === null ? (
+        <section className="overview-block" data-block="intent-performance">
+          <PluginLoading what={t.overview.performance.title} />
         </section>
       ) : (
-        <ModuleCardsBlock data={moduleData} />
+        <IntentPerformanceBlock data={{ attributedOrders }} />
       )}
 
       <BlindSpotFooter items={t.blindSpots.overview} />
